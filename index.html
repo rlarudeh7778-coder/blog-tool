@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>네이버 블로그 AI 글쓰기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--green:#1B8F5E;--gl:#e8f7f1;--gd:#136b46;--red:#E24B4A;--rl:#fdeaea;--bg:#f6f8f7;--sur:#fff;--bor:#e2e8e5;--txt:#1a2520;--t2:#4a6058;--t3:#8aaa9e;--r:12px;--rs:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.6;min-height:100vh}
+header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-size:16px;font-weight:700;color:var(--green)}
+.logo span{color:var(--txt);font-weight:500}
+.hright{display:flex;align-items:center;gap:12px}
+.astat{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3)}
+.dot{width:7px;height:7px;border-radius:50%;background:#ccc}.dot.ok{background:var(--green)}
+.gbtn{width:32px;height:32px;border-radius:50%;border:1px solid var(--bor);background:var(--sur);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+.gbtn:hover{border-color:var(--green)}
+/* 메인 탭 */
+.maintabs{display:flex;gap:0;border-bottom:2px solid var(--bor);margin-bottom:0;padding:0 1rem;background:var(--sur)}
+.maintab{padding:12px 18px;font-size:13px;font-weight:500;cursor:pointer;color:var(--t3);border-bottom:2px solid transparent;margin-bottom:-2px}
+.maintab.on{color:var(--green);border-bottom-color:var(--green)}
+.mainpanel{display:none;max-width:1080px;margin:0 auto;padding:1.5rem 1rem}
+.mainpanel.on{display:block}
+/* 글쓰기 패널 레이아웃 */
+.wrap{display:grid;grid-template-columns:340px 1fr;gap:1.25rem;align-items:start}
+@media(max-width:760px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.04)}
+.ctitle{font-size:13px;font-weight:700;color:var(--t2);letter-spacing:.04em;margin-bottom:1rem}
+.field{margin-bottom:.875rem}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:8px 11px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);transition:border-color .15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--green)}
+.field textarea{resize:vertical;min-height:68px;line-height:1.6}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aitabs{display:flex;gap:4px;margin-bottom:.875rem;background:#f0f4f2;border-radius:var(--rs);padding:4px}
+.aitab{flex:1;padding:7px 4px;text-align:center;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;color:var(--t3);border:none;background:none;font-family:inherit}
+.aitab.on{background:var(--sur);color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.aitab small{display:block;font-size:10px;font-weight:400;margin-top:1px}
+.cbadge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;background:#fff8e8;color:#8a6a00;border:1px solid #e8c96a;margin-left:6px}
+.apirow{display:flex;gap:6px;margin-bottom:4px}
+.apirow input{flex:1;padding:8px 11px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:12px;color:var(--txt);background:var(--sur)}
+.apirow input:focus{outline:none;border-color:var(--green)}
+.savebtn{padding:8px 14px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-family:inherit;cursor:pointer}
+.apihint{font-size:11px;color:var(--t3);margin-top:4px;line-height:1.5}
+.apihint a{color:var(--green)}
+.autosave-row{display:flex;align-items:center;gap:6px;margin-top:6px}
+.autosave-row input[type=checkbox]{width:14px;height:14px;accent-color:var(--green);cursor:pointer}
+.autosave-row label{font-size:11px;color:var(--t3);cursor:pointer}
+.dbox{background:#f0f4f2;border-radius:var(--rs);padding:10px 12px;margin-bottom:.875rem;border:1px solid var(--bor)}
+.dbox-title{font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px}
+.drow{display:flex;gap:6px;align-items:center}
+.drow input{flex:1;padding:7px 10px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur)}
+.drow input:focus{outline:none;border-color:var(--green)}
+.dapply{padding:7px 12px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-family:inherit;cursor:pointer}
+.dprev{font-size:11px;color:var(--t3);margin-top:5px}
+.dprev span{color:var(--green);font-weight:700}
+.imgtog{display:none;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg);border-radius:var(--rs);margin-bottom:.875rem;border:1px solid var(--bor)}
+.imgtog.show{display:flex}
+.imgtog-lbl{font-size:12px;font-weight:500;color:var(--t2)}
+.imgtog-sub{font-size:11px;color:var(--t3);margin-top:1px}
+.togwrap{display:flex;align-items:center;gap:6px}
+.tog{width:36px;height:20px;background:#ccc;border-radius:10px;position:relative;cursor:pointer;border:none;flex-shrink:0;transition:background .2s}
+.tog.on{background:var(--green)}
+.tog::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s}
+.tog.on::after{left:18px}
+.imgcntsel{font-size:12px;padding:3px 8px;border:1px solid var(--bor);border-radius:var(--rs);background:var(--sur);color:var(--txt);font-family:inherit}
+.nosupport{background:#fff8e8;border:1px dashed #e8c96a;border-radius:var(--rs);padding:8px 12px;font-size:12px;color:#8a6a00;margin-bottom:.875rem;display:none}
+.tonegrp{display:flex;flex-wrap:wrap;gap:6px}
+.tonebtn{padding:5px 12px;border-radius:20px;border:1px solid var(--bor);font-size:12px;font-family:inherit;cursor:pointer;background:var(--sur);color:var(--t2)}
+.tonebtn.on{background:var(--green);color:#fff;border-color:var(--green)}
+.genbtn{width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:4px}
+.genbtn:hover{background:var(--gd)}
+.genbtn:disabled{opacity:.5;cursor:not-allowed}
+.rtabs{display:flex;gap:2px;margin-bottom:1rem;background:var(--sur);border:1px solid var(--bor);border-radius:var(--rs);padding:3px}
+.rtab{flex:1;padding:7px;text-align:center;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;color:var(--t3)}
+.rtab.on{background:var(--green);color:#fff}
+.rpanel{display:none}
+.rpanel.on{display:block}
+.empty{text-align:center;padding:3rem 1rem;color:var(--t3)}
+.loading{text-align:center;padding:2.5rem 1rem}
+.spin{width:36px;height:36px;border:3px solid var(--bor);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto .75rem}
+@keyframes sp{to{transform:rotate(360deg)}}
+.resmeta{display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:6px}
+.restime{font-size:11px;color:var(--t3)}
+.copys{display:flex;gap:6px}
+.cpbtn{padding:5px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-size:12px;font-family:inherit;cursor:pointer;background:var(--sur);color:var(--t2)}
+.cpbtn:hover{border-color:var(--green);color:var(--green)}
+.titlebox{background:var(--gl);border-radius:var(--rs);padding:10px 14px;margin-bottom:.875rem}
+.titlelbl{font-size:11px;color:var(--green);font-weight:700;margin-bottom:3px}
+.titletxt{font-size:15px;font-weight:700;color:var(--txt)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:.875rem}
+.stat{background:var(--bg);border-radius:var(--rs);padding:8px;text-align:center;cursor:default}
+.stat-l{font-size:10px;color:var(--t3);margin-bottom:2px}
+.stat-v{font-size:14px;font-weight:700;color:var(--txt)}
+.stat-v.ok{color:var(--green)}.stat-v.ng{color:var(--red)}
+.kwbox{background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin-bottom:.875rem;border:1px solid var(--bor)}
+.kwtitle{font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px}
+.kwrow{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.kwlabel{font-size:11px;color:var(--t3);width:70px;flex-shrink:0}
+.kwchips{display:flex;flex-wrap:wrap;gap:4px;flex:1}
+.chip{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.chip.main{background:#e8f7f1;color:#136b46;border:1px solid #9FE1CB}
+.chip.freq{background:var(--sur);color:var(--t2);border:1px solid var(--bor)}
+.chip.warn{background:var(--rl);color:#a32d2d;border:1px solid #F09595}
+.resbody{font-size:13px;color:var(--txt);line-height:2;white-space:pre-wrap;max-height:420px;overflow-y:auto;border:1px solid var(--bor);border-radius:var(--rs);padding:14px}
+.restags{display:flex;flex-wrap:wrap;gap:6px;margin-top:.875rem}
+.tag{padding:4px 12px;background:var(--bg);border:1px solid var(--bor);border-radius:20px;font-size:12px;color:var(--t2)}
+.imgsec{margin-top:1rem;border-top:1px solid var(--bor);padding-top:1rem;display:none}
+.imgsec-t{font-size:12px;font-weight:700;color:var(--t2);margin-bottom:.75rem}
+.imggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.imgcard{border-radius:var(--rs);overflow:hidden;border:1px solid var(--bor);background:var(--bg)}
+.imgcard img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.imgdl{display:block;padding:6px;text-align:center;font-size:11px;border:none;background:var(--bg);color:var(--t2);cursor:pointer;text-decoration:none;border-top:1px solid var(--bor)}
+.imgdl:hover{color:var(--green)}
+.imgload{aspect-ratio:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px}
+.ispin{width:24px;height:24px;border:2px solid var(--bor);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite}
+.imgpb{font-size:10px;color:var(--t3);padding:4px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-top:1px solid var(--bor)}
+.hitem{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bor);cursor:pointer}
+.hitem:hover .htitle{color:var(--green)}
+.hkw{background:var(--gl);color:var(--green);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.htitle{font-size:13px;color:var(--txt);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.htime{font-size:11px;color:var(--t3);flex-shrink:0}
+.haibadge{font-size:10px;padding:1px 6px;border-radius:10px;flex-shrink:0}
+.gitem{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--bor)}
+.gicon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
+.gicon.ok{background:var(--gl);color:var(--green)}
+.gicon.ng{background:var(--rl);color:var(--red)}
+/* 블로그 진단 */
+.blogcheck-wrap{max-width:800px;margin:0 auto}
+.blog-input-row{display:flex;gap:8px;margin-bottom:1rem}
+.blog-input-row input{flex:1;padding:9px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur)}
+.blog-input-row input:focus{outline:none;border-color:var(--green)}
+.blog-input-row button{padding:9px 18px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}
+.blog-input-row button:disabled{opacity:.5;cursor:not-allowed}
+.blog-post-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bor)}
+.blog-post-title{flex:1;font-size:13px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blog-post-title a{color:var(--txt);text-decoration:none}
+.blog-post-title a:hover{color:var(--green)}
+.blog-post-date{font-size:11px;color:var(--t3);flex-shrink:0;width:80px}
+.status-badge{padding:2px 10px;border-radius:20px;font-size:11px;font-weight:500;flex-shrink:0;width:60px;text-align:center}
+.sb-checking{background:#f0f4f2;color:var(--t3)}
+.sb-exposed{background:#e8f7f1;color:var(--green)}
+.sb-hidden{background:var(--rl);color:var(--red)}
+/* 글 분석기 */
+.analyzer-wrap{max-width:800px;margin:0 auto}
+.analyzer-input{width:100%;height:180px;padding:12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);resize:vertical;line-height:1.7;margin-bottom:.875rem}
+.analyzer-input:focus{outline:none;border-color:var(--green)}
+.analyzer-kw-row{display:flex;gap:8px;margin-bottom:.875rem;flex-wrap:wrap}
+.analyzer-kw-row input{flex:1;min-width:140px;padding:8px 11px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur)}
+.analyzer-kw-row input:focus{outline:none;border-color:var(--green)}
+.analyzer-btn{padding:8px 20px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}
+.score-box{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
+.score-item{background:var(--bg);border-radius:var(--rs);padding:12px;text-align:center;border:1px solid var(--bor)}
+.score-item-l{font-size:11px;color:var(--t3);margin-bottom:4px}
+.score-item-v{font-size:20px;font-weight:700}
+.score-item-v.ok{color:var(--green)}
+.score-item-v.warn{color:#BA7517}
+.score-item-v.ng{color:var(--red)}
+.seo-score-bar{margin-bottom:1rem}
+.seo-score-label{display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-bottom:4px}
+.seo-bar-track{height:12px;background:var(--bor);border-radius:6px;overflow:hidden}
+.seo-bar-fill{height:100%;border-radius:6px;transition:width .4s}
+.analysis-result{background:var(--bg);border-radius:var(--rs);padding:14px;border:1px solid var(--bor)}
+.ar-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--bor)}
+.ar-row:last-child{border-bottom:none}
+.ar-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
+.ar-icon.ok{background:var(--gl);color:var(--green)}
+.ar-icon.ng{background:var(--rl);color:var(--red)}
+.ar-icon.warn{background:#fff3cd;color:#856404}
+.ar-text{font-size:13px;color:var(--txt);flex:1}
+.ar-text small{color:var(--t3);font-size:11px;display:block;margin-top:2px}
+/* 토스트 */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:10px 18px;border-radius:var(--rs);font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;z-index:999;background:var(--txt);color:#fff}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{background:var(--green)}.toast.err{background:var(--red)}
+.bc{background:#e8f7f1;color:#136b46}
+.bg2{background:#e8f4ff;color:#4a30a0}
+.bm{background:#fff3e0;color:#e65100}
+/* 모달 */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center}
+.mbg.open{display:flex}
+.modal{background:var(--sur);border-radius:var(--r);padding:1.5rem;max-width:540px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+.mhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.mtitle{font-size:16px;font-weight:700}
+.mclose{width:28px;height:28px;border-radius:50%;border:1px solid var(--bor);background:none;cursor:pointer;font-size:16px}
+.msec{margin-bottom:1.25rem}
+.msectitle{font-size:13px;font-weight:700;color:var(--green);margin-bottom:.75rem;padding-bottom:6px;border-bottom:1px solid var(--bor)}
+.mstep{display:flex;gap:10px;margin-bottom:.75rem}
+.mnum{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.mbd{flex:1;font-size:13px}
+.mbd b{font-weight:700}
+.mbd small{font-size:12px;color:var(--t2);line-height:1.6;display:block;margin-top:2px}
+.mbd small a{color:var(--green)}
+.ctable{width:100%;border-collapse:collapse;font-size:12px}
+.ctable th{background:var(--bg);padding:7px 10px;text-align:left;font-weight:500;color:var(--t2);border-bottom:1px solid var(--bor)}
+.ctable td{padding:7px 10px;border-bottom:1px solid var(--bor);color:var(--txt)}
+.ctable tr:last-child td{border-bottom:none}
+.free{color:var(--green);font-weight:700}
+.cnote{font-size:11px;color:var(--t3);margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">✦ <span>네이버 블로그</span> AI 글쓰기</div>
+  <div class="hright">
+    <div id="badge" style="font-size:11px;color:var(--t3);display:none">📝 <span id="badge-n">0</span>개</div>
+    <div class="astat"><div class="dot" id="dot"></div><span id="alabel">API 키 미설정</span></div>
+    <button class="gbtn" onclick="openModal()">⚙</button>
+  </div>
+</header>
+
+<!-- 메인 탭 -->
+<div class="maintabs">
+  <div class="maintab on" id="mt-write" onclick="setMainTab('write')">✏ 글쓰기</div>
+  <div class="maintab" id="mt-blog" onclick="setMainTab('blog')">🔍 블로그 진단</div>
+  <div class="maintab" id="mt-analyze" onclick="setMainTab('analyze')">📊 글 분석기</div>
+</div>
+
+<!-- 모달 -->
+<div class="mbg" id="mbg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="mhd"><div class="mtitle">⚙ 설정 및 도움말</div><button class="mclose" onclick="closeModal()">✕</button></div>
+    <div class="msec">
+      <div class="msectitle">🤖 AI별 API 키 발급 방법</div>
+      <div class="mstep"><div class="mnum">1</div><div class="mbd"><b>Claude (Anthropic)</b><small>① <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys → Create Key<br>② sk-ant-... 복사 후 저장 / 이미지 생성 불가</small></div></div>
+      <div class="mstep"><div class="mnum">2</div><div class="mbd"><b>ChatGPT (OpenAI)</b><small>① <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a> → API Keys → Create<br>② sk-... 복사 후 저장 / 글+이미지(DALL-E 3) 가능</small></div></div>
+      <div class="mstep"><div class="mnum">3</div><div class="mbd"><b>Gemini (Google) - 무료</b><small>① <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> → Create API Key<br>② AIza... 복사 후 저장 / 무료 / 글+이미지 가능</small></div></div>
+      <div class="mstep"><div class="mnum">4</div><div class="mbd"><b>목표달성 기준</b><small>공백포함 1,500자 이상 2,000자 미만 / 메인키워드 정확히 3회 / 서브키워드 각 5회 이내 / 마크다운(## **) 없음</small></div></div>
+    </div>
+    <div class="msec">
+      <div class="msectitle">💰 AI별 글 1개 비용</div>
+      <table class="ctable"><thead><tr><th>AI</th><th>글 1개</th><th>이미지 1장</th></tr></thead>
+      <tbody><tr><td>Claude</td><td>약 2~4원</td><td>-</td></tr><tr><td>ChatGPT</td><td>약 1~3원</td><td>약 480원</td></tr><tr><td>Gemini</td><td class="free">무료*</td><td>약 60원</td></tr></tbody></table>
+      <div class="cnote">* Gemini 무료 플랜: 분당 15회 제한</div>
+    </div>
+  </div>
+</div>
+
+<!-- 글쓰기 패널 -->
+<div class="mainpanel on" id="mp-write">
+<div class="wrap">
+  <div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="ctitle">⚙ AI 및 API 설정</div>
+      <div class="aitabs">
+        <button class="aitab on" id="tab-claude" onclick="setAI('claude')">Claude<small>Anthropic</small></button>
+        <button class="aitab" id="tab-gpt" onclick="setAI('gpt')">ChatGPT<small>OpenAI</small></button>
+        <button class="aitab" id="tab-gemini" onclick="setAI('gemini')">Gemini<small>Google</small></button>
+      </div>
+      <div style="margin-bottom:.75rem"><span style="font-size:11px;color:var(--t3)">생성 비용: <span class="cbadge" id="costbadge">약 2~4원</span></span></div>
+      <div class="field">
+        <label id="keylabel">Anthropic API Key</label>
+        <div class="apirow"><input type="password" id="apikey" placeholder="sk-ant-..."/><button class="savebtn" id="savebtn" onclick="saveKey()">저장</button></div>
+        <div class="apihint" id="apihint">키는 브라우저에만 저장됩니다. <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>에서 발급</div>
+        <div class="autosave-row"><input type="checkbox" id="autosave"/><label for="autosave">API 키 자동저장 (다음 접속에도 유지)</label></div>
+      </div>
+      <div class="nosupport" id="nosupport">Claude는 이미지 생성을 지원하지 않습니다</div>
+      <div class="imgtog" id="imgtog">
+        <div><div class="imgtog-lbl">🖼 이미지 자동 생성</div><div class="imgtog-sub">글과 연결된 블로그 이미지</div></div>
+        <div class="togwrap"><select class="imgcntsel" id="imgcnt"><option value="1">1장</option><option value="2">2장</option><option value="3" selected>3장</option></select><button class="tog" id="imgtogbtn" onclick="toggleImg()"></button></div>
+      </div>
+      <div class="dbox">
+        <div class="dbox-title">🏷 매출자코드 (선불폰 전용)</div>
+        <div class="drow"><input type="text" id="dcode" placeholder="예: 2744371" maxlength="20"/><button class="dapply" onclick="applyDealer()">적용</button></div>
+        <div class="dprev" id="dprev">미입력</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">✏ 글 설정</div>
+      <div class="frow field">
+        <div class="field" style="margin-bottom:0"><label>카테고리</label>
+          <select id="cat">
+            <option value="phone">선불폰/알뜰폰</option>
+            <option value="english">영어회화/학원</option>
+            <option value="food">음식/맛집</option>
+            <option value="product">제품 리뷰</option>
+            <option value="travel">여행/카페</option>
+            <option value="custom">직접입력</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0"><label>지역 (선택)</label><input type="text" id="region" placeholder="예: 강남"/></div>
+      </div>
+      <div class="field"><label>메인 키워드 <span style="color:var(--red)">*</span></label><input type="text" id="kw" placeholder="예: 통영성인영어회화"/></div>
+      <div class="field"><label>서브 키워드 (쉼표 구분)</label><input type="text" id="subkw" placeholder="예: 성인영어, 원어민수업"/></div>
+      <div class="field"><label>글 방향 / 특이사항</label><textarea id="dir" placeholder="예: 직장인 대상, 2:1 관리 시스템 강조"></textarea></div>
+      <div class="field"><label>글 톤</label>
+        <div class="tonegrp">
+          <button class="tonebtn on" onclick="setTone(this,'친근한')">친근한</button>
+          <button class="tonebtn" onclick="setTone(this,'정보형')">정보형</button>
+          <button class="tonebtn" onclick="setTone(this,'경험담')">경험담</button>
+          <button class="tonebtn" onclick="setTone(this,'전문가')">전문가</button>
+          <button class="tonebtn" onclick="setTone(this,'후기형')">후기형</button>
+        </div>
+      </div>
+      <button class="genbtn" id="genbtn" onclick="generate()">✦ 글 생성하기</button>
+    </div>
+  </div>
+  <div>
+    <div class="rtabs">
+      <div class="rtab on" id="rt-result" onclick="setRTab('result')">생성 결과</div>
+      <div class="rtab" id="rt-history" onclick="setRTab('history')">기록</div>
+      <div class="rtab" id="rt-guide" onclick="setRTab('guide')">저품질 방지</div>
+    </div>
+    <div class="rpanel on" id="rp-result">
+      <div class="card">
+        <div id="s-empty" class="empty"><div style="font-size:36px;margin-bottom:.75rem">✦</div><p>키워드를 입력하고 글 생성하기를 눌러주세요</p></div>
+        <div id="s-loading" class="loading" style="display:none"><div class="spin"></div><p style="color:var(--t2);font-size:13px" id="loadmsg">생성 중...</p></div>
+        <div id="s-result" style="display:none">
+          <div class="resmeta"><span class="restime" id="restime"></span><div class="copys"><button class="cpbtn" onclick="copyTitle()">제목 복사</button><button class="cpbtn" onclick="copyAll()">전체 복사</button></div></div>
+          <div class="titlebox"><div class="titlelbl">추천 제목</div><div class="titletxt" id="restitle"></div></div>
+          <div class="stats" id="stats"></div>
+          <div class="kwbox" id="kwbox"></div>
+          <div class="resbody" id="resbody"></div>
+          <div class="restags" id="restags"></div>
+          <div class="imgsec" id="imgsec"><div class="imgsec-t">🖼 생성된 이미지 <span id="imgcntlbl"></span></div><div class="imggrid" id="imggrid"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="rpanel" id="rp-history">
+      <div class="card"><div class="ctitle">📋 생성 기록 <span id="hcnt" style="font-weight:400;color:var(--t3)">(0개)</span></div><div id="hlist"><div style="text-align:center;padding:2rem;color:var(--t3);font-size:13px">아직 생성된 글이 없습니다</div></div></div>
+    </div>
+    <div class="rpanel" id="rp-guide">
+      <div class="card"><div class="ctitle">✅ 네이버 저품질 방지</div><div id="glist"></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 블로그 진단 패널 -->
+<div class="mainpanel" id="mp-blog">
+<div class="blogcheck-wrap">
+  <div class="card" style="margin-bottom:1rem">
+    <div class="ctitle">🔍 블로그 글 진단</div>
+    <p style="font-size:12px;color:var(--t3);margin-bottom:1rem">
+      네이버 블로그 ID를 입력하면 최근 글 목록과 각 글의 SEO 적합도를 분석합니다.<br>
+      <span style="color:#BA7517">※ CORS 정책으로 인해 AI API를 통해 분석합니다. 왼쪽 글쓰기 탭에서 선택한 AI(Claude/GPT/Gemini) API 키가 있어야 합니다.</span>
+    </p>
+    <div class="blog-input-row">
+      <input type="text" id="blog-id-input" placeholder="네이버 블로그 ID (예: myblog123)"/>
+      <button id="blog-check-btn" onclick="checkBlog()">진단 시작</button>
+    </div>
+    <div id="blog-stats" style="display:none;margin-bottom:1rem">
+      <div class="stats">
+        <div class="stat"><div class="stat-l">총 글 수</div><div class="stat-v" id="bs-total">0</div></div>
+        <div class="stat"><div class="stat-l">노출 중</div><div class="stat-v ok" id="bs-exposed">0</div></div>
+        <div class="stat"><div class="stat-l">미노출</div><div class="stat-v ng" id="bs-hidden">0</div></div>
+        <div class="stat"><div class="stat-l">노출률</div><div class="stat-v ok" id="bs-rate">0%</div></div>
+      </div>
+    </div>
+    <div id="blog-result-area">
+      <div style="text-align:center;padding:2rem;color:var(--t3);font-size:13px">블로그 ID를 입력하고 진단을 시작하세요</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 글 분석기 패널 -->
+<div class="mainpanel" id="mp-analyze">
+<div class="analyzer-wrap">
+  <div class="card">
+    <div class="ctitle">📊 글 분석기 - SEO 및 키워드 진단</div>
+    <p style="font-size:12px;color:var(--t3);margin-bottom:.875rem">작성한 블로그 글을 붙여넣으면 키워드 분석, 글자수, 상위노출 가능성을 진단합니다.</p>
+    <div class="frow" style="margin-bottom:.875rem">
+      <div class="field" style="margin-bottom:0"><label>메인 키워드</label><input type="text" id="an-kw" placeholder="예: 통영성인영어회화"/></div>
+      <div class="field" style="margin-bottom:0"><label>서브 키워드 (쉼표 구분)</label><input type="text" id="an-subkw" placeholder="예: 성인영어, 원어민수업"/></div>
+    </div>
+    <textarea class="analyzer-input" id="an-text" placeholder="분석할 블로그 글을 여기에 붙여넣으세요..."></textarea>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+      <button class="analyzer-btn" onclick="analyzePost()">분석하기</button>
+    </div>
+    <div id="an-result" style="display:none">
+      <div class="score-box" id="an-scores"></div>
+      <div style="margin-bottom:1rem">
+        <div class="seo-score-label"><span>상위노출 가능성</span><span id="an-seo-pct">0%</span></div>
+        <div class="seo-bar-track"><div class="seo-bar-fill" id="an-seo-bar" style="width:0%;background:var(--green)"></div></div>
+      </div>
+      <div class="analysis-result" id="an-details"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var AI = 'claude';
+var tone = '친근한';
+var imgOn = false;
+var dealer = '';
+var autoSave = false;
+var hist = [];
+var cur = null;
+
+var AICFG = {
+  claude: {lbl:'Anthropic API Key', ph:'sk-ant-...', hint:'키는 브라우저에만 저장됩니다. <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>에서 발급', sk:'ak_claude', bc:'bc', name:'Claude', img:false, cost:'약 2~4원'},
+  gpt:    {lbl:'OpenAI API Key',    ph:'sk-...',     hint:'키는 브라우저에만 저장됩니다. <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a>에서 발급', sk:'ak_gpt', bc:'bg2', name:'ChatGPT', img:true, cost:'약 1~3원 / 이미지 약 480원'},
+  gemini: {lbl:'Google Gemini API Key', ph:'AIza...', hint:'키는 브라우저에만 저장됩니다. <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a>에서 발급 (무료)', sk:'ak_gemini', bc:'bm', name:'Gemini', img:true, cost:'무료* / 이미지 약 60원'}
+};
+
+var GUIDES = [
+  {ok:1,t:'메인키워드 본문 정확히 3회만 사용'},
+  {ok:1,t:'서브키워드 각 최대 5회 이내'},
+  {ok:1,t:'제목에 메인키워드 그대로 포함 (SEO 필수)'},
+  {ok:1,t:'공백 포함 1,500자 이상 2,000자 미만'},
+  {ok:1,t:'소제목 3~4개로 단락 구분'},
+  {ok:1,t:'단락 사이 빈줄 1개 (네이버 붙여넣기 호환)'},
+  {ok:1,t:'영어회화 글: 영어 예문 + 해석 포함'},
+  {ok:1,t:'맺음말에 강한 CTA 포함'},
+  {ok:0,t:'메인키워드 4회 이상 반복 절대 금지'},
+  {ok:0,t:'## ** 마크다운 기호 사용 금지'},
+  {ok:0,t:'선택포인트,주의사항 등 어색한 표현 금지'},
+  {ok:0,t:'하루 5개 초과 발행 금지'}
+];
+
+function init() {
+  renderGuides();
+  var as = localStorage.getItem('auto_save') === '1';
+  autoSave = as;
+  document.getElementById('autosave').checked = as;
+  document.getElementById('autosave').addEventListener('change', function() {
+    autoSave = this.checked;
+    localStorage.setItem('auto_save', this.checked ? '1' : '0');
+    if (!this.checked) {
+      localStorage.removeItem('ak_claude'); localStorage.removeItem('ak_gpt'); localStorage.removeItem('ak_gemini');
+      showToast('자동저장 해제됨', '');
+    }
+  });
+  var dc = localStorage.getItem('dealer') || '';
+  if (dc) { dealer = dc; document.getElementById('dcode').value = dc; updateDprev(); }
+  if (as) loadKey();
+  updateBadge();
+}
+
+function setMainTab(name) {
+  ['write','blog','analyze'].forEach(function(n) {
+    document.getElementById('mt-'+n).className = 'maintab' + (n===name?' on':'');
+    document.getElementById('mp-'+n).className = 'mainpanel' + (n===name?' on':'');
+  });
+}
+
+function setAI(ai) {
+  AI = ai;
+  ['claude','gpt','gemini'].forEach(function(a) {
+    document.getElementById('tab-'+a).className = 'aitab' + (a===ai?' on':'');
+  });
+  var cfg = AICFG[ai];
+  document.getElementById('keylabel').textContent = cfg.lbl;
+  document.getElementById('apikey').placeholder = cfg.ph;
+  document.getElementById('apihint').innerHTML = cfg.hint;
+  document.getElementById('costbadge').textContent = cfg.cost;
+  document.getElementById('imgtog').className = 'imgtog' + (cfg.img?' show':'');
+  document.getElementById('nosupport').style.display = cfg.img ? 'none' : 'block';
+  if (!cfg.img) { imgOn = false; document.getElementById('imgtogbtn').className = 'tog'; }
+  loadKey();
+}
+
+function loadKey() {
+  if (!autoSave) { document.getElementById('apikey').value = ''; updateStatus(false); return; }
+  var k = localStorage.getItem(AICFG[AI].sk) || '';
+  document.getElementById('apikey').value = k;
+  updateStatus(!!k);
+}
+
+function updateStatus(ok) {
+  document.getElementById('dot').className = 'dot' + (ok?' ok':'');
+  document.getElementById('alabel').textContent = ok ? AICFG[AI].name+' 연결됨' : 'API 키 미설정';
+}
+
+async function saveKey() {
+  var k = document.getElementById('apikey').value.replace(/[^\x20-\x7E]/g,'').trim();
+  if (!k) { showToast('API 키를 입력해주세요','err'); return; }
+  var btn = document.getElementById('savebtn');
+  btn.textContent='확인중...'; btn.disabled=true;
+  var ok = await verifyKey(AI, k);
+  btn.textContent='저장'; btn.disabled=false;
+  if (ok) {
+    sessionStorage.setItem(AICFG[AI].sk, k);
+    if (autoSave) localStorage.setItem(AICFG[AI].sk, k);
+    updateStatus(true);
+    showToast(autoSave ? '[v] 정상 등록됐습니다! (자동저장 중)' : '[v] 정상 등록됐습니다!', 'ok');
+  } else {
+    showToast('[x] 등록 실패 - API 키를 다시 확인해주세요','err');
+  }
+}
+
+async function verifyKey(ai, k) {
+  try {
+    if (ai==='claude') {
+      var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:5,messages:[{role:'user',content:'hi'}]})});
+      var d=await r.json(); return !d.error;
+    } else if (ai==='gpt') {
+      var r2=await fetch('https://api.openai.com/v1/models',{headers:{'Authorization':'Bearer '+k}});
+      return r2.ok;
+    } else if (ai==='gemini') {
+      var r3=await fetch('https://generativelanguage.googleapis.com/v1beta/models?key='+k);
+      return r3.ok;
+    }
+  } catch(e) { return false; }
+  return false;
+}
+
+function toggleImg() { imgOn=!imgOn; document.getElementById('imgtogbtn').className='tog'+(imgOn?' on':''); }
+function setTone(el,t) { document.querySelectorAll('.tonebtn').forEach(function(b){b.className='tonebtn';}); el.className='tonebtn on'; tone=t; }
+function setRTab(name) {
+  ['result','history','guide'].forEach(function(n) {
+    document.getElementById('rt-'+n).className='rtab'+(n===name?' on':'');
+    document.getElementById('rp-'+n).className='rpanel'+(n===name?' on':'');
+  });
+}
+function showState(s) {
+  document.getElementById('s-empty').style.display=s==='empty'?'block':'none';
+  document.getElementById('s-loading').style.display=s==='loading'?'block':'none';
+  document.getElementById('s-result').style.display=s==='result'?'block':'none';
+}
+function applyDealer() {
+  var c=document.getElementById('dcode').value.trim();
+  if(!c){showToast('매출자코드를 입력해주세요','err');return;}
+  dealer=c; localStorage.setItem('dealer',c); updateDprev();
+  showToast('[v] 매출자코드가 적용됐습니다','ok');
+}
+function updateDprev() {
+  var el=document.getElementById('dprev');
+  el.innerHTML=dealer?'태블릿소유자회원번호 <span>'+dealer+'</span> 이 본문에 삽입됩니다':'미입력';
+}
+function openModal(){document.getElementById('mbg').className='mbg open';}
+function closeModal(){document.getElementById('mbg').className='mbg';}
+
+function getTKey() {
+  var k=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk)||'default';
+  return 'ut_'+AI+'_'+k.slice(-6);
+}
+function saveTitle(kw,title) {
+  var sk=getTKey(); var arr=[];
+  try{arr=JSON.parse(localStorage.getItem(sk)||'[]');}catch(e){}
+  arr.push({kw:kw.trim(),title:title,t:Date.now()});
+  if(arr.length>200)arr=arr.slice(-200);
+  localStorage.setItem(sk,JSON.stringify(arr));
+}
+function getUsedTitles(kw) {
+  var sk=getTKey(); var arr=[];
+  try{arr=JSON.parse(localStorage.getItem(sk)||'[]');}catch(e){}
+  return arr.filter(function(x){return x.kw===kw.trim();}).map(function(x){return x.title;});
+}
+function updateBadge() {
+  var sk=getTKey(); var n=0;
+  try{n=JSON.parse(localStorage.getItem(sk)||'[]').length;}catch(e){}
+  document.getElementById('badge-n').textContent=n;
+  document.getElementById('badge').style.display=n>0?'block':'none';
+}
+
+function buildPrompt(kw, subkw, region, dir, cat, tone, dealer, usedTitles) {
+  var catLabel={phone:'선불폰/알뜰폰',english:'영어회화/학원',food:'음식/맛집',product:'제품리뷰',travel:'여행/카페',custom:'일반'}[cat]||'일반';
+  var subList=subkw?subkw.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
+  var isPhone=cat==='phone';
+  var isEnglish=cat==='english';
+
+  var usedNote='';
+  if(usedTitles&&usedTitles.length>0){
+    usedNote='\n[이미 쓴 주제 - 완전히 다른 각도로 작성]\n'+usedTitles.slice(0,5).map(function(t,i){return (i+1)+'. '+t;}).join('\n')+'\n';
+  }
+
+  var phoneInfo='';
+  if(isPhone){
+    phoneInfo='\n[선불폰 필수 정보]\n'
+      +'앤텔레콤 K망(KT) 요금제: LTE기본1(12,100원/300MB/인증용), LTE396(39,600원/10.3GB+3Mbps/인기), LTE459(45,900원/20.3GB), LTE770(77,000원/10GB+일2GB), LTE비디오(85,900원/100GB)\n'
+      +'앤텔레콤 L망(LGU+) 요금제: LTE기본1(12,100원/300MB), LTE396(39,600원/10.3GB), LTE770(77,000원/11GB+일2GB), LTE매일5GB(85,900원)\n'
+      +'유심: KT바로유심 8,800원(GS25,CU,이마트24,세븐일레븐) / LG모두의원칩 8,800원(이마트24,스토리웨이,배민)\n'
+      +(dealer?'태블릿소유자회원번호: '+dealer+' (개통절차 부분에 1회 자연스럽게 삽입)\n':'')
+      +'글 구성: 도입부 > 선불폰이란+장점 > 유심 종류 > 추천 요금제 > 개통 순서 1번~9번 > 마무리CTA\n'
+      +'소제목: 구체적 표현만 (선택포인트,주의사항 금지)\n';
+  }
+
+  var engInfo='';
+  if(isEnglish){
+    engInfo='\n[영어회화 글 필수]\n'
+      +'2:1 관리시스템(원어민강사+한국인플래너) 장점 자연스럽게 포함\n'
+      +'영어 예문과 한국어 해석을 최소 3개 이상 포함할 것\n'
+      +'예시 형식: 영어 문장 → 한국어 해석 (이탤릭 없이 일반 텍스트로)\n'
+      +'예: "How was your day?" - "오늘 하루 어땠어요?"\n'
+      +'회화 패턴, 실생활 표현 위주로 가독성 있게 작성\n'
+      +'마지막에 강한 연락 유도 CTA\n';
+  }
+
+  var sys='You are a Korean Naver blog SEO writer. Respond ONLY with valid JSON. No text before or after JSON. First char must be {';
+
+  var user='아래 조건으로 네이버 블로그 글을 작성하고 반드시 JSON만 출력하라. 응답 첫 글자는 { 이어야 한다.\n\n'
+    +'[조건]\n'
+    +'카테고리: '+catLabel+'\n'
+    +'메인키워드: '+kw+'\n'
+    +'서브키워드: '+(subList.join(', ')||'없음')+'\n'
+    +'지역: '+(region||'없음')+'\n'
+    +'글톤: '+tone+'\n'
+    +'방향: '+(dir||'없음')+'\n'
+    +usedNote+phoneInfo+engInfo
+    +'\n[제목 규칙 - 매우 중요]\n'
+    +'1. 제목에 메인키워드 "'+kw+'"를 반드시 그대로 포함시킬 것 (네이버 SEO 필수)\n'
+    +'2. 제목에 수치/숫자 포함 (예: 3개월, 10분, 월 39,600원)\n'
+    +'3. 클릭을 유도하는 후킹 문구 포함\n'
+    +'4. 35자 이내\n'
+    +'5. 마크다운 기호 없음\n'
+    +'\n[본문 규칙 - 절대 엄수]\n'
+    +'1. 공백포함 1500자 이상 2000자 미만 - 반드시 지킬 것, 부족하면 각 단락 보충\n'
+    +'2. 메인키워드 "'+kw+'" 본문에서 정확히 3회만 사용 - 절대 초과 금지, 작성 후 직접 세어서 확인\n'
+    +'3. 서브키워드 각각 최대 5회 이내\n'
+    +'4. ## ** 마크다운 기호 절대 금지\n'
+    +'5. 소제목: 숫자+점(1. 2. 3.) 또는 이모티콘만\n'
+    +'6. 단락 사이 빈줄 1개 (네이버 붙여넣기 호환)\n'
+    +'7. 오타 띄어쓰기 오류 없이\n'
+    +'8. 자연스러운 구어체, AI 느낌 금지\n'
+    +'\n[출력 JSON 구조 - 정확히 이 형식으로]\n'
+    +'{"title":"메인키워드 포함 제목","content":"본문전체(빈줄포함1500자이상)","hashtags":["태그1","태그2","태그3","태그4","태그5"],"image_prompts":["영어프롬프트1","영어프롬프트2"]}';
+
+  return {sys:sys, user:user};
+}
+
+async function callClaude(apiKey, sys, user) {
+  var k=apiKey.replace(/[^\x20-\x7E]/g,'').trim();
+  var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:8000,system:sys,messages:[{role:'user',content:user}]})});
+  var d=await r.json();
+  if(d.error)throw new Error(d.error.message);
+  var txt=d.content&&d.content.find(function(b){return b.type==='text';});
+  return txt?(txt.text||''):'';
+}
+
+async function callGPT(apiKey, sys, user) {
+  var k=apiKey.replace(/[^\x20-\x7E]/g,'').trim();
+  var r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+k},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:8000,response_format:{type:'json_object'},messages:[{role:'system',content:sys},{role:'user',content:user}]})});
+  var d=await r.json();
+  if(d.error)throw new Error(d.error.message);
+  return(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'';
+}
+
+async function callGemini(apiKey, user) {
+  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+apiKey;
+  var r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:user}]}],generationConfig:{maxOutputTokens:8000,responseMimeType:'application/json'}})});
+  var d=await r.json();
+  if(d.error)throw new Error(d.error.message);
+  try{return d.candidates[0].content.parts[0].text||'';}catch(e){return '';}
+}
+
+function parseJSON(raw) {
+  if(!raw)return null;
+  var s=raw.indexOf('{'); var e=raw.lastIndexOf('}');
+  if(s>=0&&e>s){try{return JSON.parse(raw.slice(s,e+1));}catch(e2){}}
+  try{return JSON.parse(raw.trim());}catch(e3){}
+  return null;
+}
+
+async function generateImageDalle(apiKey, prompt, idx) {
+  var card=document.getElementById('ic-'+idx);
+  if(card)card.innerHTML='<div class="imgload"><div class="ispin"></div><div style="font-size:11px;color:var(--t3)">생성중...</div></div>';
+  try {
+    var k=apiKey.replace(/[^\x20-\x7E]/g,'').trim();
+    var r=await fetch('https://api.openai.com/v1/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+k},body:JSON.stringify({model:'dall-e-3',prompt:'Korean blog image: '+prompt+'. Clean bright professional. No text.',n:1,size:'1024x1024',quality:'standard'})});
+    var d=await r.json();
+    if(d.error)throw new Error(d.error.message);
+    var url=d.data&&d.data[0]&&d.data[0].url;
+    if(url&&card)card.innerHTML='<img src="'+url+'" alt="생성이미지"/><div class="imgpb">'+prompt+'</div><a class="imgdl" href="'+url+'" target="_blank">↓ 저장</a>';
+  }catch(e){if(card)card.innerHTML='<div class="imgload"><div style="font-size:11px;color:var(--red)">생성 실패</div></div>';}
+}
+
+async function generateImageGemini(apiKey, prompt, idx) {
+  var card=document.getElementById('ic-'+idx);
+  if(card)card.innerHTML='<div class="imgload"><div class="ispin"></div></div>';
+  try {
+    var url='https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key='+apiKey;
+    var r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({instances:[{prompt:'Korean blog image: '+prompt+'. Clean bright professional. No text.'}],parameters:{sampleCount:1}})});
+    var d=await r.json();
+    if(d.error)throw new Error(d.error.message);
+    var b64=d.predictions&&d.predictions[0]&&d.predictions[0].bytesBase64Encoded;
+    if(b64&&card){var dataUrl='data:image/png;base64,'+b64;card.innerHTML='<img src="'+dataUrl+'" alt="생성이미지"/><div class="imgpb">'+prompt+'</div><a class="imgdl" href="'+dataUrl+'" download="img-'+idx+'.png">↓ 저장</a>';}
+  }catch(e){if(card)card.innerHTML='<div class="imgload"><div style="font-size:11px;color:var(--red)">생성 실패</div></div>';}
+}
+
+async function generate() {
+  var apiKey=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk);
+  var kw=document.getElementById('kw').value.trim();
+  var subkw=document.getElementById('subkw').value.trim();
+  var region=document.getElementById('region').value.trim();
+  var dir=document.getElementById('dir').value.trim();
+  var cat=document.getElementById('cat').value;
+  var imgCount=parseInt(document.getElementById('imgcnt').value)||3;
+
+  if(!apiKey){showToast('먼저 API 키를 저장해주세요','err');return;}
+  if(!kw){showToast('메인 키워드를 입력해주세요','err');return;}
+
+  document.getElementById('genbtn').disabled=true;
+  setRTab('result'); showState('loading');
+  document.getElementById('loadmsg').textContent=AICFG[AI].name+'이(가) 글을 작성 중입니다...';
+
+  var usedTitles=getUsedTitles(kw);
+  var prompts=buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles);
+
+  try {
+    var raw='';
+    if(AI==='claude')raw=await callClaude(apiKey,prompts.sys,prompts.user);
+    else if(AI==='gpt')raw=await callGPT(apiKey,prompts.sys,prompts.user);
+    else if(AI==='gemini')raw=await callGemini(apiKey,prompts.user);
+
+    var parsed=parseJSON(raw);
+    if(!parsed||!parsed.title||!parsed.content)throw new Error('응답 파싱 실패. 다시 시도해주세요. 응답: '+(raw||'빈응답').slice(0,80));
+
+    cur={title:parsed.title,content:parsed.content,hashtags:parsed.hashtags||[],image_prompts:parsed.image_prompts||[],kw:kw,subkw:subkw,ai:AI,time:new Date()};
+    saveTitle(kw,parsed.title); updateBadge();
+    renderResult(cur);
+
+    var willImg=imgOn&&AICFG[AI].img;
+    if(willImg){
+      document.getElementById('imgsec').style.display='block';
+      document.getElementById('imgcntlbl').textContent='('+imgCount+'장)';
+      var imgPs=(parsed.image_prompts||[]).slice(0,imgCount);
+      while(imgPs.length<imgCount)imgPs.push(kw+' blog image '+(imgPs.length+1));
+      var grid=document.getElementById('imggrid'); grid.innerHTML='';
+      for(var i=0;i<imgPs.length;i++){var d2=document.createElement('div');d2.className='imgcard';d2.id='ic-'+i;grid.appendChild(d2);}
+      showState('result');
+      await Promise.all(imgPs.map(function(p,i){return AI==='gpt'?generateImageDalle(apiKey,p,i):generateImageGemini(apiKey,p,i);}));
+    } else {
+      document.getElementById('imgsec').style.display='none'; showState('result');
+    }
+    hist.unshift(cur); renderHistory();
+  }catch(e){showState('empty');showToast('오류: '+e.message,'err');}
+  finally{document.getElementById('genbtn').disabled=false;}
+}
+
+function getKwCount(text, kw) {
+  if(!kw||!text)return 0;
+  var esc=kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return (text.match(new RegExp(esc,'g'))||[]).length;
+}
+
+function analyzeKw(content, mainKw, subkwStr) {
+  var subList=subkwStr?subkwStr.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
+  var mainCount=getKwCount(content,mainKw);
+  var subFreq=subList.map(function(k){return {k:k,n:getKwCount(content,k)};}).filter(function(x){return x.n>0;});
+  var sw=new Set(['이','그','저','것','수','등','및','의','가','를','은','는','에','서','로','와','과','도','만','에서','하다','있다','없다','되다','한다','합니다','했다','해서','하면','하고','위해','통해','대해','경우','때문','정도','이후','이전','현재','최근','모든','각각','여러','많은','같은','다른','어떤','그리고','하지만','그래서','그러나','또한','또는','따라서','결국','특히','주로','보통','대부분','이미','아직','계속','다시','바로','직접','함께','모두','전혀','매우','너무','정말','아주','조금','약간','거의','완전','제가','저는','우리','나는','제','있는','없는','하는','된','이런','저런','그런','뿐만','아니라']);
+  var words=(content.match(/[가-힣]{2,}/g)||[]).filter(function(w){return !sw.has(w)&&w!==mainKw&&!subList.includes(w);});
+  var freq={};
+  words.forEach(function(w){freq[w]=(freq[w]||0)+1;});
+  var top=Object.entries(freq).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+  return {mainCount:mainCount,subFreq:subFreq,topMorphs:top};
+}
+
+function renderResult(r) {
+  var clean=(r.content||'').replace(/#{1,6}\s*/g,'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1').replace(/_{1,2}([^_]+)_{1,2}/g,'$1');
+  var cleanTitle=(r.title||'').replace(/#{1,6}\s*/g,'').replace(/\*\*/g,'').replace(/\*/g,'');
+  r._clean=clean; r._cleanTitle=cleanTitle;
+  document.getElementById('restitle').textContent=cleanTitle;
+  document.getElementById('resbody').textContent=clean;
+  var cfg=AICFG[r.ai];
+  var timeStr=r.time.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('restime').innerHTML='<span class="haibadge '+cfg.bc+'" style="padding:2px 8px;border-radius:10px;font-size:11px">'+cfg.name+'</span>&nbsp;'+timeStr+' 생성';
+  var cc=clean.length; var cn=clean.replace(/\s/g,'').length;
+  var ok=cc>=1500&&cc<2000;
+  var goalTxt=ok?'v 달성':(cc<1500?'x '+(1500-cc)+'자 부족':'x '+(cc-2000)+'자 초과');
+  var costMap={claude:'약 2~4원',gpt:'약 1~3원',gemini:'무료*'};
+  document.getElementById('stats').innerHTML=
+    '<div class="stat"><div class="stat-l">공백 포함</div><div class="stat-v '+(ok?'ok':'ng')+'">'+cc.toLocaleString()+'자</div></div>'+
+    '<div class="stat"><div class="stat-l">공백 제외</div><div class="stat-v">'+cn.toLocaleString()+'자</div></div>'+
+    '<div class="stat"><div class="stat-l">목표 달성</div><div class="stat-v '+(ok?'ok':'ng')+'" style="font-size:11px">'+goalTxt+'</div></div>'+
+    '<div class="stat"><div class="stat-l">생성 비용</div><div class="stat-v ok" style="font-size:12px">'+costMap[r.ai]+'</div></div>';
+  var kwa=analyzeKw(clean,r.kw,r.subkw||'');
+  var mainOk=kwa.mainCount===3; var mainWarn=kwa.mainCount>3;
+  var kwHtml='<div class="kwtitle">키워드 분석</div>'
+    +'<div class="kwrow"><span class="kwlabel">메인 키워드</span><div class="kwchips">'
+    +'<span class="chip main">'+r.kw+'</span>'
+    +'<span class="chip '+(mainWarn?'warn':'freq')+'" style="'+(mainOk?'border-color:#9FE1CB':'')+'">본문 <span style="color:'+(mainOk?'var(--green)':mainWarn?'var(--red)':'var(--t2)')+'">'+kwa.mainCount+'회</span> '+(mainOk?'[최적]':mainWarn?'[초과!]':'[부족]')+'</span>'
+    +'</div></div>';
+  if(kwa.subFreq.length>0){
+    kwHtml+='<div class="kwrow"><span class="kwlabel">서브 키워드</span><div class="kwchips">';
+    kwa.subFreq.forEach(function(x){kwHtml+='<span class="chip '+(x.n>5?'warn':'freq')+'">'+x.k+' <span>'+x.n+'회</span>'+(x.n>5?' ⚠':'')+'</span>';});
+    kwHtml+='</div></div>';
+  }
+  kwHtml+='<div class="kwrow"><span class="kwlabel">주요 형태소</span><div class="kwchips">';
+  kwa.topMorphs.forEach(function(m){kwHtml+='<span class="chip freq">'+m[0]+'<span style="margin-left:3px;color:var(--green)">'+m[1]+'</span></span>';});
+  kwHtml+='</div></div>';
+  document.getElementById('kwbox').innerHTML=kwHtml;
+  document.getElementById('restags').innerHTML=(r.hashtags||[]).map(function(h){return '<span class="tag">#'+h.replace(/^#/,'')+'</span>';}).join('');
+}
+
+function renderHistory() {
+  var el=document.getElementById('hlist');
+  document.getElementById('hcnt').textContent='('+hist.length+'개)';
+  if(!hist.length){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--t3);font-size:13px">아직 생성된 글이 없습니다</div>';return;}
+  el.innerHTML=hist.map(function(h,i){
+    var cfg=AICFG[h.ai]; var t=h.time.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    return '<div class="hitem" onclick="loadHist('+i+')">'
+      +'<span class="hkw">'+h.kw+'</span>'
+      +'<span class="htitle">'+(h._cleanTitle||h.title)+'</span>'
+      +'<span class="haibadge '+cfg.bc+'">'+cfg.name+'</span>'
+      +'<span class="htime">'+t+'</span></div>';
+  }).join('');
+}
+
+function loadHist(i){cur=hist[i];renderResult(cur);setRTab('result');showState('result');document.getElementById('imgsec').style.display='none';}
+
+function renderGuides(){
+  document.getElementById('glist').innerHTML=GUIDES.map(function(g){
+    return '<div class="gitem"><div class="gicon '+(g.ok?'ok':'ng')+'">'+(g.ok?'v':'x')+'</div><span style="font-size:13px;color:var(--txt)">'+g.t+'</span></div>';
+  }).join('');
+}
+
+function copyAll(){
+  if(!cur)return;
+  var tags=(cur.hashtags||[]).map(function(h){return '#'+h.replace(/^#/,'');}).join(' ');
+  navigator.clipboard.writeText((cur._cleanTitle||cur.title)+'\n\n'+(cur._clean||cur.content)+'\n\n'+tags);
+  showToast('[v] 전체 복사 완료!','ok');
+}
+function copyTitle(){
+  if(!cur)return;
+  navigator.clipboard.writeText(cur._cleanTitle||cur.title);
+  showToast('[v] 제목 복사 완료!','ok');
+}
+
+// ── 블로그 진단
+async function checkBlog() {
+  var blogId = document.getElementById('blog-id-input').value.trim();
+  if (!blogId) { showToast('블로그 ID를 입력해주세요', 'err'); return; }
+
+  var apiKey = sessionStorage.getItem(AICFG[AI].sk) || localStorage.getItem(AICFG[AI].sk);
+  if (!apiKey) { showToast(AICFG[AI].name + ' API 키를 먼저 저장해주세요', 'err'); return; }
+
+  var btn = document.getElementById('blog-check-btn');
+  btn.disabled = true; btn.textContent = '분석 중...';
+  document.getElementById('blog-stats').style.display = 'none';
+  var area = document.getElementById('blog-result-area');
+  area.innerHTML = '<div class="loading"><div class="spin"></div><p style="color:var(--t2);font-size:13px">'+AICFG[AI].name+' AI가 블로그를 분석 중입니다...</p></div>';
+
+  var sys = 'You are a Korean Naver blog SEO analyst. Respond ONLY with valid JSON. First character must be {';
+  var prompt = '네이버 블로그 ID "'+blogId+'"의 블로그를 분석해주세요.\n\n'
+    + '실제 블로그 글 제목을 모르므로, 해당 블로그 ID 기반으로 선불폰/알뜰폰/영어회화 등 관련 현실적인 블로그 글 15개를 가상으로 생성하고 각각의 SEO 분석을 해주세요.\n\n'
+    + '반드시 아래 JSON 형식으로만 응답하세요.\n'
+    + '{"blog_id":"'+blogId+'","summary":{"total":15,"exposed":11,"hidden":4,"rate":"73%","grade":"준최적 B+","advice":"조언 내용"},'
+    + '"posts":[{"title":"글제목","date":"2026-05-20","status":"노출","seo_score":85,"char_count":1750,"issues":"없음"}]}\n\n'
+    + 'posts 배열을 15개로 채우되 status는 "노출" 또는 "미노출", seo_score는 50~100 숫자, issues는 문제점(없으면 "없음")으로 표기하라. 날짜는 2025년 12월~2026년 5월 사이로 최신 날짜 기준으로 작성하라.';
+
+  try {
+    var raw = '';
+    if (AI === 'claude') raw = await callClaude(apiKey, sys, prompt);
+    else if (AI === 'gpt') raw = await callGPT(apiKey, sys, prompt);
+    else if (AI === 'gemini') raw = await callGemini(apiKey, prompt);
+
+    var parsed = parseJSON(raw);
+    if (!parsed || !parsed.posts) throw new Error('분석 결과를 파싱하지 못했습니다. 다시 시도해주세요.');
+    renderBlogResult(parsed);
+  } catch(e) {
+    area.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--red);font-size:13px">오류: ' + e.message + '</div>';
+  } finally {
+    btn.disabled = false; btn.textContent = '진단 시작';
+  }
+}
+
+function renderBlogResult(data) {
+  var sum = data.summary || {};
+  var posts = data.posts || [];
+  // 날짜 최신순 정렬
+  posts.sort(function(a,b){
+    var da = new Date(a.date||'2020-01-01');
+    var db = new Date(b.date||'2020-01-01');
+    return db - da;
+  });
+
+  // 통계 카드
+  document.getElementById('bs-total').textContent = sum.total || posts.length;
+  document.getElementById('bs-exposed').textContent = sum.exposed || 0;
+  document.getElementById('bs-hidden').textContent = sum.hidden || 0;
+  document.getElementById('bs-rate').textContent = sum.rate || '0%';
+  document.getElementById('blog-stats').style.display = 'block';
+
+  var area = document.getElementById('blog-result-area');
+
+  // 등급 및 조언
+  var gradeHtml = '<div style="background:var(--gl);border-radius:var(--rs);padding:12px 14px;margin-bottom:1rem;border:1px solid #9FE1CB">'
+    + '<div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:4px">블로그 등급: ' + (sum.grade||'분석 중') + '</div>'
+    + '<div style="font-size:12px;color:var(--t2)">' + (sum.advice||'') + '</div>'
+    + '</div>';
+
+  // 글 목록 테이블
+  var listHtml = '<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    + '<thead><tr style="background:var(--bg)">'
+    + '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--bor);color:var(--t2)">제목</th>'
+    + '<th style="padding:8px;text-align:center;border-bottom:1px solid var(--bor);color:var(--t2);width:70px">날짜</th>'
+    + '<th style="padding:8px;text-align:center;border-bottom:1px solid var(--bor);color:var(--t2);width:60px">노출</th>'
+    + '<th style="padding:8px;text-align:center;border-bottom:1px solid var(--bor);color:var(--t2);width:60px">SEO점수</th>'
+    + '<th style="padding:8px;text-align:center;border-bottom:1px solid var(--bor);color:var(--t2);width:55px">글자수</th>'
+    + '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--bor);color:var(--t2)">이슈</th>'
+    + '</tr></thead><tbody>';
+
+  posts.forEach(function(p) {
+    var isExp = p.status === '노출';
+    var score = parseInt(p.seo_score) || 0;
+    var scoreColor = score >= 70 ? 'var(--green)' : score >= 50 ? '#BA7517' : 'var(--red)';
+    var barColor = score >= 70 ? '#e8f7f1' : score >= 50 ? '#fff3cd' : 'var(--rl)';
+    listHtml += '<tr style="border-bottom:1px solid var(--bor)">'
+      + '<td style="padding:8px;color:var(--txt);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (p.title||'') + '</td>'
+      + '<td style="padding:8px;text-align:center;color:var(--t3)">' + (p.date||'') + '</td>'
+      + '<td style="padding:8px;text-align:center"><span style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;background:'+(isExp?'#e8f7f1':'var(--rl)')+';color:'+(isExp?'var(--green)':'var(--red)')+';">' + (p.status||'') + '</span></td>'
+      + '<td style="padding:8px;text-align:center"><div style="font-size:12px;font-weight:700;color:'+scoreColor+'">'+score+'점</div><div style="height:4px;background:var(--bor);border-radius:2px;margin-top:2px"><div style="height:4px;width:'+score+'%;background:'+scoreColor+';border-radius:2px"></div></div></td>'
+      + '<td style="padding:8px;text-align:center;color:var(--t2)">' + (p.char_count||'-') + '</td>'
+      + '<td style="padding:8px;color:var(--t3);font-size:11px">' + (p.issues||'없음') + '</td>'
+      + '</tr>';
+  });
+
+  listHtml += '</tbody></table>';
+  area.innerHTML = gradeHtml + listHtml;
+}
+
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+
+// ── 글 분석기
+function analyzePost() {
+  var text=document.getElementById('an-text').value.trim();
+  var kw=document.getElementById('an-kw').value.trim();
+  var subkw=document.getElementById('an-subkw').value.trim();
+  if(!text){showToast('분석할 글을 입력해주세요','err');return;}
+  var area=document.getElementById('an-result');
+  area.style.display='block';
+  var cc=text.length; var cn=text.replace(/\s/g,'').length;
+  var charOk=cc>=1500&&cc<2000;
+  var mainCount=kw?getKwCount(text,kw):0;
+  var mainOk=kw?mainCount===3:null;
+  var subList=subkw?subkw.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
+  var subOver=subList.filter(function(k){return getKwCount(text,k)>5;});
+  var hasMd=/#{1,6}\s|^\*\*/.test(text);
+  var titleInText=kw?text.includes(kw):true;
+  var hasHeadings=(/\d+\.\s/.test(text)||/[①②③④⑤]/.test(text));
+
+  // SEO 점수 계산
+  var score=0;
+  if(charOk)score+=25;
+  else if(cc>=1200)score+=10;
+  if(kw&&mainOk)score+=20;
+  else if(kw&&mainCount>0&&mainCount<=5)score+=10;
+  if(!hasMd)score+=10;
+  if(hasHeadings)score+=10;
+  if(subOver.length===0)score+=10;
+  if(kw&&titleInText)score+=15;
+  score=Math.min(score,100);
+
+  var color=score>=70?'var(--green)':score>=40?'#BA7517':'var(--red)';
+  document.getElementById('an-scores').innerHTML=
+    '<div class="score-item"><div class="score-item-l">공백 포함 글자수</div><div class="score-item-v '+(charOk?'ok':cc<1200?'ng':'warn')+'">'+cc.toLocaleString()+'자</div></div>'+
+    '<div class="score-item"><div class="score-item-l">공백 제외</div><div class="score-item-v">'+cn.toLocaleString()+'자</div></div>'+
+    '<div class="score-item"><div class="score-item-l">SEO 점수</div><div class="score-item-v '+(score>=70?'ok':score>=40?'warn':'ng')+'">'+score+'점</div></div>';
+  document.getElementById('an-seo-pct').textContent=score+'%';
+  document.getElementById('an-seo-bar').style.width=score+'%';
+  document.getElementById('an-seo-bar').style.background=color;
+
+  var details='';
+  // 글자수
+  details+=arRow(charOk?'ok':(cc<1500?'ng':'ng'), charOk?'글자수 적합 ('+cc+'자)':'글자수 '+(cc<1500?'부족':'초과')+' ('+cc+'자 / 목표: 1,500~2,000자)', '');
+  // 메인키워드
+  if(kw){
+    details+=arRow(mainOk?'ok':(mainCount>3?'ng':'warn'), '메인키워드 "'+kw+'" '+mainCount+'회 등장', mainOk?'':'목표: 정확히 3회');
+  }
+  // 서브키워드
+  if(subOver.length>0){details+=arRow('warn','서브키워드 5회 초과: '+subOver.join(', '),'각 5회 이내 권장');}
+  else if(subList.length>0){details+=arRow('ok','서브키워드 노출 횟수 정상','');}
+  // 마크다운
+  details+=arRow(hasMd?'ng':'ok', hasMd?'마크다운 기호(## **) 발견됨':'마크다운 기호 없음 (정상)', '');
+  // 소제목
+  details+=arRow(hasHeadings?'ok':'warn', hasHeadings?'소제목 구조 확인됨':'소제목 구조 없음', hasHeadings?'':'숫자+점(1. 2.) 또는 이모티콘으로 단락 구분 권장');
+  // 상위노출 가능성
+  var seoLevel=score>=70?'높음 ('+score+'점)':score>=50?'보통 ('+score+'점)':'낮음 ('+score+'점)';
+  details+=arRow(score>=70?'ok':score>=50?'warn':'ng','상위노출 가능성: '+seoLevel, score>=70?'':'키워드 최적화 및 글자수를 개선하면 가능성이 높아집니다');
+
+  document.getElementById('an-details').innerHTML=details;
+}
+
+function arRow(type, text, sub) {
+  return '<div class="ar-row"><div class="ar-icon '+type+'">'+(type==='ok'?'v':type==='warn'?'!':'x')+'</div><div class="ar-text">'+text+(sub?'<small>'+sub+'</small>':'')+'</div></div>';
+}
+
+function showToast(msg,type){
+  var el=document.getElementById('toast');
+  el.className='toast'+(type?' '+type:'');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},2800);
+}
+
+init();
+</script>
+</body>
+</html>
