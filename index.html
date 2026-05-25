@@ -1,0 +1,2572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>네이버 블로그 AI 글쓰기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=86e83ad78e7c0c9d926f99da49a6c332&libraries=services"></script>
+<style>
+:root{--green:#1B8F5E;--gl:#e8f7f1;--gd:#136b46;--red:#E24B4A;--rl:#fdeaea;--bg:#f6f8f7;--sur:#fff;--bor:#e2e8e5;--txt:#1a2520;--t2:#4a6058;--t3:#8aaa9e;--r:12px;--rs:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.6;min-height:100vh}
+header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-size:16px;font-weight:700;color:var(--green)}
+.logo span{color:var(--txt);font-weight:500}
+.hright{display:flex;align-items:center;gap:12px}
+.astat{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3)}
+.dot{width:7px;height:7px;border-radius:50%;background:#ccc}.dot.ok{background:var(--green)}
+.gbtn{width:32px;height:32px;border-radius:50%;border:1px solid var(--bor);background:var(--sur);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+.gbtn:hover{border-color:var(--green)}
+.maintabs{display:flex;border-bottom:2px solid var(--bor);padding:0 1rem;background:var(--sur)}
+.maintab{padding:12px 18px;font-size:13px;font-weight:500;cursor:pointer;color:var(--t3);border-bottom:2px solid transparent;margin-bottom:-2px}
+.maintab.on{color:var(--green);border-bottom-color:var(--green)}
+.mainpanel{display:none;max-width:1080px;margin:0 auto;padding:1.5rem 1rem}
+.mainpanel.on{display:block}
+.wrap{display:grid;grid-template-columns:340px 1fr;gap:1.25rem;align-items:start}
+@media(max-width:760px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.04)}
+.ctitle{font-size:13px;font-weight:700;color:var(--t2);letter-spacing:.04em;margin-bottom:1rem}
+.field{margin-bottom:.875rem}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:8px 11px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);transition:border-color .15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--green)}
+.field textarea{resize:vertical;min-height:68px;line-height:1.6}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aitabs{display:flex;gap:4px;margin-bottom:.875rem;background:#f0f4f2;border-radius:var(--rs);padding:4px}
+.aitab{flex:1;padding:7px 4px;text-align:center;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;color:var(--t3);border:none;background:none;font-family:inherit}
+.aitab.on{background:var(--sur);color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.aitab small{display:block;font-size:10px;font-weight:400;margin-top:1px}
+.cbadge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;background:#fff8e8;color:#8a6a00;border:1px solid #e8c96a;margin-left:6px}
+.apirow{display:flex;gap:6px;margin-bottom:4px}
+.apirow input{flex:1;padding:8px 11px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:12px;color:var(--txt);background:var(--sur)}
+.apirow input:focus{outline:none;border-color:var(--green)}
+.savebtn{padding:8px 14px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-family:inherit;cursor:pointer}
+.apihint{font-size:11px;color:var(--t3);margin-top:4px;line-height:1.5}
+.apihint a{color:var(--green)}
+.autosave-row{display:flex;align-items:center;gap:6px;margin-top:6px}
+.autosave-row input[type=checkbox]{width:14px;height:14px;accent-color:var(--green);cursor:pointer}
+.autosave-row label{font-size:11px;color:var(--t3);cursor:pointer}
+.dbox{background:#f0f4f2;border-radius:var(--rs);padding:10px 12px;margin-bottom:.875rem;border:1px solid var(--bor)}
+.dbox-title{font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px}
+.drow{display:flex;gap:6px;align-items:center}
+.drow input{flex:1;padding:7px 10px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur)}
+.drow input:focus{outline:none;border-color:var(--green)}
+.dapply{padding:7px 12px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-family:inherit;cursor:pointer}
+.dprev{font-size:11px;color:var(--t3);margin-top:5px}
+.dprev span{color:var(--green);font-weight:700}
+.tonegrp{display:flex;flex-wrap:wrap;gap:6px}
+.tonebtn{padding:5px 12px;border-radius:20px;border:1px solid var(--bor);font-size:12px;font-family:inherit;cursor:pointer;background:var(--sur);color:var(--t2)}
+.tonebtn.on{background:var(--green);color:#fff;border-color:var(--green)}
+/* 톤 툴팁 */
+.tonewrap{position:relative;display:inline-block}
+.tonetooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1a2520;color:#fff;font-size:11px;line-height:1.6;padding:10px 12px;border-radius:var(--rs);width:200px;pointer-events:none;opacity:0;transition:opacity .2s;z-index:50;white-space:normal;text-align:left}
+.tonetooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a2520}
+.tonewrap:hover .tonetooltip{opacity:1}
+.tonetooltip b{color:#9FE1CB;display:block;margin-bottom:4px}
+.tonetooltip em{color:#e8c96a;font-style:normal}
+/* 체험단 입력 */
+.ref-box{background:#f0f4f2;border-radius:var(--rs);padding:10px 12px;margin-bottom:8px;border:1px solid var(--bor)}
+.ref-box-title{font-size:11px;font-weight:700;color:var(--t2);margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.ref-textarea{width:100%;padding:8px 10px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:12px;color:var(--txt);background:var(--sur);resize:vertical;min-height:80px;line-height:1.6;outline:none}
+.ref-textarea:focus{border-color:var(--green)}
+.genbtn{width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:4px}
+.genbtn:hover{background:var(--gd)}
+.genbtn:disabled{opacity:.5;cursor:not-allowed}
+.rtabs{display:flex;gap:2px;margin-bottom:1rem;background:var(--sur);border:1px solid var(--bor);border-radius:var(--rs);padding:3px}
+.rtab{flex:1;padding:7px;text-align:center;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;color:var(--t3)}
+.rtab.on{background:var(--green);color:#fff}
+.rpanel{display:none}.rpanel.on{display:block}
+.empty{text-align:center;padding:3rem 1rem;color:var(--t3)}
+.loading{text-align:center;padding:2.5rem 1rem}
+.spin{width:36px;height:36px;border:3px solid var(--bor);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto .75rem}
+@keyframes sp{to{transform:rotate(360deg)}}
+.resmeta{display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:6px}
+.restime{font-size:11px;color:var(--t3)}
+.copys{display:flex;gap:6px}
+.cpbtn{padding:5px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-size:12px;font-family:inherit;cursor:pointer;background:var(--sur);color:var(--t2)}
+.cpbtn:hover{border-color:var(--green);color:var(--green)}
+.titlebox{background:var(--gl);border-radius:var(--rs);padding:10px 14px;margin-bottom:.875rem}
+.titlelbl{font-size:11px;color:var(--green);font-weight:700;margin-bottom:3px}
+.titletxt{font-size:15px;font-weight:700;color:var(--txt)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.875rem}
+.stat{background:var(--bg);border-radius:var(--rs);padding:8px;text-align:center}
+.stat-l{font-size:10px;color:var(--t3);margin-bottom:2px}
+.stat-v{font-size:14px;font-weight:700;color:var(--txt)}
+.stat-v.ok{color:var(--green)}.stat-v.ng{color:var(--red)}
+.kwbox{background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin-bottom:.875rem;border:1px solid var(--bor)}
+.kwtitle{font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px}
+.kwrow{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.kwlabel{font-size:11px;color:var(--t3);width:70px;flex-shrink:0}
+.kwchips{display:flex;flex-wrap:wrap;gap:4px;flex:1}
+.chip{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.chip.main{background:#e8f7f1;color:#136b46;border:1px solid #9FE1CB}
+.chip.freq{background:var(--sur);color:var(--t2);border:1px solid var(--bor)}
+.chip.warn{background:var(--rl);color:#a32d2d;border:1px solid #F09595}
+.resbody{font-size:13px;color:var(--txt);line-height:2;white-space:pre-wrap;max-height:500px;overflow-y:auto;border:1px solid var(--bor);border-radius:var(--rs);padding:14px}
+.restags{display:flex;flex-wrap:wrap;gap:6px;margin-top:.875rem}
+.tag{padding:4px 12px;background:var(--bg);border:1px solid var(--bor);border-radius:20px;font-size:12px;color:var(--t2)}
+.hitem{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bor);cursor:pointer}
+.hitem:hover .htitle{color:var(--green)}
+.hkw{background:var(--gl);color:var(--green);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.htitle{font-size:13px;color:var(--txt);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.htime{font-size:11px;color:var(--t3);flex-shrink:0}
+.haibadge{font-size:10px;padding:1px 6px;border-radius:10px;flex-shrink:0}
+.gitem{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--bor)}
+.gicon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
+.gicon.ok{background:var(--gl);color:var(--green)}.gicon.ng{background:var(--rl);color:var(--red)}
+.blogcheck-wrap{max-width:800px;margin:0 auto}
+.blog-input-row{display:flex;gap:8px;margin-bottom:1rem}
+.blog-input-row input{flex:1;padding:9px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur)}
+.blog-input-row input:focus{outline:none;border-color:var(--green)}
+.blog-input-row button{padding:9px 18px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}
+.blog-input-row button:disabled{opacity:.5;cursor:not-allowed}
+.status-badge{padding:2px 10px;border-radius:20px;font-size:11px;font-weight:500;flex-shrink:0;text-align:center}
+.sb-exposed{background:#e8f7f1;color:var(--green)}
+.sb-hidden{background:var(--rl);color:var(--red)}
+.analyzer-wrap{max-width:800px;margin:0 auto}
+.analyzer-input{width:100%;height:180px;padding:12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);resize:vertical;line-height:1.7;margin-bottom:.875rem}
+.analyzer-input:focus{outline:none;border-color:var(--green)}
+.analyzer-btn{padding:8px 20px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-family:inherit;cursor:pointer}
+.score-box{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
+.score-item{background:var(--bg);border-radius:var(--rs);padding:12px;text-align:center;border:1px solid var(--bor)}
+.score-item-l{font-size:11px;color:var(--t3);margin-bottom:4px}
+.score-item-v{font-size:20px;font-weight:700}
+.score-item-v.ok{color:var(--green)}.score-item-v.warn{color:#BA7517}.score-item-v.ng{color:var(--red)}
+.seo-score-label{display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-bottom:4px}
+.seo-bar-track{height:12px;background:var(--bor);border-radius:6px;overflow:hidden;margin-bottom:1rem}
+.seo-bar-fill{height:100%;border-radius:6px;transition:width .4s}
+.analysis-result{background:var(--bg);border-radius:var(--rs);padding:14px;border:1px solid var(--bor)}
+.ar-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--bor)}
+.ar-row:last-child{border-bottom:none}
+.ar-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
+.ar-icon.ok{background:var(--gl);color:var(--green)}.ar-icon.ng{background:var(--rl);color:var(--red)}.ar-icon.warn{background:#fff3cd;color:#856404}
+.ar-text{font-size:13px;color:var(--txt);flex:1}
+.ar-text small{color:var(--t3);font-size:11px;display:block;margin-top:2px}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:10px 18px;border-radius:var(--rs);font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;z-index:999;background:var(--txt);color:#fff}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{background:var(--green)}.toast.err{background:var(--red)}
+.bc{background:#e8f7f1;color:#136b46}
+.bg2{background:#e8f4ff;color:#4a30a0}
+.bm{background:#fff3e0;color:#e65100}
+.kw-suggest-box{background:#f0f9f5;border:1px solid #9FE1CB;border-radius:var(--rs);padding:10px 12px;margin-top:6px;display:none}
+.kw-suggest-title{font-size:11px;font-weight:700;color:var(--green);margin-bottom:7px}
+.kw-suggest-chips{display:flex;flex-wrap:wrap;gap:5px}
+.kw-chip{padding:4px 10px;background:#fff;border:1px solid #9FE1CB;border-radius:20px;font-size:11px;color:#136b46;cursor:pointer;transition:all .15s}
+.kw-chip:hover{background:var(--green);color:#fff;border-color:var(--green)}
+.kw-chip.added{background:var(--green);color:#fff;border-color:var(--green)}
+.kw-suggest-loading{font-size:11px;color:var(--t3)}
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center}
+.mbg.open{display:flex}
+.modal{background:var(--sur);border-radius:var(--r);padding:1.5rem;max-width:540px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+.mhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.mtitle{font-size:16px;font-weight:700}
+.mclose{width:28px;height:28px;border-radius:50%;border:1px solid var(--bor);background:none;cursor:pointer;font-size:16px}
+.msec{margin-bottom:1.25rem}
+.msectitle{font-size:13px;font-weight:700;color:var(--green);margin-bottom:.75rem;padding-bottom:6px;border-bottom:1px solid var(--bor)}
+.mstep{display:flex;gap:10px;margin-bottom:.75rem}
+.mnum{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.mbd{flex:1;font-size:13px}
+.mbd b{font-weight:700}
+.mbd small{font-size:12px;color:var(--t2);line-height:1.6;display:block;margin-top:2px}
+.mbd small a{color:var(--green)}
+/* 센터 카드 hover */
+.cr-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s}
+.cr-card:hover{border-color:var(--green)}
+.cr-card.active{background:var(--gl);border-color:var(--green)}
+
+/* 접속 코드 화면 */
+#access-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem}
+.access-box{background:var(--sur);border-radius:var(--r);padding:2rem 1.5rem;max-width:360px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.12);text-align:center}
+.access-logo{font-size:28px;font-weight:700;color:var(--green);margin-bottom:6px}
+.access-sub{font-size:12px;color:var(--t3);margin-bottom:1.5rem}
+.access-input{width:100%;padding:12px 14px;border:2px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:15px;text-align:center;letter-spacing:3px;color:var(--txt);outline:none;margin-bottom:10px;transition:border-color .2s}
+.access-input:focus{border-color:var(--green)}
+.access-btn{width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:8px}
+.access-btn:hover{background:var(--gd)}
+.access-err{font-size:12px;color:var(--red);min-height:18px;margin-bottom:4px}
+.access-hint{font-size:11px;color:var(--t3)}
+/* 편집 영역 */
+.edit-title{width:100%;padding:8px 11px;border:1px solid var(--green);border-radius:var(--rs);font-family:inherit;font-size:15px;font-weight:700;color:var(--txt);background:#fff;outline:none;margin-bottom:4px}
+.edit-body{width:100%;padding:14px;border:1px solid var(--green);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:#fff;outline:none;line-height:2;resize:vertical;min-height:300px}
+.edit-btn{padding:6px 14px;border-radius:var(--rs);font-size:12px;font-family:inherit;cursor:pointer;border:1px solid var(--bor)}
+.edit-btn.on{background:var(--green);color:#fff;border-color:var(--green)}
+.edit-btn.off{background:var(--sur);color:var(--t2)}
+/* ══ 모바일 최적화 ══ */
+/* 헤더 */
+@media(max-width:600px){
+  .btn-text-full{display:none}
+  .btn-text-short{display:inline!important}
+  header{padding:0 .75rem;height:50px}
+  .logo{font-size:14px}
+  .astat span{display:none}
+  /* 메인 탭 - 스크롤 가능하게 */
+  .maintabs{padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:nowrap;white-space:nowrap}
+  .maintabs::-webkit-scrollbar{display:none}
+  .maintab{padding:10px 14px;font-size:12px;flex-shrink:0}
+  /* 외부링크 버튼 - 짧게 */
+  .maintabs a{padding:10px 12px;font-size:11px;flex-shrink:0}
+  .maintabs a span{display:none}
+  /* 메인 패널 패딩 줄이기 */
+  .mainpanel{padding:0.75rem 0.625rem}
+  /* 글쓰기 wrap - 1컬럼 */
+  .wrap{grid-template-columns:1fr;gap:.75rem}
+  /* 카드 패딩 */
+  .card{padding:.875rem}
+  /* frow - 1컬럼 */
+  .frow{grid-template-columns:1fr}
+  /* 버튼 크게 */
+  .genbtn{padding:14px;font-size:15px}
+  /* 결과 본문 높이 */
+  .resbody{max-height:400px;font-size:12px;line-height:1.9}
+  /* 통계 */
+  .stats{gap:6px}
+  .stat{padding:6px}
+  .stat-v{font-size:13px}
+  /* 히스토리 */
+  .hitem{flex-wrap:wrap;gap:4px}
+  .htitle{white-space:normal;font-size:12px}
+  /* 복사 버튼 */
+  .cpbtn{padding:7px 10px;font-size:12px}
+  /* 토스트 */
+  .toast{bottom:1rem;right:.75rem;left:.75rem;text-align:center}
+  /* 분석기 */
+  .analyzer-input{height:140px;font-size:12px}
+  .score-box{grid-template-columns:repeat(3,1fr);gap:6px}
+  .score-item{padding:8px 4px}
+  .score-item-v{font-size:16px}
+  /* 센터 목록 - 1컬럼 */
+  #cr-list{grid-template-columns:1fr!important}
+  /* 센터 탭 */
+  #cr-tabs{gap:4px}
+  #cr-tabs button{padding:5px 10px!important;font-size:11px!important}
+  /* 연관키워드 */
+  .kw-chip{padding:6px 10px;font-size:12px}
+  /* 글 톤 버튼 */
+  .tonebtn{padding:7px 12px;font-size:12px}
+  /* 모달 */
+  .modal{padding:1rem;width:95%}
+}
+
+/* 태블릿 */
+@media(max-width:900px) and (min-width:601px){
+  .wrap{grid-template-columns:1fr}
+  .maintabs a{padding:10px 14px;font-size:12px}
+  #cr-list{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))!important}
+}
+
+/* 터치 친화적 - 탭 등 최소 높이 */
+@media(hover:none){
+  .maintab,.rtab,.tonebtn,.cpbtn{min-height:44px;display:flex;align-items:center;justify-content:center}
+  .rtab{padding:10px}
+  .genbtn{min-height:52px}
+  .savebtn{min-height:44px;padding:10px 16px}
+  .dapply{min-height:44px;padding:10px 14px}
+  .field input,.field select,.field textarea{font-size:16px!important} /* iOS 줌 방지 */
+}
+</style>
+
+</head>
+<body>
+<!-- 접속 코드 화면 -->
+<div id="access-screen">
+  <div class="access-box">
+    <div class="access-logo">✦ 앤텔레콤 블로그툴</div>
+    <div class="access-sub">접속 코드를 입력해주세요</div>
+    <input type="password" class="access-input" id="access-input" maxlength="20"
+      placeholder="● ● ● ● ● ●"
+      onkeydown="if(event.key==='Enter')checkAccess()"/>
+    <div class="access-err" id="access-err"></div>
+    <button class="access-btn" onclick="checkAccess()">입장하기</button>
+    <div class="access-hint">코드가 없으시면 관리자에게 문의하세요</div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">✦ <span>네이버 블로그</span> AI 글쓰기</div>
+  <div class="hright">
+    <div id="badge" style="font-size:11px;color:var(--t3);display:none">📝 <span id="badge-n">0</span>개</div>
+    <div class="astat"><div class="dot" id="dot"></div><span id="alabel">API 키 미설정</span></div>
+    <button class="gbtn" onclick="openModal()" title="설정">⚙</button>
+    <button class="gbtn" onclick="doLogout()" title="로그아웃" style="font-size:13px">🚪</button>
+  </div>
+</header>
+
+<!-- 메인 탭 -->
+<div class="maintabs" id="maintabs-bar">
+  <div class="maintab on" id="mt-write" data-tab="write">✏ 글쓰기</div>
+  <div class="maintab" id="mt-analyze" data-tab="analyze">📊 글 분석기</div>
+  <div class="maintab" id="mt-center" data-tab="center">📍 센터 찾기</div>
+  <div class="maintab" id="mt-cafe" data-tab="cafe">☕ 카페자동화</div>
+  <a href="https://www.nvoimp.com/Member/Login.asp" target="_blank" rel="noopener"
+    style="display:flex;align-items:center;gap:4px;padding:12px 14px;font-size:12px;font-weight:500;color:#fff;background:#2a7ab5;text-decoration:none;margin-left:auto;transition:background .15s;flex-shrink:0;white-space:nowrap"
+    onmouseover="this.style.background='#1e5a87'" onmouseout="this.style.background='#2a7ab5'">
+    📋 <span class="btn-text-full">플래너 관리</span><span class="btn-text-short" style="display:none">플래너</span> ↗
+  </a>
+  <a href="https://npfa.n-telecom.co.kr" target="_blank" rel="noopener"
+    style="display:flex;align-items:center;gap:4px;padding:12px 14px;font-size:12px;font-weight:500;color:#fff;background:var(--green);text-decoration:none;transition:background .15s;flex-shrink:0;white-space:nowrap"
+    onmouseover="this.style.background='var(--gd)'" onmouseout="this.style.background='var(--green)'">
+    🏢 <span class="btn-text-full">앤플랫폼 관리자</span><span class="btn-text-short" style="display:none">앤플랫폼</span> ↗
+  </a>
+</div>
+
+<!-- 모달 -->
+<div class="mbg" id="mbg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="mhd"><div class="mtitle">⚙ 설정 및 도움말</div><button class="mclose" onclick="closeModal()">✕</button></div>
+    <div class="msec">
+      <div class="msectitle">🤖 AI별 API 키 발급 방법</div>
+      <div class="mstep"><div class="mnum">1</div><div class="mbd"><b>Claude (Anthropic)</b><small>① <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys → Create Key<br>② sk-ant-... 복사 후 저장</small></div></div>
+
+    </div>
+    <div class="msec">
+      <div class="msectitle">📌 목표달성 기준</div>
+      <div style="font-size:12px;color:var(--t2);line-height:2">
+        ✓ 공백 포함 <b>1,500자 이상 2,000자 미만</b><br>
+        ✓ 메인키워드 제목에 <b>그대로 포함</b> (SEO 필수)<br>
+        ✓ 메인키워드 본문 <b>정확히 3회</b><br>
+        ✓ 서브키워드 각 <b>5회 이내</b><br>
+        ✓ 마크다운(## **) 없음
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ① 글쓰기 패널 -->
+<div class="mainpanel on" id="mp-write">
+<div class="wrap">
+  <div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="ctitle">⚙ AI 및 API 설정</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:.875rem;background:#f0f4f2;border-radius:var(--rs);padding:10px 14px">
+        <span style="font-size:18px">🤖</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--txt)">Claude <small style="font-weight:400;color:var(--t3)">by Anthropic</small></div>
+        <div style="font-size:11px;color:var(--t3);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span>생성 비용: <span class="cbadge">약 10~20원/회</span></span>
+          <span id="usage-badge" style="font-size:11px;color:var(--t2);background:#f0f4f2;padding:2px 8px;border-radius:20px;border:1px solid var(--bor)">오늘 0회 · 약 0원</span>
+          <a href="https://console.anthropic.com/settings/billing" target="_blank" rel="noopener"
+            style="font-size:11px;color:var(--green);text-decoration:none;background:var(--gl);padding:2px 8px;border-radius:20px;border:1px solid #9FE1CB;white-space:nowrap">💳 잔액 확인 →</a>
+        </div></div>
+      </div>
+      <div class="field">
+        <label id="keylabel">Anthropic API Key</label>
+        <div class="apirow"><input type="password" id="apikey" placeholder="sk-ant-..."/><button class="savebtn" id="savebtn" onclick="saveKey()">저장</button></div>
+        <div class="apihint" id="apihint">키는 브라우저에만 저장됩니다. <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>에서 발급</div>
+        <div class="autosave-row"><input type="checkbox" id="autosave"/><label for="autosave">API 키 자동저장 (다음 접속에도 유지)</label></div>
+      </div>
+      <div class="dbox">
+        <div class="dbox-title">🏷 매출자코드 (선불폰 전용)</div>
+        <div class="drow"><input type="text" id="dcode" placeholder="예: 2744371" maxlength="20"/><button class="dapply" id="dapply-btn" onclick="applyDealer()">적용</button></div>
+        <div class="dprev" id="dprev">미입력</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">✏ 글 설정</div>
+      <div class="frow field">
+        <div class="field" style="margin-bottom:0"><label>카테고리</label>
+          <select id="cat" onchange="onCatChange()">
+            <option value="phone">선불폰/알뜰폰</option>
+            <option value="english">영어회화/학원</option>
+            <option value="food">음식/맛집</option>
+            <option value="product">제품 리뷰</option>
+            <option value="travel">여행/카페</option>
+            <option value="custom">직접입력</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>전국지역 (선택)
+            <span style="font-size:10px;font-weight:400;color:var(--t3)">▾ 선택 시 메인키워드 자동입력</span>
+          </label>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:5px;background:#f0f4f2;padding:6px 10px;border-radius:var(--rs);line-height:1.6">
+            📍 지역 선택 → <b style="color:var(--green)">선불폰</b>: 지역+선불폰 자동입력 &nbsp;|&nbsp; <b style="color:#2a7ab5">영어회화</b>: 지역+영어 키워드 랜덤입력
+          </div>
+          <select id="region-select" onchange="onRegionSelect()" style="font-size:13px">
+            <option value="">-- 지역/번화가 선택 --</option>
+            <optgroup label="서울">
+              <option value="강남">강남역</option>
+              <option value="홍대">홍대</option>
+              <option value="신촌">신촌</option>
+              <option value="건대입구">건대입구</option>
+              <option value="왕십리">왕십리</option>
+              <option value="노원">노원</option>
+              <option value="신림">신림</option>
+              <option value="사당">사당</option>
+              <option value="잠실">잠실</option>
+              <option value="여의도">여의도</option>
+              <option value="마포">마포</option>
+              <option value="영등포">영등포</option>
+              <option value="구로디지털단지">구로디지털단지</option>
+              <option value="가산디지털단지">가산디지털단지</option>
+              <option value="이태원">이태원</option>
+              <option value="종로">종로</option>
+              <option value="동대문">동대문</option>
+              <option value="성수">성수</option>
+              <option value="상봉">상봉</option>
+            </optgroup>
+            <optgroup label="경기">
+              <option value="수원">수원</option>
+              <option value="수원역">수원역</option>
+              <option value="수원 인계동">수원 인계동</option>
+              <option value="성남">성남</option>
+              <option value="성남 모란">성남 모란</option>
+              <option value="성남 판교">성남 판교</option>
+              <option value="부천">부천</option>
+              <option value="부천역">부천역</option>
+              <option value="안양">안양</option>
+              <option value="안양 범계">안양 범계</option>
+              <option value="안산">안산</option>
+              <option value="안산 고잔동">안산 고잔동</option>
+              <option value="평택">평택</option>
+              <option value="평택역">평택역</option>
+              <option value="의정부">의정부</option>
+              <option value="의정부역">의정부역</option>
+              <option value="파주">파주</option>
+              <option value="파주 금촌">파주 금촌</option>
+              <option value="고양">고양</option>
+              <option value="고양 일산">고양 일산</option>
+              <option value="고양 화정">고양 화정</option>
+              <option value="용인">용인</option>
+              <option value="용인 수지">용인 수지</option>
+              <option value="용인 기흥">용인 기흥</option>
+              <option value="남양주">남양주</option>
+              <option value="남양주 별내">남양주 별내</option>
+              <option value="구리">구리</option>
+              <option value="구리역">구리역</option>
+              <option value="김포">김포</option>
+              <option value="김포 풍무">김포 풍무</option>
+              <option value="오산">오산</option>
+              <option value="오산역">오산역</option>
+              <option value="하남">하남</option>
+              <option value="하남 미사">하남 미사</option>
+              <option value="화성">화성</option>
+              <option value="화성 동탄">화성 동탄</option>
+              <option value="시흥">시흥</option>
+              <option value="시흥 정왕">시흥 정왕</option>
+              <option value="광명">광명</option>
+              <option value="가평">가평</option>
+              <option value="과천">과천</option>
+              <option value="군포">군포</option>
+              <option value="동두천">동두천</option>
+              <option value="양주">양주</option>
+              <option value="양평">양평</option>
+              <option value="여주">여주</option>
+              <option value="연천">연천</option>
+              <option value="안성">안성</option>
+              <option value="의왕">의왕</option>
+              <option value="이천">이천</option>
+              <option value="포천">포천</option>
+            </optgroup>
+            <optgroup label="인천">
+              <option value="인천 부평">인천 부평역</option>
+              <option value="인천 구월동">인천 구월동</option>
+              <option value="인천 송도">인천 송도</option>
+              <option value="인천 주안">인천 주안</option>
+              <option value="인천 계산동">인천 계산동</option>
+              <option value="인천 작전동">인천 작전동</option>
+              <option value="강화">강화</option>
+            </optgroup>
+            <optgroup label="강원 주요 도시">
+              <option value="춘천">춘천</option>
+              <option value="춘천 명동">춘천 명동</option>
+              <option value="원주">원주</option>
+              <option value="원주 혁신도시">원주 혁신도시</option>
+              <option value="강릉">강릉</option>
+              <option value="강릉 교동">강릉 교동</option>
+              <option value="동해">동해</option>
+              <option value="속초">속초</option>
+              <option value="삼척">삼척</option>
+              <option value="태백">태백</option>
+              <option value="홍천">홍천</option>
+              <option value="횡성">횡성</option>
+              <option value="영월">영월</option>
+              <option value="평창">평창</option>
+              <option value="정선">정선</option>
+              <option value="철원">철원</option>
+              <option value="화천">화천</option>
+              <option value="양구">양구</option>
+              <option value="인제">인제</option>
+              <option value="고성">고성</option>
+              <option value="양양">양양</option>
+            </optgroup>
+            <optgroup label="대전">
+              <option value="대전 둔산동">대전 둔산동</option>
+              <option value="대전 은행동">대전 은행동</option>
+              <option value="대전 유성온천">대전 유성온천</option>
+              <option value="대전 노은동">대전 노은동</option>
+              <option value="대전역">대전역</option>
+            </optgroup>
+            <optgroup label="세종">
+              <option value="세종 도담동">세종 도담동</option>
+              <option value="세종 어진동">세종 어진동</option>
+            </optgroup>
+            <optgroup label="충남">
+              <option value="천안">천안</option>
+              <option value="천안 신부동">천안 신부동</option>
+              <option value="천안 불당동">천안 불당동</option>
+              <option value="아산">아산</option>
+              <option value="아산 온천동">아산 온천동</option>
+              <option value="당진">당진</option>
+              <option value="서산">서산</option>
+              <option value="공주">공주</option>
+              <option value="보령">보령</option>
+              <option value="논산">논산</option>
+              <option value="계룡">계룡</option>
+              <option value="예산">예산</option>
+              <option value="홍성">홍성</option>
+              <option value="청양">청양</option>
+              <option value="태안">태안</option>
+              <option value="서천">서천</option>
+              <option value="부여">부여</option>
+              <option value="금산">금산</option>
+            </optgroup>
+            <optgroup label="충북">
+              <option value="청주">청주</option>
+              <option value="청주 성안길">청주 성안길</option>
+              <option value="청주 복대동">청주 복대동</option>
+              <option value="청주 율량동">청주 율량동</option>
+              <option value="충주">충주</option>
+              <option value="충주 성내동">충주 성내동</option>
+              <option value="제천">제천</option>
+              <option value="진천">진천</option>
+              <option value="음성">음성</option>
+              <option value="괴산">괴산</option>
+              <option value="단양">단양</option>
+              <option value="보은">보은</option>
+              <option value="영동">영동</option>
+              <option value="옥천">옥천</option>
+              <option value="증평">증평</option>
+            </optgroup>
+            <optgroup label="광주">
+              <option value="광주 충장로">광주 충장로</option>
+              <option value="광주 상무지구">광주 상무지구</option>
+              <option value="광주 첨단지구">광주 첨단지구</option>
+              <option value="광주 수완지구">광주 수완지구</option>
+              <option value="광주 봉선동">광주 봉선동</option>
+              <option value="광주 풍암동">광주 풍암동</option>
+            </optgroup>
+            <optgroup label="전남">
+              <option value="목포">목포</option>
+              <option value="목포 하당">목포 하당</option>
+              <option value="순천">순천</option>
+              <option value="순천 조례동">순천 조례동</option>
+              <option value="여수">여수</option>
+              <option value="나주">나주</option>
+              <option value="광양">광양</option>
+              <option value="담양">담양</option>
+              <option value="강진">강진</option>
+              <option value="고흥">고흥</option>
+              <option value="곡성">곡성</option>
+              <option value="구례">구례</option>
+              <option value="무안">무안</option>
+              <option value="보성">보성</option>
+              <option value="신안">신안</option>
+              <option value="영광">영광</option>
+              <option value="영암">영암</option>
+              <option value="완도">완도</option>
+              <option value="장성">장성</option>
+              <option value="장흥">장흥</option>
+              <option value="진도">진도</option>
+              <option value="함평">함평</option>
+              <option value="해남">해남</option>
+              <option value="화순">화순</option>
+            </optgroup>
+            <optgroup label="전북">
+              <option value="전주">전주</option>
+              <option value="전주 효자동">전주 효자동</option>
+              <option value="전주 덕진">전주 덕진</option>
+              <option value="전주 삼천동">전주 삼천동</option>
+              <option value="군산">군산</option>
+              <option value="익산">익산</option>
+              <option value="정읍">정읍</option>
+              <option value="남원">남원</option>
+              <option value="고창">고창</option>
+              <option value="김제">김제</option>
+              <option value="무주">무주</option>
+              <option value="부안">부안</option>
+              <option value="순창">순창</option>
+              <option value="완주">완주</option>
+              <option value="임실">임실</option>
+              <option value="장수">장수</option>
+              <option value="진안">진안</option>
+            </optgroup>
+            <optgroup label="대구">
+              <option value="대구 동성로">대구 동성로</option>
+              <option value="대구 반월당">대구 반월당</option>
+              <option value="대구 범어동">대구 범어동</option>
+              <option value="대구 수성못">대구 수성못</option>
+              <option value="대구 칠성시장">대구 칠성시장</option>
+              <option value="대구 달서">대구 달서</option>
+            </optgroup>
+            <optgroup label="경북">
+              <option value="포항">포항</option>
+              <option value="포항 죽도시장">포항 죽도시장</option>
+              <option value="경주">경주</option>
+              <option value="구미">구미</option>
+              <option value="구미 원평동">구미 원평동</option>
+              <option value="안동">안동</option>
+              <option value="경산">경산</option>
+              <option value="영주">영주</option>
+              <option value="상주">상주</option>
+              <option value="김천">김천</option>
+              <option value="고령">고령</option>
+              <option value="군위">군위</option>
+              <option value="문경">문경</option>
+              <option value="봉화">봉화</option>
+              <option value="성주">성주</option>
+              <option value="영덕">영덕</option>
+              <option value="영양">영양</option>
+              <option value="영천">영천</option>
+              <option value="예천">예천</option>
+              <option value="울릉">울릉</option>
+              <option value="울진">울진</option>
+              <option value="의성">의성</option>
+              <option value="청도">청도</option>
+              <option value="청송">청송</option>
+              <option value="칠곡">칠곡</option>
+            </optgroup>
+            <optgroup label="울산">
+              <option value="울산 달동">울산 달동</option>
+              <option value="울산 삼산동">울산 삼산동</option>
+              <option value="울산 성남동">울산 성남동</option>
+              <option value="울산 신정동">울산 신정동</option>
+            </optgroup>
+            <optgroup label="부산 번화가">
+              <option value="부산 서면">부산 서면</option>
+              <option value="부산 해운대">부산 해운대</option>
+              <option value="부산 남포동">부산 남포동</option>
+              <option value="부산 광복동">부산 광복동</option>
+              <option value="부산 동래">부산 동래</option>
+              <option value="부산 연산동">부산 연산동</option>
+              <option value="부산 사직동">부산 사직동</option>
+              <option value="부산 덕천동">부산 덕천동</option>
+              <option value="부산 하단">부산 하단</option>
+              <option value="부산 초량동">부산 초량동</option>
+            </optgroup>
+            <optgroup label="경남">
+              <option value="창원">창원</option>
+              <option value="창원 상남동">창원 상남동</option>
+              <option value="창원 마산">창원 마산</option>
+              <option value="진주">진주</option>
+              <option value="진주 중앙시장">진주 중앙시장</option>
+              <option value="김해">김해</option>
+              <option value="거제">거제</option>
+              <option value="양산">양산</option>
+              <option value="통영">통영</option>
+              <option value="거창">거창</option>
+              <option value="고성">고성</option>
+              <option value="남해">남해</option>
+              <option value="밀양">밀양</option>
+              <option value="사천">사천</option>
+              <option value="산청">산청</option>
+              <option value="의령">의령</option>
+              <option value="창녕">창녕</option>
+              <option value="하동">하동</option>
+              <option value="함안">함안</option>
+              <option value="함양">함양</option>
+              <option value="합천">합천</option>
+            </optgroup>
+            <optgroup label="제주">
+              <option value="제주 연동">제주 연동</option>
+              <option value="제주 노형동">제주 노형동</option>
+              <option value="서귀포">서귀포</option>
+            </optgroup>
+          </select>
+          <input type="text" id="region"          <input type="text" id="region" placeholder="직접 입력 (예: 강남)" style="margin-top:5px;display:none"/>
+        </div>
+      </div>
+      <!-- 체험단 입력 영역 (음식/제품/여행 카테고리) -->
+      <div id="review-inputs" style="display:none">
+        <div class="ref-box">
+          <div class="ref-box-title">📋 레퍼런스 글 1 <span style="font-weight:400;color:var(--t3)">(참고할 기존 블로그 글 복사 붙여넣기)</span></div>
+          <textarea class="ref-textarea" id="ref1" placeholder="참고할 블로그 글 1 붙여넣기..."></textarea>
+        </div>
+        <div class="ref-box">
+          <div class="ref-box-title">📋 레퍼런스 글 2</div>
+          <textarea class="ref-textarea" id="ref2" placeholder="참고할 블로그 글 2 붙여넣기... (선택)"></textarea>
+        </div>
+        <div class="ref-box">
+          <div class="ref-box-title">📋 레퍼런스 글 3</div>
+          <textarea class="ref-textarea" id="ref3" placeholder="참고할 블로그 글 3 붙여넣기... (선택)"></textarea>
+        </div>
+        <div class="ref-box" style="border-color:#e8c96a;background:#fff9f0">
+          <div class="ref-box-title" style="color:#8a6a00">🏢 업체 가이드 / 제품 정보 <span style="font-weight:400;color:var(--t3)">(업체가 제공한 가이드라인, 제품 스펙, 주요 포인트 등)</span></div>
+          <textarea class="ref-textarea" id="guide-text" placeholder="업체 가이드라인, 제품 특징, 꼭 넣어야 할 내용 등 붙여넣기..."></textarea>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>메인 키워드 <span style="color:var(--red)">*</span></label>
+        <input type="text" id="kw" placeholder="예: 파주선불폰" oninput="onKwInput()" onblur="onKwBlur()"/>
+        <div class="kw-suggest-box" id="kw-suggest-box">
+          <div class="kw-suggest-title">🔍 연관 키워드 추천 <span style="font-weight:400;color:var(--t3)">(클릭 시 서브키워드에 추가)</span></div>
+          <div class="kw-suggest-chips" id="kw-suggest-chips"><span class="kw-suggest-loading">분석 중...</span></div>
+        </div>
+      </div>
+
+      <div class="field"><label>서브 키워드 (쉼표 구분)</label><input type="text" id="subkw" placeholder="예: 선불폰개통, 비대면개통"/></div>
+      <div class="field"><label>글 방향 / 특이사항</label><textarea id="dir" placeholder="예: 미납자도 당일 개통 가능하다는 점 강조"></textarea></div>
+      <div class="field"><label>글 톤 <span style="font-size:10px;color:var(--t3);font-weight:400">(버튼에 마우스 올리면 설명)</span></label>
+        <div class="tonegrp">
+
+          <div class="tonewrap">
+            <button class="tonebtn on" onclick="setTone(this,'친근한')">친근한</button>
+            <div class="tonetooltip">
+              <b>💬 친근한 — 동네 언니/오빠 톤</b>
+              카톡으로 친구한테 설명하듯 편하게.<br>
+              <em>예: "CU 가서 바로유심 달라고 하면 돼요. 8,800원이에요. 그냥 달라고 하면 바로 줘요."</em>
+            </div>
+          </div>
+
+          <div class="tonewrap">
+            <button class="tonebtn" onclick="setTone(this,'정보형')">정보형</button>
+            <div class="tonetooltip">
+              <b>📋 정보형 — IT 블로거 스타일</b>
+              번호 소제목으로 나눠서 하나씩 설명. 원동욱 블로거 스타일.<br>
+              <em>예: "1. 선불폰이란 / 2. 유심 종류 / 3. 요금제 / 4. 개통 절차 / 5. 총평"</em>
+            </div>
+          </div>
+
+          <div class="tonewrap">
+            <button class="tonebtn" onclick="setTone(this,'경험담')">경험담</button>
+            <div class="tonetooltip">
+              <b>📖 경험담 — 직접 써본 솔직 후기</b>
+              좋은 점 + 살짝 아쉬운 점도 언급해서 진짜처럼.<br>
+              <em>예: "막상 해보니 5분도 안 걸렸어요. 앱이 좀 느리긴 한데 개통 자체는 문제없었어요."</em>
+            </div>
+          </div>
+
+          <div class="tonewrap">
+            <button class="tonebtn" onclick="setTone(this,'전문가')">전문가</button>
+            <div class="tonetooltip">
+              <b>🔍 전문가 — 통신 분야 분석형</b>
+              왜 그런지 이유/배경까지 깊게 분석. 장단점 균형있게.<br>
+              <em>예: "KT망 연체 공유 이유는 통신사 간 정보 공유 시스템 때문입니다. 미납이 있다면 LG망을 추천합니다."</em>
+            </div>
+          </div>
+
+          <div class="tonewrap">
+            <button class="tonebtn" onclick="setTone(this,'후기형')">후기형</button>
+            <div class="tonetooltip">
+              <b>⭐ 후기형 — 네이버 블로그 인플루언서</b>
+              ■ 소제목 + 현장 묘사 + 마지막에 "이런 분께 추천" 리스트.<br>
+              <em>예: "■ 직접 써본 개통 후기 / 마무리에 👇이런 분께 추천합니다 1. 2. 3."</em>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <button class="genbtn" id="genbtn" onclick="generate()">✦ 글 생성하기</button>
+    </div>
+  </div>
+  <div>
+    <div class="rtabs">
+      <div class="rtab on" id="rt-result" onclick="setRTab('result')">생성 결과</div>
+      <div class="rtab" id="rt-history" onclick="setRTab('history')">기록</div>
+      <div class="rtab" id="rt-guide" onclick="setRTab('guide')">저품질 방지</div>
+    </div>
+    <div class="rpanel on" id="rp-result">
+      <div class="card">
+        <div id="s-empty" class="empty"><div style="font-size:36px;margin-bottom:.75rem">✦</div><p>키워드를 입력하고 글 생성하기를 눌러주세요</p></div>
+        <div id="s-loading" class="loading" style="display:none"><div class="spin"></div><p style="color:var(--t2);font-size:13px" id="loadmsg">생성 중...</p></div>
+        <div id="s-result" style="display:none">
+          <div class="resmeta"><span class="restime" id="restime"></span><div class="copys"><button class="cpbtn" onclick="copyTitle()">제목 복사</button><button class="cpbtn" onclick="copyAll()">전체 복사</button></div></div>
+          <!-- 제목 영역 -->
+          <div class="titlebox" style="position:relative">
+            <div class="titlelbl" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <span>추천 제목</span>
+              <button class="edit-btn off" id="edit-mode-btn" onclick="toggleEditMode()">✏ 편집</button>
+            </div>
+            <!-- 보기 모드 -->
+            <div class="titletxt" id="restitle"></div>
+            <!-- 편집 모드 -->
+            <input type="text" class="edit-title" id="edit-title" style="display:none" placeholder="제목 편집..." oninput="onEditChange()"/>
+          </div>
+          <div class="stats" id="stats"></div>
+          <div class="kwbox" id="kwbox"></div>
+          <!-- 본문 보기 모드 -->
+          <div class="resbody" id="resbody"></div>
+          <!-- 본문 편집 모드 -->
+          <textarea class="edit-body" id="edit-body" style="display:none" placeholder="본문 편집..." oninput="onEditChange()"></textarea>
+          <div class="restags" id="restags"></div>
+          <!-- 품질 리포트 -->
+          <div id="quality-report" style="margin-top:1.25rem;border:1px solid var(--bor);border-radius:var(--r);overflow:hidden">
+            <div style="background:#f0f4f2;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:13px;font-weight:700;color:var(--t2)">📋 품질 리포트 <span id="qr-score-badge" style="font-size:11px;padding:2px 8px;border-radius:20px;margin-left:6px"></span></span>
+              <span style="font-size:11px;color:var(--t3)">편집 시 자동 업데이트</span>
+            </div>
+            <div id="qr-list" style="padding:4px 0"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rpanel" id="rp-history">
+      <div class="card"><div class="ctitle">📋 생성 기록 <span id="hcnt" style="font-weight:400;color:var(--t3)">(0개)</span></div><div id="hlist"><div style="text-align:center;padding:2rem;color:var(--t3);font-size:13px">아직 생성된 글이 없습니다</div></div></div>
+    </div>
+    <div class="rpanel" id="rp-guide">
+      <div class="card">
+        <div class="ctitle">✅ 네이버 저품질 방지 체크리스트</div>
+        <div id="glist"></div>
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--bor)">
+          <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:1rem">📚 2026년 신규 기준 쉽게 이해하기</div>
+
+          <div style="background:#f0f9f5;border-radius:var(--rs);padding:14px;margin-bottom:10px;border-left:3px solid var(--green)">
+            <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:5px">🔍 통합탭 대응: 사용자 의도 중심 글쓰기</div>
+            <div style="font-size:12px;color:var(--t2);line-height:1.8">
+              2026년부터 네이버는 단순히 키워드가 많이 들어간 글보다, <b>사람들이 실제로 원하는 정보를 담은 글</b>을 더 높이 노출시켜요.
+              예를 들어 "파주선불폰"을 검색하는 사람은 <b>개통 방법과 비용</b>이 궁금한 거예요. 이 질문에 직접적으로 답하는 글을 써야 해요.
+              키워드를 억지로 많이 넣는 것보다, 검색하는 사람 입장에서 "이 글 진짜 도움됐다!"라는 느낌이 들도록 써야 노출돼요.
+            </div>
+          </div>
+
+          <div style="background:#f0f9f5;border-radius:var(--rs);padding:14px;margin-bottom:10px;border-left:3px solid var(--green)">
+            <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:5px">⭐ 정보 출처 명확히 + 전문성 드러내기 (E-E-A-T)</div>
+            <div style="font-size:12px;color:var(--t2);line-height:1.8">
+              E-E-A-T는 <b>경험(Experience), 전문성(Expertise), 권위(Authoritativeness), 신뢰(Trust)</b>의 줄임말이에요.
+              쉽게 말하면 <b>"이 글 쓴 사람이 직접 써봤거나 잘 아는 사람인가?"</b>를 네이버가 판단하는 거예요.
+              그래서 글에 <b>직접 경험한 느낌</b>(예: "저도 처음엔 몰랐는데 써보니까...")이나 <b>구체적인 수치</b>(요금, 날짜, 시간)를 꼭 넣어야 해요.
+              "누구나 쓸 수 있는 일반적인 내용"만 있으면 신뢰도가 낮다고 판단돼요.
+            </div>
+          </div>
+
+          <div style="background:#fdeaea;border-radius:var(--rs);padding:14px;margin-bottom:10px;border-left:3px solid var(--red)">
+            <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:5px">🚫 AI 생성 무색무취 글 → 검색 누락</div>
+            <div style="font-size:12px;color:var(--t2);line-height:1.8">
+              "안녕하세요! 오늘은 선불폰에 대해 알아보겠습니다" 같은 문장, 다들 비슷하죠?
+              네이버 AI가 이런 패턴을 <b>기계가 쓴 글</b>로 인식해서 검색 결과에서 아예 빼버려요.
+              해결책: <b>매번 다른 도입부</b>로 시작하고, <b>실제 경험담 느낌</b>으로 써야 해요.
+              예: "지난주에 친구가 갑자기 폰이 정지됐다고 연락이 와서..." 이런 식으로요.
+            </div>
+          </div>
+
+          <div style="background:#fdeaea;border-radius:var(--rs);padding:14px;border-left:3px solid var(--red)">
+            <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:5px">🚫 구조화 안 된 정보 나열식 글 → 노출 제외</div>
+            <div style="font-size:12px;color:var(--t2);line-height:1.8">
+              정보를 그냥 쭉 나열만 하면 네이버가 "읽기 어려운 글"로 판단해요.
+              <b>소제목으로 단락을 나누고</b>, 각 단락이 하나의 주제를 명확하게 다루어야 해요.
+              예: "1. 선불폰이란?", "2. 편의점 유심 종류", "3. 개통 절차" 처럼 <b>목차가 명확한 구조</b>가 2026년엔 필수예요.
+              독자가 원하는 정보를 빠르게 찾을 수 있어야 체류시간이 올라가고, 체류시간이 올라야 상위노출이 돼요.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+
+
+<!-- ③ 글 분석기 -->
+<div class="mainpanel" id="mp-analyze">
+<div class="analyzer-wrap">
+  <div class="card">
+    <div class="ctitle">📊 글 분석기 - SEO 진단</div>
+    <p style="font-size:12px;color:var(--t3);margin-bottom:.875rem">작성한 블로그 글을 붙여넣으면 키워드 분석, 글자수, 상위노출 가능성을 진단합니다.</p>
+    <div class="frow" style="margin-bottom:.875rem">
+      <div class="field" style="margin-bottom:0"><label>메인 키워드</label><input type="text" id="an-kw" placeholder="예: 파주선불폰"/></div>
+      <div class="field" style="margin-bottom:0"><label>서브 키워드 (쉼표 구분)</label><input type="text" id="an-subkw" placeholder="예: 선불폰개통"/></div>
+    </div>
+    <textarea class="analyzer-input" id="an-text" placeholder="분석할 블로그 글을 여기에 붙여넣으세요..."></textarea>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+      <button class="analyzer-btn" onclick="analyzePost()">분석하기</button>
+    </div>
+    <div id="an-result" style="display:none">
+      <div class="score-box" id="an-scores"></div>
+      <div class="seo-score-label"><span>상위노출 가능성</span><span id="an-seo-pct">0%</span></div>
+      <div class="seo-bar-track"><div class="seo-bar-fill" id="an-seo-bar" style="width:0%;background:var(--green)"></div></div>
+      <div class="analysis-result" id="an-details"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ④ 센터 찾기 ← 완전히 독립된 패널 -->
+<div class="mainpanel" id="mp-center">
+  <div style="margin-bottom:1rem;font-size:13px;font-weight:700;color:var(--t2)">📍 앤텔레콤 전국 센터 찾기</div>
+
+  <!-- 카카오맵 -->
+  <div class="card" style="margin-bottom:1rem;padding:0;overflow:hidden">
+
+  </div>
+
+  <!-- 지역 탭 -->
+  <div id="cr-tabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem"></div>
+
+  <!-- 검색 -->
+  <div style="display:flex;gap:8px;margin-bottom:1rem">
+    <input type="text" id="cr-search" placeholder="센터명 또는 주소로 검색..."
+      style="flex:1;padding:9px 14px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);outline:none"/>
+    <button id="cr-reset-btn" style="padding:9px 16px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-family:inherit;cursor:pointer">초기화</button>
+  </div>
+
+  <!-- 선택된 센터 정보 -->
+  <div id="cr-selected" style="display:none;background:var(--sur);border:2px solid var(--green);border-radius:var(--r);padding:16px;margin-bottom:1rem">
+    <div id="cr-sel-name" style="font-size:15px;font-weight:700;color:var(--green);margin-bottom:6px"></div>
+    <div id="cr-sel-addr" style="font-size:12px;color:var(--t2);margin-bottom:5px"></div>
+    <div id="cr-sel-tel" style="font-size:12px;color:var(--t2);margin-bottom:10px"></div>
+    <a id="cr-sel-link" href="#" target="_blank" rel="noopener"
+      style="display:inline-block;padding:7px 18px;background:var(--green);color:#fff;border-radius:var(--rs);font-size:12px;font-weight:700;text-decoration:none">🗺️ 카카오맵에서 보기</a>
+  </div>
+
+  <!-- 카운트 -->
+  <div id="cr-count" style="font-size:12px;color:var(--t3);margin-bottom:8px"></div>
+
+  <!-- 목록 -->
+  <div id="cr-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var AI='claude',tone='친근한',dealer='',autoSave=false,hist=[],cur=null;
+var selectedSuggestKws=[];
+var kwSuggestTimer=null,kwSuggestLast='';
+var crRegion='전체',crActive=-1;
+
+var AICFG={
+  claude:{lbl:'Anthropic API Key',ph:'sk-ant-...',hint:'키는 브라우저에만 저장됩니다. <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>에서 발급',sk:'ak_claude',bc:'bc',name:'Claude',cost:'약 10~20원'}
+};
+
+var GUIDES=[
+  // ── 필수 준수 항목
+  {ok:1,t:'제목에 메인키워드 그대로 포함 + 35자 이내 (SEO 핵심)'},
+  {ok:1,t:'메인키워드 본문 정확히 3회 (C-Rank 최적화)'},
+  {ok:1,t:'서브키워드 각 최대 5회 이내 자연스럽게 녹이기'},
+  {ok:1,t:'공백 포함 1,500자 이상 2,000자 미만'},
+  {ok:1,t:'개인 경험담/실제 후기 느낌 반드시 포함 (E-E-A-T)'},
+  {ok:1,t:'구체적 수치/숫자 최소 3개 이상 포함'},
+  {ok:1,t:'도입부 다양하게: 질문형/경험담형/상황묘사형 등 매번 다르게'},
+  {ok:1,t:'선불폰: 유심 종류·요금제·개통절차 ①~⑨ 필수'},
+  {ok:1,t:'영어회화: 예문+해석 3개 이상 + 강한 CTA'},
+  {ok:1,t:'단락 사이 빈줄 1개 + 소제목으로 구조화'},
+  {ok:1,t:'발행 시간 분산: 하루 1~3개, 일정한 시간대 유지'},
+  {ok:1,t:'이웃/공감 자연스럽게 유도 (체류시간 UP)'},
+  // ── 절대 금지 항목
+  {ok:0,t:'메인키워드 4회 이상 반복 절대 금지'},
+  {ok:0,t:'## ** 마크다운 기호 절대 금지'},
+  {ok:0,t:'"안녕하세요", "오늘은 ~알아보겠습니다" AI 전형 문구 금지'},
+  {ok:0,t:'동일 패턴 글 연속 발행 금지 (저품질 패턴 감지)'},
+  {ok:0,t:'외부 상업링크/제휴링크 과다 삽입 금지'},
+  {ok:0,t:'하루 5개 초과 발행 금지 (스팸 감지)'},
+  {ok:0,t:'복사·유사글 발행 금지 (D.I.A+ 중복 페널티)'},
+  {ok:0,t:'제목과 본문 내용 불일치 금지 (이탈률 상승)'},
+  // ── 2026 신규 기준
+  {ok:1,t:'[2026 신규] 통합탭 대응: 사용자 의도 중심 글쓰기'},
+  {ok:1,t:'[2026 신규] 정보 출처 명확히 + 전문성 드러내기 (E-E-A-T)'},
+  {ok:0,t:'[2026 신규] AI 생성 무색무취 글 → 검색 누락 처리됨'},
+  {ok:0,t:'[2026 신규] 구조화 안 된 정보 나열식 글 → 노출 제외'}
+];
+
+var CR_CENTERS=[
+  {r:'서울',name:'스마트마포BP',addr:'서울 마포구 잔다리로 77 (서교동) 대창빌딩 401호',tel:'02-3142-2016',fax:'02-323-2016'},
+  {r:'서울',name:'송파 CGI BP',addr:'서울 송파구 오금로11길 23-9 (방이동) 5층 511호',tel:'02-472-3663',fax:'02-477-7016'},
+  {r:'서울',name:'군자BP',addr:'서울 광진구 능동로 331 (중곡동) 2층',tel:'02-2248-0016',fax:'02-2213-0102'},
+  {r:'서울',name:'구로 신도림테크노BP',addr:'서울 구로구 새말로 97 (구로동) 9층 3호',tel:'02-858-0598',fax:'02-859-0598'},
+  {r:'서울',name:'성북비전BP',addr:'서울 성북구 돌곶이로 25길 4-1 퀸즈빌8차 101호',tel:'02-3292-7010',fax:'02-3292-5010'},
+  {r:'서울',name:'을지로BP',addr:'서울 중구 충무로 50 (을지로3가) 6층',tel:'010-3208-8250',fax:'050-4206-7926'},
+  {r:'서울',name:'동서울BP',addr:'서울 광진구 자양로 67 (자양동) 302호',tel:'02-3437-7705',fax:'02-3437-7706'},
+  {r:'서울',name:'관악BP',addr:'서울 관악구 봉천로 335 (봉천동) 301호',tel:'02-889-6665',fax:'02-889-6664'},
+  {r:'서울',name:'구로디지털BP',addr:'서울 구로구 디지털로29길 38 (구로동) 에이스테크노타워3차 709호',tel:'02-830-8747',fax:'02-830-8748'},
+  {r:'서울',name:'가산역BP',addr:'서울 금천구 가산디지털1로 181 (가산동) 5층 507호',tel:'02-6264-2025',fax:'02-6264-2026'},
+  {r:'서울',name:'건대친구통신BP',addr:'서울 광진구 아차산로30길 31 (자양동) 3층',tel:'02-6964-8020',fax:'02-6964-8090'},
+  {r:'서울',name:'신세계 영등포BP',addr:'서울 영등포구 영중로 22 (영등포동3가) 4층 401호',tel:'02-2676-6016',fax:'02-2675-6016'},
+  {r:'서울',name:'상봉 크라운BP',addr:'서울 중랑구 망우로 240 (상봉동) 3층 302호',tel:'02-435-8812',fax:'02-435-8812'},
+  {r:'서울',name:'강동그린BP',addr:'서울 강동구 성내로 4 (성내동) 3층',tel:'02-478-0278',fax:'02-478-0845'},
+  {r:'서울',name:'구로센트럴BP',addr:'서울 구로구 디지털로30길 28 (구로동) 마리오타워1108호',tel:'02-877-3694',fax:'050-4277-3694'},
+  {r:'서울',name:'대림 모아BP',addr:'서울 구로구 일대',tel:'02-851-3858',fax:'02-851-3858'},
+  {r:'경기',name:'부천역BP',addr:'경기 부천시 부천로39번길 8 (심곡동) 6층(동아빌딩)',tel:'032-323-3055',fax:'032-326-3055'},
+  {r:'경기',name:'안산BP',addr:'경기 안산시 단원구 광덕4로 112 (고잔동) 206호(슈마프라자)',tel:'031-414-0163',fax:'031-413-0163'},
+  {r:'경기',name:'가온 오산역BP',addr:'경기 오산시 오산로 198 (원동) 우정빌딩 102호',tel:'031-375-5016',fax:'031-377-6018'},
+  {r:'경기',name:'용인미르BP',addr:'경기 용인시 처인구 중부대로1758번길 83-6 (마평동) 2층',tel:'031-339-7127',fax:'031-339-7128'},
+  {r:'경기',name:'에이스양평BP',addr:'경기 양평군 양평읍 시민로 94 지하1층',tel:'031-771-0902',fax:'031-771-0970'},
+  {r:'경기',name:'이천BP',addr:'경기 이천시 증신로 81 2층 202호',tel:'031-637-9888',fax:'031-634-3888'},
+  {r:'경기',name:'광명빅BP',addr:'경기 광명시 오리로 992 (광명동) 광명리더스 빌딩 901호',tel:'02-6953-8014',fax:'02-6956-8014'},
+  {r:'경기',name:'시흥 정왕역BP',addr:'경기 시흥시 마유로418번길 10 (정왕동) 롯데시네마 시화점 2층 203호',tel:'031-431-2016',fax:'031-431-3016'},
+  {r:'경기',name:'가온 평택역BP',addr:'경기 평택시 평택로64번길 32 (평택동) 3층',tel:'031-691-1236',fax:'031-652-0124'},
+  {r:'경기',name:'의정부역BP',addr:'경기 의정부시 평화로 552 (의정부동) 3층',tel:'031-846-0399',fax:'031-821-0399'},
+  {r:'경기',name:'고양일산BP',addr:'경기 고양시 일산동구 중앙로 1200 (마두동) 삼희골드프라자 205호',tel:'031-904-8610',fax:'031-904-8611'},
+  {r:'경기',name:'가온파주BP',addr:'경기 파주시 새꽃로 180 (금촌동) 1층',tel:'031-942-2989',fax:'050-4393-2989'},
+  {r:'경기',name:'평택BP',addr:'경기 평택시 원평로 43 (평택동) 2층',tel:'031-618-7990',fax:'031-618-7991'},
+  {r:'경기',name:'수원나눔BP',addr:'경기 수원시 팔달구 경수대로 424 (인계동) 2층 202호',tel:'031-223-2763',fax:'031-237-2764'},
+  {r:'인천',name:'뉴부평BP',addr:'인천 부평구 동수로 173 (부개동) 1층',tel:'032-504-0577',fax:'032-232-1359'},
+  {r:'강원',name:'춘천우리BP',addr:'강원 춘천시 춘주로92번길 30 (온의동) 1층',tel:'033-241-5010',fax:'033-242-7010'},
+  {r:'강원',name:'동해BP',addr:'강원 동해시 발한로 125 (발한동) 1층',tel:'033-532-0101',fax:'033-532-0102'},
+  {r:'강원',name:'원주BP',addr:'강원특별자치도 원주시 단관길 197 (관설동) 1층',tel:'033-762-2017',fax:'033-762-2018'},
+  {r:'강원',name:'홍천BP',addr:'강원 홍천',tel:'033-434-3358',fax:'050-5333-3358'},
+  {r:'대전',name:'대전 GOBP',addr:'대전 동구 백룡로5번길 80 (자양동) 지하1층',tel:'042-633-0633',fax:'042-633-0634'},
+  {r:'대전',name:'대전역BP',addr:'대전시 중구 대흥동 336-16 조양빌딩 3층',tel:'042-253-1016',fax:'042-253-2016'},
+  {r:'광주',name:'광주BP',addr:'광주 서구 상무화원로12번길 4 (치평동) 1층',tel:'062-372-5016',fax:'062-372-6016'},
+  {r:'전남',name:'순천우정BP',addr:'전남 순천시 연동남3길 5 (조례동) 2층(앤텔레콤)',tel:'061-743-6066',fax:'061-743-6065'},
+  {r:'전남',name:'목포BP',addr:'전남 목포시 영산로 95 (명륜동) 3층',tel:'061-284-1094',fax:'061-281-1094'},
+  {r:'전북',name:'군산웅비BP',addr:'전북 군산시 팔마로 212 (경장동) 2층 앤텔레콤',tel:'063-452-7924',fax:'063-446-7924'},
+  {r:'전북',name:'군산BP',addr:'전북특별자치도 군산시 신풍길 31 (신풍동) 1층',tel:'063-471-8890',fax:'050-4418-6789'},
+  {r:'전북',name:'전주BP',addr:'전북특별자치도 전주시 덕진구 가리내로 18 (금암동) 1층',tel:'063-246-9922',fax:'063-246-9923'},
+  {r:'충남',name:'나눔천안BP',addr:'충남 천안시 동남구 수곡1길 12-5(신방동) 은광빌딩 4층',tel:'041-567-1530',fax:'041-566-1530'},
+  {r:'충남',name:'당진BP',addr:'충남 당진시 당진중앙3로 14 조향빌딩 (읍내동) 6층 602호',tel:'041-352-5016',fax:'041-352-6016'},
+  {r:'충남',name:'충남스마트BP',addr:'충남 아산시 충무로 8 (온천동) 영성빌딩 5층',tel:'041-531-5677',fax:'041-531-5688'},
+  {r:'충북',name:'청주BP',addr:'충북 청주시 서원구 산남로70번길 34 (산남동) 1동 610호',tel:'043-286-1016',fax:'043-286-2016'},
+  {r:'충북',name:'충주BP',addr:'충북 충주시 중앙로 108 (성내동) 1층',tel:'043-855-6555',fax:'043-847-2016'},
+  {r:'충북',name:'청주오션BP',addr:'충북 청주',tel:'043-221-1134',fax:'043-221-1135'},
+  {r:'대구',name:'대구BP',addr:'대구 달서구 대명천로 236 (장기동) 4층',tel:'053-561-6016',fax:'053-561-8016'},
+  {r:'대구',name:'동대구BP',addr:'대구 동구 효신로 14 (효목동) 2층',tel:'053-751-8016',fax:'053-753-8016'},
+  {r:'대구',name:'대구팔공BP',addr:'대구 동구 동부로 71 (신천동) 2층',tel:'053-744-8016',fax:'053-745-9016'},
+  {r:'대구',name:'대구글로벌BP',addr:'대구광역시 달서구 계대동문로4길 72(신당동) 1층 101호',tel:'053-588-3016',fax:'053-285-1527'},
+  {r:'대구',name:'대구역BP',addr:'대구 달서구 와룡로 286 (죽전동) 2층',tel:'053-565-6252',fax:'053-565-6253'},
+  {r:'경북',name:'구미BP',addr:'경북 구미시 야은로 740-1 (신평동) 3층',tel:'054-463-3016',fax:'054-463-9016'},
+  {r:'경북',name:'포항BP',addr:'포항시 남구 중앙로 158 (해도동) 3층',tel:'054-283-0991',fax:'054-283-0992'},
+  {r:'경북',name:'경산BP',addr:'경북 경산시 강변동로 76 (서상동) 3층',tel:'053-813-0160',fax:''},
+  {r:'경북',name:'안동BP',addr:'경북 안동',tel:'054-843-8114',fax:'054-843-8214'},
+  {r:'울산',name:'울산BP',addr:'울산 남구 돋질로239번길 4-4 (달동) 2층',tel:'052-254-3016',fax:'052-264-7016'},
+  {r:'부산',name:'부산연제BP',addr:'부산 부산진구 양연로 4 (양정동) 4층',tel:'051-852-2016',fax:'051-852-3016'},
+  {r:'부산',name:'부산동래BP',addr:'부산 동래구 연안로 41 (안락동) 서정빌딩 5층',tel:'051-717-0302',fax:'051-717-0405'},
+  {r:'부산',name:'부산역BP',addr:'부산 동구 중앙대로308번길 3-5 (초량동) 세진빌딩 303호',tel:'051-464-8016',fax:'051-465-9016'},
+  {r:'부산',name:'부산우정BP',addr:'부산 부산진구 부전로162번길 3 (부전동) 3층',tel:'010-9758-5987',fax:''},
+  {r:'부산',name:'가자부산BP',addr:'부산 연제구 중앙대로1075번길 16 (연산동) 2층',tel:'051-866-1543',fax:'051-866-1544'},
+  {r:'부산',name:'부산광명BP',addr:'부산 연제구 반송로 9 (연산동) 4층',tel:'051-852-0898',fax:'051-852-0878'},
+  {r:'부산',name:'부산 미래BP',addr:'부산 부산진구 범일로 175 (범천동) 2층',tel:'051-633-9956',fax:'051-633-9957'},
+  {r:'경남',name:'창원BP',addr:'경남 창원시 마산합포구 합포로 240 (산호동) 4층',tel:'055-291-2953',fax:'055-291-2954'},
+  {r:'경남',name:'거제BP',addr:'경남 거제시 장평로8길 30 (장평동) 2층 201호',tel:'055-637-5760',fax:'055-637-5761'},
+  {r:'경남',name:'양산홍익으뜸BP',addr:'경남 양산시 북안남3길 44 (북부동) 2층',tel:'055-385-5222',fax:'050-4099-8118'},
+  {r:'경남',name:'김해BP',addr:'경남 김해시 김해대로 2389 (부원동) 3층',tel:'055-326-6016',fax:'055-323-8018'},
+  {r:'경남',name:'김해 이레BP',addr:'경남 김해시 가락로 26 (부원동) 부원프라자 7층',tel:'055-724-1850',fax:'055-724-1851'},
+  {r:'경남',name:'창원글로벌BP',addr:'경남 창원시 의창구 창원대로363번길 22-57 (팔용동) 1층 114호',tel:'055-237-9016',fax:'055-237-9016'},
+  {r:'경남',name:'진주남강BP',addr:'경남 진주시 범골로54번길 30-9 (충무공동) 드림IT밸리 B601호',tel:'010-9309-6265',fax:'0504-166-6265'},
+  {r:'경남',name:'호야통신',addr:'경남',tel:'010-4443-2502',fax:'031-267-9699'},
+  {r:'제주',name:'올레BP',addr:'제주특별자치도 제주시 남성로 16 (용담1동) 1층',tel:'064-749-3016',fax:'064-749-3018'},
+  {r:'제주',name:'제주우정BP',addr:'제주특별자치도 제주시 삼봉로 137 (도련일동) 101호',tel:'010-2700-8335',fax:'050-4161-8335'}
+];
+var CR_REGIONS=['전체','서울','경기','인천','강원','대전','광주','전남','전북','충남','충북','대구','경북','울산','부산','경남','제주'];
+
+// ══ 접속 코드 관리 ══
+// 코드 추가/삭제: 아래 ACCESS_CODES 배열만 수정 후 GitHub 재업로드
+var ACCESS_CODES = [
+  {code:'ANT-ADMIN-99', name:'관리자(경도)', expire:'2099-12-31'},
+  {code:'ANT-SY65-P3UR', name:'리치원사장님2026', expire:'2027-05-25'}
+];
+// ⬆ 코드 삭제 시 해당 줄 제거 → GitHub 재업로드 → 즉시 차단
+
+function checkAccess(){
+  var input = document.getElementById('access-input').value.trim().toUpperCase();
+  var errEl = document.getElementById('access-err');
+  if(!input){ errEl.textContent='코드를 입력해주세요.'; return; }
+
+  var found = ACCESS_CODES.find(function(c){ return c.code.toUpperCase()===input; });
+
+  if(!found){
+    errEl.textContent='유효하지 않은 코드입니다.';
+    document.getElementById('access-input').value='';
+    return;
+  }
+
+  // 만료일 체크
+  var today = new Date();
+  var expire = new Date(found.expire);
+  if(today > expire){
+    errEl.textContent='"'+found.name+'" 코드가 만료됐습니다. 관리자에게 문의하세요.';
+    return;
+  }
+
+  // 인증 성공 - 세션에 저장 (새로고침해도 유지)
+  localStorage.setItem('access_ok', found.code);
+  localStorage.setItem('access_name', found.name);
+  document.getElementById('access-screen').style.display='none';
+
+  // 상단에 사용자 이름 표시
+  var badge = document.getElementById('badge');
+  if(badge){
+    badge.style.display='block';
+    badge.innerHTML='👤 <span id="badge-n">'+found.name+'</span>';
+  }
+}
+
+function initAccess(){
+  // 이미 인증된 세션인지 확인
+  var saved = localStorage.getItem('access_ok');
+  if(!saved){ return; } // 인증 안 됨 → 코드 화면 유지
+
+  // 저장된 코드가 여전히 유효한지 재확인
+  var found = ACCESS_CODES.find(function(c){ return c.code===saved; });
+  if(!found){
+    localStorage.removeItem('access_ok');
+    return; // 코드 삭제됨 → 재인증 필요
+  }
+  var today = new Date();
+  var expire = new Date(found.expire);
+  if(today > expire){
+    localStorage.removeItem('access_ok');
+    return; // 만료됨
+  }
+
+  // 유효 → 화면 숨기기
+  document.getElementById('access-screen').style.display='none';
+  var badge = document.getElementById('badge');
+  if(badge){
+    badge.style.display='block';
+    badge.innerHTML='👤 <span id="badge-n">'+found.name+'</span>';
+  }
+}
+
+function doLogout(){
+  if(!confirm('로그아웃 하시겠어요?\n다시 접속 코드를 입력해야 합니다.'))return;
+  localStorage.removeItem('access_ok');
+  localStorage.removeItem('access_name');
+  showToast('로그아웃됐어요','');
+  setTimeout(function(){ location.reload(); }, 800);
+}
+
+function init(){
+  initAccess();
+  // 메인 탭 이벤트
+  document.getElementById('maintabs-bar').addEventListener('click',function(e){
+    var t=e.target.closest('[data-tab]');
+    if(t) setMainTab(t.getAttribute('data-tab'));
+  });
+  renderGuides();
+  var as=localStorage.getItem('auto_save')==='1';
+  autoSave=as;
+  document.getElementById('autosave').checked=as;
+  document.getElementById('autosave').addEventListener('change',function(){
+    autoSave=this.checked;
+    localStorage.setItem('auto_save',this.checked?'1':'0');
+    if(!this.checked){localStorage.removeItem('ak_claude');localStorage.removeItem('ak_gpt');localStorage.removeItem('ak_gemini');showToast('자동저장 해제됨','');}
+  });
+  var dc=localStorage.getItem('dealer')||'';
+  if(dc){
+    dealer=dc;
+    var dcodeEl=document.getElementById('dcode');
+    var dbtnEl=document.getElementById('dapply-btn');
+    dcodeEl.value=dc;
+    dcodeEl.disabled=true;
+    if(dbtnEl){dbtnEl.textContent='✓ 적용됨 (취소)';dbtnEl.style.background='#BA7517';}
+    updateDprev();
+  }
+  if(as)loadKey();
+  updateBadge();
+  updateUsageBadge();
+  var existKey=localStorage.getItem(AICFG[AI].sk)||'';
+  if(existKey) loadHistory();
+  // 센터 찾기 미리 초기화
+  crInit();
+}
+
+function setMainTab(n){
+  ['write','analyze','center','cafe'].forEach(function(x){
+    var mt=document.getElementById('mt-'+x);
+    var mp=document.getElementById('mp-'+x);
+    if(mt)mt.className='maintab'+(x===n?' on':'');
+    if(mp)mp.className='mainpanel'+(x===n?' on':'');
+  });
+  if(n==='center'){
+    crInit();
+    setTimeout(function(){
+      if(!_crMap) crInitMap();
+    }, 100);
+  }
+  if(n==='cafe'){
+    setTimeout(initCafe, 50);
+  }
+}
+
+function setAI(ai){ AI=ai; loadKey(); }
+function loadKey(){
+  if(!autoSave){document.getElementById('apikey').value='';updateStatus(false);return;}
+  var k=localStorage.getItem(AICFG[AI].sk)||'';
+  document.getElementById('apikey').value=k;
+  updateStatus(!!k);
+  // API 키 기반으로 기록 불러오기
+  if(k) loadHistory();
+}
+function updateStatus(ok){
+  document.getElementById('dot').className='dot'+(ok?' ok':'');
+  document.getElementById('alabel').textContent=ok?AICFG[AI].name+' 연결됨':'API 키 미설정';
+}
+async function saveKey(){
+  var k=document.getElementById('apikey').value.replace(/[^\x20-\x7E]/g,'').trim();
+  if(!k){showToast('API 키를 입력해주세요','err');return;}
+  var btn=document.getElementById('savebtn');
+  btn.textContent='확인중...';btn.disabled=true;
+  var ok=await verifyKey(AI,k);
+  btn.textContent='저장';btn.disabled=false;
+  if(ok){sessionStorage.setItem(AICFG[AI].sk,k);if(autoSave)localStorage.setItem(AICFG[AI].sk,k);updateStatus(true);showToast(autoSave?'[v] 정상 등록됐습니다! (자동저장 중)':'[v] 정상 등록됐습니다!','ok');loadHistory();}
+  else{showToast('[x] 등록 실패 - API 키를 다시 확인해주세요','err');}
+}
+async function verifyKey(ai,k){
+  try{
+    var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:5,messages:[{role:'user',content:'hi'}]})});
+    var d=await r.json();return!d.error;
+  }catch(e){return false;}
+}
+function onCatChange(){
+  var cat = document.getElementById('cat').value;
+  var sel = document.getElementById('region-select');
+  var regionVal = sel ? sel.value : '';
+  var kwInput = document.getElementById('kw');
+  var subkwInput = document.getElementById('subkw');
+  var regionField = sel ? sel.closest('.field') : null;
+  var reviewInputs = document.getElementById('review-inputs');
+  var isReview = (cat==='food'||cat==='product'||cat==='travel');
+
+  // 카테고리 바뀌면 메인키워드/서브키워드 초기화
+  kwInput.value = '';
+  subkwInput.value = '';
+  kwSuggestLast = '';
+  selectedSuggestKws = [];
+  document.getElementById('kw-suggest-box').style.display = 'none';
+  
+
+  // 지역 필드 표시/숨김
+  if(regionField) regionField.style.display = isReview ? 'none' : '';
+  // 체험단 입력 표시/숨김
+  if(reviewInputs) reviewInputs.style.display = isReview ? 'block' : 'none';
+
+  if(!regionVal || isReview) return;
+
+  if(cat === 'phone'){
+    var randPhone = PHONE_KW_POOL[Math.floor(Math.random()*PHONE_KW_POOL.length)];
+    kwInput.value = regionVal + ' ' + randPhone;
+  } else if(cat === 'english'){
+    var randKw = ENG_KW_POOL[Math.floor(Math.random()*ENG_KW_POOL.length)];
+    kwInput.value = regionVal + ' ' + randKw;
+  }
+}
+
+function setTone(el,t){document.querySelectorAll('.tonebtn').forEach(function(b){b.className='tonebtn';});el.className='tonebtn on';tone=t;}
+function setRTab(n){
+  ['result','history','guide'].forEach(function(x){
+    document.getElementById('rt-'+x).className='rtab'+(x===n?' on':'');
+    document.getElementById('rp-'+x).className='rpanel'+(x===n?' on':'');
+  });
+}
+function showState(s){
+  document.getElementById('s-empty').style.display=s==='empty'?'block':'none';
+  document.getElementById('s-loading').style.display=s==='loading'?'block':'none';
+  document.getElementById('s-result').style.display=s==='result'?'block':'none';
+  // 새 글 생성 시 편집 모드 초기화
+  if(s==='loading'||s==='empty'){
+    _editMode=false;
+    var btn=document.getElementById('edit-mode-btn');
+    if(btn){btn.textContent='✏ 편집';btn.className='edit-btn off';}
+    var tv=document.getElementById('restitle'),te=document.getElementById('edit-title');
+    var bv=document.getElementById('resbody'),be=document.getElementById('edit-body');
+    if(tv)tv.style.display='block'; if(te)te.style.display='none';
+    if(bv)bv.style.display='block'; if(be)be.style.display='none';
+  }
+}
+function applyDealer(){
+  var btn = document.getElementById('dapply-btn');
+  var input = document.getElementById('dcode');
+
+  // 이미 적용된 상태면 → 취소
+  if(dealer){
+    dealer='';
+    localStorage.removeItem('dealer');
+    input.value='';
+    input.disabled=false;
+    btn.textContent='적용';
+    btn.style.background='var(--green)';
+    updateDprev();
+    showToast('매출자코드가 초기화됐어요','');
+    return;
+  }
+
+  // 적용
+  var c=input.value.trim();
+  if(!c){showToast('매출자코드를 입력해주세요','err');return;}
+  dealer=c;
+  localStorage.setItem('dealer',c);
+  input.disabled=true;
+  btn.textContent='✓ 적용됨 (취소)';
+  btn.style.background='#BA7517';
+  updateDprev();
+  showToast('[v] 매출자코드 '+c+' 적용됐습니다','ok');
+}
+function updateDprev(){var el=document.getElementById('dprev');el.innerHTML=dealer?'태블릿소유자회원번호 <span>'+dealer+'</span> 이 본문에 삽입됩니다':'미입력';}
+function openModal(){document.getElementById('mbg').className='mbg open';}
+function closeModal(){document.getElementById('mbg').className='mbg';}
+function getTKey(){var k=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk)||'default';return'ut_'+AI+'_'+k.slice(-6);}
+function getHistKey(){var k=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk)||'default';return'hist_'+AI+'_'+k.slice(-8);}
+
+function saveHistory(r){
+  // 제목+본문+메타 전부 localStorage에 저장
+  var sk=getTKey(), hk=getHistKey();
+  // 1) 제목 기록 (중복 방지용)
+  var arr=[];try{arr=JSON.parse(localStorage.getItem(sk)||'[]');}catch(e){}
+  arr.push({kw:(r.kw||'').trim(),title:r._cleanTitle||r.title,t:Date.now()});
+  if(arr.length>500)arr=arr.slice(-500);
+  localStorage.setItem(sk,JSON.stringify(arr));
+  // 2) 전체 기록 (본문 포함) - 최대 100개
+  var harr=[];try{harr=JSON.parse(localStorage.getItem(hk)||'[]');}catch(e){}
+  var item={
+    kw:r.kw||'',
+    title:r._cleanTitle||r.title||'',
+    content:r._clean||r.content||'',
+    hashtags:r.hashtags||[],
+    cat:r.cat||'',
+    tone:r.tone||'',
+    ai:r.ai||AI,
+    t:(r.time||new Date()).getTime()
+  };
+  harr.unshift(item);
+  if(harr.length>100)harr=harr.slice(0,100);
+  try{localStorage.setItem(hk,JSON.stringify(harr));}catch(e){
+    // 용량 초과 시 오래된 거 제거
+    harr=harr.slice(0,50);
+    try{localStorage.setItem(hk,JSON.stringify(harr));}catch(e2){}
+  }
+}
+
+function loadHistory(){
+  // localStorage에서 기록 불러와서 hist 배열 복원
+  var hk=getHistKey();
+  var harr=[];try{harr=JSON.parse(localStorage.getItem(hk)||'[]');}catch(e){}
+  hist=harr.map(function(item){
+    return {
+      kw:item.kw, title:item.title, _cleanTitle:item.title,
+      content:item.content, _clean:item.content,
+      hashtags:item.hashtags||[], cat:item.cat||'', tone:item.tone||'',
+      ai:item.ai||AI, time:new Date(item.t||Date.now())
+    };
+  });
+  renderHistory();
+  updateBadge();
+}
+
+function saveTitle(kw,title){var sk=getTKey(),arr=[];try{arr=JSON.parse(localStorage.getItem(sk)||'[]');}catch(e){}arr.push({kw:kw.trim(),title:title,t:Date.now()});if(arr.length>500)arr=arr.slice(-500);localStorage.setItem(sk,JSON.stringify(arr));}
+function getUsedTitles(kw){var sk=getTKey(),arr=[];try{arr=JSON.parse(localStorage.getItem(sk)||'[]');}catch(e){}return arr.filter(function(x){return x.kw===kw.trim();}).map(function(x){return x.title;});}
+function updateUsageBadge(){
+  // 오늘 생성 횟수
+  var sk=getTKey();
+  var arr=[];
+  try{arr=JSON.parse(localStorage.getItem(sk)||'[]');}catch(e){}
+  var today=new Date().toDateString();
+  var todayArr=arr.filter(function(x){return new Date(x.t).toDateString()===today;});
+  var todayCnt=todayArr.length;
+  // 이번달 생성 횟수
+  var thisMonth=new Date().toISOString().slice(0,7);
+  var monthCnt=arr.filter(function(x){return new Date(x.t).toISOString().slice(0,7)===thisMonth;}).length;
+  // 예상 비용 (Sonnet 4.6 기준 회당 약 10~20원, 중간값 15원으로 계산)
+  var costPerGen=15;
+  var todayCost=todayCnt*costPerGen;
+  var monthCost=monthCnt*costPerGen;
+  var badge=document.getElementById('usage-badge');
+  if(badge){
+    badge.innerHTML='오늘 '+todayCnt+'회 · 약 '+todayCost+'원'
+      +'<span style="color:var(--t3);margin-left:6px">이번달 '+monthCnt+'회 · 약 '+monthCost+'원</span>';
+    // 오늘 3개 넘으면 주의 색상
+    if(todayCnt>=3){
+      badge.style.background='var(--rl)';
+      badge.style.borderColor='#F09595';
+      badge.style.color='var(--red)';
+    } else {
+      badge.style.background='#f0f4f2';
+      badge.style.borderColor='var(--bor)';
+      badge.style.color='var(--t2)';
+    }
+  }
+}
+
+function updateBadge(){var sk=getTKey(),n=0;try{n=JSON.parse(localStorage.getItem(sk)||'[]').length;}catch(e){}document.getElementById('badge-n').textContent=n;document.getElementById('badge').style.display=n>0?'block':'none';}
+
+// 연관키워드
+// 영어 키워드 풀
+var ENG_KW_POOL = [
+  '영어회화', '영어학원', '성인영어', '1:1원어민', '원어민수업',
+  '영어스피킹', '비즈니스영어', '영어회화학원', '원어민영어', '성인영어학원'
+];
+// 선불폰 키워드 풀
+var PHONE_KW_POOL = ['선불폰','알뜰폰','선불유심','앤텔레콤'];
+
+function onRegionSelect(){
+  var sel = document.getElementById('region-select');
+  var regionInput = document.getElementById('region');
+  var val = sel.value;
+
+  // region input 동기화
+  if(val){
+    regionInput.value = val;
+    regionInput.style.display = 'none';
+  } else {
+    regionInput.value = '';
+    regionInput.style.display = 'block';
+  }
+
+  var cat = document.getElementById('cat').value;
+  var kwInput = document.getElementById('kw');
+
+  if(!val) return;
+
+  if(cat === 'phone'){
+    // 선불폰: 지역+선불폰
+    var randPhone = PHONE_KW_POOL[Math.floor(Math.random()*PHONE_KW_POOL.length)];
+    kwInput.value = val + ' ' + randPhone;
+  } else if(cat === 'english'){
+    // 영어회화: 지역+랜덤 영어 키워드
+    var randKw = ENG_KW_POOL[Math.floor(Math.random()*ENG_KW_POOL.length)];
+    kwInput.value = val + ' ' + randKw;
+  }
+
+  if(cat === 'phone' || cat === 'english'){
+    kwSuggestLast = '';
+    selectedSuggestKws = [];
+    clearTimeout(kwSuggestTimer);
+    kwSuggestTimer = setTimeout(function(){
+      fetchKwSuggest(kwInput.value);
+    }, 700);
+  }
+}
+
+function onKwInput(){
+  var kw=document.getElementById('kw').value.trim();
+  if(kwSuggestTimer)clearTimeout(kwSuggestTimer);
+  if(!kw||kw.length<2){document.getElementById('kw-suggest-box').style.display='none';kwSuggestLast='';selectedSuggestKws=[];return;}
+  if(kw===kwSuggestLast)return;
+  kwSuggestTimer=setTimeout(function(){fetchKwSuggest(kw);},700);
+}
+function onKwBlur(){setTimeout(function(){if(!document.getElementById('kw').value.trim())document.getElementById('kw-suggest-box').style.display='none';},200);}
+async function fetchKwSuggest(kw){
+  var apiKey=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk);
+  var box=document.getElementById('kw-suggest-box');
+  if(!apiKey){box.style.display='none';return;}
+  kwSuggestLast=kw;selectedSuggestKws=[];
+  box.style.display='block';
+  document.getElementById('kw-suggest-chips').innerHTML='<span class="kw-suggest-loading">✦ 연관 키워드 분석 중...</span>';
+  var sys='You are a Korean Naver blog SEO keyword expert. Respond ONLY with valid JSON array. No other text.';
+  var user='네이버 블로그 SEO용 메인 키워드 "'+kw+'"의 연관 키워드 8개를 추천해주세요.\n조건:\n- 해당 키워드와 함께 자주 검색되는 연관어\n- 2~8글자 이내\n- 메인 키워드 자체는 제외\n응답 형식: ["키워드1","키워드2","키워드3","키워드4","키워드5","키워드6","키워드7","키워드8"]';
+  try{
+    var raw='';
+    raw=await callClaude(apiKey,sys,user);
+    var s=raw.indexOf('['),e=raw.lastIndexOf(']');
+    var arr=[];
+    if(s>=0&&e>s){try{arr=JSON.parse(raw.slice(s,e+1));}catch(e2){}}
+    if(!arr.length){box.style.display='none';return;}
+    document.getElementById('kw-suggest-chips').innerHTML=arr.map(function(k){
+      var esc=k.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return '<span class="kw-chip" data-kw="'+esc+'" onclick="toggleSuggestKw(this)">'+k+'</span>';
+    }).join('');
+  }catch(e){box.style.display='none';}
+}
+
+
+function toggleSuggestKw(el){
+  var kw=el.getAttribute('data-kw');
+  var subInput=document.getElementById('subkw');
+  var arr=subInput.value.trim()?subInput.value.split(',').map(function(x){return x.trim();}).filter(Boolean):[];
+  var idx=selectedSuggestKws.indexOf(kw);
+  if(idx<0){
+    selectedSuggestKws.push(kw);
+    if(arr.indexOf(kw)<0){arr.push(kw);subInput.value=arr.join(', ');}
+    el.classList.add('added');el.textContent=kw+' ✓';
+    showToast('[v] "'+kw+'" 추가됨','ok');
+  }else{
+    selectedSuggestKws.splice(idx,1);
+    subInput.value=arr.filter(function(x){return x!==kw;}).join(', ');
+    el.classList.remove('added');el.textContent=kw;
+    showToast('"'+kw+'" 제거됨','');
+  }
+}
+
+// ── 패턴 랜덤 풀
+// ══ 패턴 다양화 풀 (매번 다른 글 생성) ══
+var INTROS=[
+  '솔직히 말하면 나도 처음엔 이게 뭔지도 몰랐어요.',
+  '지난주에 친구한테 연락이 왔는데 갑자기 폰이 먹통이 됐다고 하더라고요.',
+  '요즘 이쪽으로 문의가 하루에도 몇 번씩 들어오는 걸 보면,',
+  '갑자기 폰이 터지지 않을 때 제일 당황스럽죠.',
+  '나도 예전에 이거 몰라서 대리점을 세 군데나 돌아다녔던 기억이 나요.',
+  '주변에서 자꾸 같은 질문이 들어오길래 한번 제대로 정리해두려고요.',
+  '생각보다 방법이 간단해서 저도 처음엔 좀 허탈했거든요.',
+  '통신비 아끼는 방법을 찾다가 우연히 알게 됐는데 진짜 괜찮더라고요.',
+  '복잡할 줄 알고 미뤘는데 막상 해보니까 10분도 안 걸렸어요.',
+  '직접 써본 경험 바탕으로 솔직하게 써볼게요.',
+  '이거 모르면 진짜 손해라는 말이 과장이 아니에요.',
+  '알고 나면 왜 진작 안 했을까 싶은 게 있는데 바로 이거예요.',
+  '요금 폭탄 맞고 나서야 알게 됐는데, 미리 알았더라면 좋았을 텐데.',
+  '주변 지인 덕분에 알게 됐는데 생각보다 훨씬 편하더라고요.',
+  '카카오톡으로 공유해달라는 분들이 많아서 블로그에 정리해둡니다.'
+];
+
+// ── 후기형/경험담 후킹 오프닝 풀 (길고 생동감 있게)
+var HOOKING_OPENERS = [
+  '솔직히 이거 진짜 충격이었어요.\n처음엔 그냥 지나치려 했는데 지인이 강력 추천해서 반신반의로 갔다가, 결국 일주일 뒤에 또 찾아가게 됐거든요.',
+  '이걸 왜 이제야 알았을까 싶어서 진짜 억울했어요.\n주변에서 다들 알고 있었는데 저만 몰랐던 거더라고요. 이렇게 좋은 걸.',
+  '처음엔 별 기대 안 했어요. 솔직히요.\n근데 딱 들어서는 순간 분위기에 완전 반해버렸고, 나오면서는 이미 다음 방문 날짜를 잡고 있었어요.',
+  '주변에서 추천받고 반신반의하며 갔는데, 진짜 이건 뭐지 싶었어요.\n기대치를 훌쩍 넘어버려서 오히려 당황스럽기까지 했달까요. 다음 날 또 갔습니다.',
+  '한 입 먹는 순간 진짜 말이 안 나왔어요.\n옆에 있던 친구도 숟가락 멈추고 저 바라보더라고요. 우리 둘 다 눈 마주치고 고개 끄덕였어요.',
+  '이건 꼭 공유해야겠다 싶어서 밥 다 먹기도 전에 글 쓸 준비 시작했어요.\n이런 거 혼자 알기 너무 아깝잖아요. 진심으로.',
+  '이거 아는 사람만 안다고 하더니, 알고 보니 진짜였어요.\n지도 앱에 검색해도 잘 안 나오는 곳인데 찾아가면 이미 사람들이 가득 차 있는 그런 곳이에요.',
+  '솔직히 가격 보고 잠깐 망설였거든요.\n근데 막상 써보고 나서는 오히려 이 가격이 말이 되나 싶었어요. 이렇게 좋은데 이 가격이라고?',
+  '저처럼 이거 몰랐던 분들 정말 꼭 한번 읽어보세요.\n진짜 후회할 수도 있어요. 더 일찍 알았으면 좋았을 걸, 이런 생각이 드는 그런 곳이거든요.',
+  '이거 하나로 오랫동안 고민했던 게 싹 해결됐어요.\n검색 엄청 해보고 여러 군데 알아봤는데 결국 여기가 답이었더라고요. 처음부터 올 걸 그랬어요.'
+];
+var EMPATHY_LINES = [
+  '혹시 저랑 비슷한 고민 해보신 적 있으신가요?\n좋다고들 하는데 막상 어디가 진짜 좋은 건지 몰라서 그냥 포기했던 경험이요.',
+  '이런 상황, 한 번쯤은 겪어보셨을 것 같아요.\n분명히 좋은 곳이 있을 텐데 어떻게 찾아야 할지 막막한 그 기분이요.',
+  '저도 그랬거든요. 처음엔 반신반의했는데 직접 해보고 나서 완전 달라졌어요.\n이렇게 차이가 날 줄은 몰랐거든요. 솔직히.',
+  '아마 저만 이런 생각 한 건 아닐 것 같아서 글 써요.\n검색해도 잘 안 나오고, 주변에 물어봐도 다들 모르는 그런 것들 있잖아요. 바로 이거예요.',
+  '주변에 물어봐도 아무도 제대로 아는 사람이 없어서 제가 직접 발품 팔아 알아봤어요.\n몇 달 고민한 게 이 글 한 번 읽고 다 해결됐으면 좋겠어요.',
+  '처음엔 이게 맞나 싶어서 엄청 망설였는데, 써보고 나서 확신이 생겼어요.\n이럴 거면 진작에 할 걸 그랬다는 생각이 드는 그런 거예요.'
+];
+// 감탄사/맛 표현 풀
+var EXCLAMATION_POOL = [
+  '와', '진짜', '대박', '어머', '헉', '와씨', '솔직히',
+  '완전', '이건 뭐', '말이 안 나와요', '소름이었어요'
+];
+var TASTE_POOL = [
+  '첫 입부터 육즙이 터지는데',
+  '불맛이 제대로 살아있고',
+  '짭쪼름하면서 고소한 뒷맛이',
+  '달콤하면서 살짝 씁쓸한 게 딱 제 취향이었고',
+  '이 깊은 국물 맛은 진짜 잊을 수가 없어요',
+  '겉은 바삭 속은 촉촉한 그 식감이',
+  '기름지지 않고 담백한 맛이 계속 생각나고',
+  '양념이 속까지 배어있어서 한 조각 먹으면',
+  '부드럽게 녹아드는 식감이 진짜 남달랐어요',
+  '처음엔 별로일 줄 알았는데 한 입 먹고 반했어요'
+];
+
+var ENDINGS=[
+  '궁금한 점은 댓글로 남겨주시면 아는 한 답해드릴게요 :)',
+  '도움이 됐으면 좋겠고, 공감이나 댓글은 큰 힘이 됩니다.',
+  '저도 처음엔 몰랐던 건데 이제 주변에 다 알려주고 있어요 ㅎㅎ',
+  '이거 하나로 해결됐으면 좋겠어요. 또 좋은 정보로 돌아올게요!',
+  '직접 써보고 느낀 거라 믿고 따라해보셔도 될 것 같아요.',
+  '더 궁금한 거 있으면 편하게 물어보세요. 최대한 빠르게 답해드릴게요.',
+  '별거 아닌 것 같아도 이런 정보가 누군가한테는 진짜 필요할 수 있으니까요.',
+  '오늘도 읽어주셔서 감사해요. 다음엔 더 유용한 정보 들고 올게요!',
+  '저처럼 헤매는 분들한테 조금이라도 도움이 됐으면 좋겠습니다.',
+  '이 정보가 필요한 분한테 공유해주시면 더 좋겠죠 :)',
+  '여기까지 읽어주신 분들은 이미 절반은 성공한 거예요!',
+  '다음에도 이런 실용적인 정보로 찾아올게요. 그때 또 봬요.'
+];
+var OPENING_STYLES=['question','story','fact','problem','tip','contrast','discovery','empathy'];
+
+// 선불폰 정보 표현 풀 - 같은 정보를 다르게 표현
+var PHONE_CONCEPT_POOL=[
+  '선불폰은 요금을 먼저 정해두고 쓰는 방식이에요. 후불폰이랑 다른 게 신용조회가 아예 없어요. 그래서 KT미납이든 SK연체든 상관없이 누구나 본인 명의로 개통할 수 있거든요. 약정도 없고 위약금도 없어요.',
+  '후불폰은 쓰고 나서 내는 거고, 선불폰은 요금제 선택하고 바로 쓰는 거예요. 신용등급 조회가 없으니까 대리점에서 거절당한 분들도 가능해요. 미납·연체·정지 다 상관없어요.',
+  '선불폰의 핵심은 조건이 없다는 거예요. SK·KT·LG 3사 모두 연체가 있어도, 폰이 정지됐어도 신분증 하나만 있으면 바로 개통돼요. 쓰던 중고폰이나 자급제폰 그대로 써도 되고요.',
+  '통신사 대리점에서 거절당한 분들이 가장 많이 찾는 게 선불폰이에요. 약정·위약금 없고 신용조회도 없어서 부담이 없거든요. 세컨폰 용도로도 많이 써요.',
+  '선불폰이 주목받는 이유는 간단해요. 미납이 있어도 되고, 약정도 없고, 기존에 쓰던 폰 그대로 쓸 수 있어요. 당근이나 중고나라에서 구한 중고폰도 유심만 꽂으면 바로 돼요.'
+];
+
+var PHONE_SIM_POOL=[
+  '유심은 망에 따라 종류가 달라요.\n\n📱 KT망 유심\n- KT 바로유심: 8,800원 / 이마트24·CU·GS25·세븐일레븐 구매 가능\n- 주의: KT 미납 이력 있으면 KT망 가입 불가 → LG망으로\n\n📱 LG U+망 유심\n- LG 모두의원칩: 8,800원 / 이마트24·스토리웨이·배민B마트\n- 다이소: LG국민유심칩 5,000원 (저렴하게 구매 가능)\n- LG망은 SK·KT·LG 3사 모두 연체 있어도 가입 가능\n\n준비물: 신분증(운전면허증 or 주민등록증) + 간편인증서(카카오·토스·PASS·신한·국민 중 1개)',
+  'KT망이냐 LG망이냐 먼저 정해야 해요.\n\nKT망 → KT 바로유심 (8,800원): CU, GS25, 이마트24, 세븐일레븐에서 구매\n단, KT 미납 있으면 개통 불가. 이럴 땐 LG망으로 가세요.\n\nLG U+망 → LG 모두의원칩 (8,800원): 이마트24, 스토리웨이, 배민B마트\n다이소에서 LG국민유심칩 5,000원에도 살 수 있어요.\nLG망은 SK·KT·LG 3사 연체 있어도 모두 가입 가능해서 조건이 가장 넓어요.',
+  '유심 선택 포인트는 딱 하나예요. KT 미납 있으면 KT망은 안 돼요.\n\n【KT망】 바로유심 8,800원 - 편의점(CU·GS25·이마트24) 구매\n【LG망】 모두의원칩 8,800원 - 이마트24·스토리웨이·배민B마트\n【LG망 저렴】 다이소 LG국민유심칩 5,000원\n\nLG U+ 망은 SK, KT, LG 3사 모두 연체나 미납 있어도 선불폰 가입이 돼요. 조건이 가장 넓어서 애매하면 LG망 추천드려요.',
+  '먼저 KT망 쓸지 LG망 쓸지 결정하세요.\n\nKT망 유심: KT 바로유심 (8,800원) - CU, GS25, 이마트24, 세븐일레븐\nLG망 유심: LG 모두의원칩 (8,800원) - 이마트24, 스토리웨이, 배민B마트\nLG망 저렴: 다이소 LG국민유심칩 (5,000원)\n\n중요한 거 하나. KT 미납·연체 이력이 있으면 KT망 개통이 안 돼요. 그럴 땐 LG U+ 망으로 가야 해요. LG망은 SK·KT·LG 3사 연체 있어도 선불폰 가입이 되거든요.',
+  '유심 종류는 망에 따라 달라요.\n\nKT망 쓸 분: 편의점에서 KT 바로유심 (8,800원) 사면 돼요. CU, GS25, 이마트24 다 있어요.\nLG망 쓸 분: LG 모두의원칩 (8,800원) / 아니면 다이소에서 LG국민유심칩 (5,000원)으로 더 저렴하게.\n\nKT 요금 미납이 있는 분이라면 KT망은 가입이 막혀요. 이럴 때 LG U+망으로 가면 되는데, LG망은 SK·KT·LG 3사 연체가 있어도 선불폰 가입이 가능해요.'
+];
+
+var PHONE_PLAN_POOL=[
+  '앤텔레콤 요금제는 KT망과 LG망 둘 다 비슷하게 구성되어 있어요.\n\n요금제명 | 월정액 | 기본데이터 | 소진후속도 | 특징\nLTE기본1 | 12,100원 | 300MB | - | 인증용/최저가\nLTE396 | 39,600원 | 10.3GB | 3Mbps 무제한 | 가성비 1위\nLTE459 | 45,900원 | 20.3GB | 3Mbps 무제한 | 데이터 여유\nLTE770 | 77,000원 | 10GB+일2GB | 1Mbps | 고용량\nLTE비디오 | 85,900원 | 100GB | 5Mbps | 동영상 헤비유저\n\n3Mbps는 유튜브 SD화질, 카카오톡, 네이버 등 일상적인 사용에 문제없는 속도예요.',
+  '앤텔레콤 요금제 중 제일 많이 선택하는 건 LTE396이에요. 월 39,600원에 10.3GB 쓰고 나서도 3Mbps로 계속 터지거든요.\n\n속도 참고로 말씀드리면\n- 3Mbps: 유튜브 SD화질, 카카오톡, 웹서핑 가능\n- 5Mbps: 유튜브 HD화질 가능\n- 1Mbps: 카카오톡, 웹서핑만 가능\n\n전화·문자만 필요하면 LTE기본1(12,100원), 데이터 넉넉히 쓰고 싶으면 LTE459(45,900원), 영상 많이 보면 LTE비디오(85,900원) 가면 돼요.',
+  '요금제 고를 때 핵심은 소진 후 속도예요.\n\nLTE396 (39,600원): 10.3GB + 이후 3Mbps 무제한 → 가성비 최고\nLTE459 (45,900원): 20.3GB + 이후 3Mbps 무제한 → 데이터 좀 더 여유\nLTE770 (77,000원): 10GB + 하루 2GB 추가 + 이후 1Mbps\nLTE비디오 (85,900원): 100GB + 이후 5Mbps → 유튜브 HD 헤비유저\nLTE기본1 (12,100원): 300MB → 인증용 or 세컨폰\n\nLG망도 동일한 요금제 구성이에요.',
+  '요금제는 이렇게 보시면 돼요.\n\n가장 인기: LTE396 (39,600원) - 10.3GB 기본 + 소진 후 3Mbps 무제한\n데이터 더: LTE459 (45,900원) - 20.3GB + 소진 후 3Mbps\n고용량: LTE770 (77,000원) - 10GB + 하루 추가 2GB\n영상특화: LTE비디오 (85,900원) - 100GB + 5Mbps\n인증전용: LTE기본1 (12,100원) - 300MB\n\n3Mbps면 유튜브 SD, 카카오톡, 웹서핑은 충분해요. KT망·LG망 동일 요금제 적용.',
+  '앤텔레콤 요금제 한눈에 정리\n\nLTE기본1: 12,100원 / 300MB / 인증·세컨폰용\nLTE396: 39,600원 / 10.3GB + 3Mbps무제한 / 가성비왕\nLTE459: 45,900원 / 20.3GB + 3Mbps무제한 / 데이터여유\nLTE770: 77,000원 / 10GB+일2GB + 1Mbps / 고용량\nLTE비디오: 85,900원 / 100GB + 5Mbps / 영상헤비\n\n3Mbps = 유튜브SD·카카오톡·웹서핑 OK / 5Mbps = 유튜브HD OK / 1Mbps = 카톡·웹서핑만 OK'
+];
+
+var PHONE_WEB_STEPS = "\n[웹 플랫폼 셀프 개통 절차] - 매출자코드 없을 때 적용\n접수 가능 시간: 오전 8시~오후 9시 50분 / 평일·주말·공휴일 365일\n\n① 홈페이지 이동\n앤플랫폼 사이트에 접속한 후, 구입한 유심 종류에 맞게 KT 또는 LG 개통하기를 클릭해 접수를 시작합니다.\n\n② 유형 체크\n신규 → 내국인 순서대로 클릭하고, 기존에 사용하던 번호를 입력한 후 다음으로 넘어갑니다.\n\n③ 안면 인증\n7월 1일 의무화 이전까지는 안면 인증 건너뛰기를 클릭하면 됩니다.\n\n④ 간편 인증서 본인확인\n카카오·토스·PASS·신한·국민 중 보유하고 있는 수단으로 본인 확인을 진행합니다.\n\n⑤ 유심 정보 등록\nKT망: 8982로 시작하는 19자리 숫자 입력 (영문 F 제외)\nLG U+망: 모델명(U8680, K3630 등 5자리) + 일련번호(8자리 숫자)\n\n⑥ 요금제 선택\n사용량과 이용 목적에 맞춰 화면에서 요금제를 선택합니다.\n\n⑦ 사전 체크\n온라인 신청 가능 여부 확인을 위해 사전 체크를 진행합니다.\n\n⑧ 번호 예약\n원하는 뒷번호 4자리를 조회하고 채번된 번호 중 하나를 선택해 예약합니다.\n\n⑨ 개통 신청 완료\n가입 정보를 기입하고 '개통 신청' 버튼을 클릭합니다. 평균 3~5분 이내로 단말기 활성화 처리가 완료됩니다.\n";
+var PHONE_APP_STEPS_TPL = '\n[앤텔레콤 멤버십 앱 셀프 개통 절차] - 매출자코드 있을 때 적용\n접수 가능 시간: 오전 8시~오후 9시 50분 / 365일\n\n① 전용 앱 설치\n플레이스토어 또는 앱스토어에서 [앤텔레콤 멤버십]을 검색합니다.\nKT망 쓸 분은 KT망, LG망 쓸 분은 LG망 앱으로 설치하세요.\n\n② 태블릿소유자회원번호 입력 ({DEALER})\n앱 실행 후 [신규 개통]을 누릅니다.\n태블릿소유자회원번호 입력란에 {DEALER}을 입력합니다.\n담당자 확인 후 최종 승인을 진행해주는 담당자 번호이니 정확히 입력해주세요.\n\n③ 안면 인증\n연락 가능한 번호를 입력합니다.\nQR 또는 문자 링크로 접속 후 PASS·브라우저로 안면 인식을 진행합니다.\n7월 1일 의무화 전까지는 건너뛰기도 가능합니다.\n\n④ 본인 인증\n유형 화면에서 [선불]을 클릭합니다.\n토스·카카오·PASS·국민·신한 간편인증서 중 보유하고 있는 것으로 전자서명합니다.\n\n⑤ 고객 정보 입력\n주민등록증 또는 운전면허증의 정보를 참고해 고객 정보를 정확히 입력합니다.\n\n⑥ 번호 선택\n원하는 뒷번호 4자리를 조회한 후 원하는 번호를 선택합니다.\n\n⑦ 유심(USIM) 등록\nKT망: 8982로 시작하는 19자리 숫자 입력 (영문 F 제외)\nLG U+망: 모델코드(U8680·K3630 등 5자리) + 일련번호(8자리)\n\n⑧ 요금제 선택\nLTE 396 (39,600원/10.3GB+3Mbps 무제한)이 가장 인기 있는 요금제입니다.\n실속형~무제한까지 다양하게 구성되어 있으니 사용 패턴에 맞게 선택하세요.\n\n⑨ 승인 요청 및 개통 완료\n고객명과 서명을 입력하면 접수가 완료됩니다.\n담당자에게 승인 요청을 하면 평균 3~5분 이내 개통이 완료됩니다.\n';
+
+// dealer 주입해서 실제 절차 문자열 생성
+function getPhoneSteps(dealer){
+  if(dealer){
+    return PHONE_APP_STEPS_TPL.replace(/{DEALER}/g, dealer);
+  } else {
+    return PHONE_WEB_STEPS;
+  }
+}
+
+
+// 문장 구조 패턴 풀 (소제목 스타일)
+var SUBTITLE_STYLES=[
+  'number',    // 1. 2. 3.
+  'emoji',     // 이모지로 시작
+  'question',  // 질문형
+  'keyword'    // 핵심 키워드형
+];
+
+var SYNONYM_PHONE={
+  '개통':'연결,등록,신청,뚫기,터뜨리기',
+  '저렴한':'합리적인,가성비 좋은,부담없는,착한,알뜰한',
+  '추천':'권장,소개,권하는,추천드리는',
+  '간단하게':'쉽게,빠르게,손쉽게,어렵지 않게,간편하게',
+  '확인하다':'체크하다,살펴보다,알아보다,점검하다',
+  '사용하다':'쓰다,활용하다,이용하다,써먹다',
+  '방법':'방식,절차,과정,순서,노하우',
+  '준비물':'필요한 것,챙길 것,준비사항,준비해야 할 것',
+  '선불폰':'알뜰폰,선불유심폰,선불요금제폰,비대면개통폰',
+  '개통절차':'개통방법,개통순서,개통과정,신청방법',
+  '비대면':'온라인,앱으로,셀프로,직접',
+  '요금제':'플랜,통신요금,월정액,데이터플랜'
+};
+
+function getRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function getRandomInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+// 오늘 발행 횟수 체크 (하루 3개 제한)
+function getTodayCount(){
+  var sk=getTKey();
+  var arr=[];
+  try{arr=JSON.parse(localStorage.getItem(sk)||'[]');}catch(e){}
+  var today=new Date().toDateString();
+  return arr.filter(function(x){return new Date(x.t).toDateString()===today;}).length;
+}
+
+function getRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function getRandomInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,reviewData){
+  var catLabel={phone:'선불폰/알뜰폰',english:'영어회화/학원',food:'음식/맛집',product:'제품리뷰',travel:'여행/카페',custom:'일반'}[cat]||'일반';
+  var subList=subkw?subkw.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
+  if(suggestKws&&suggestKws.length)suggestKws.forEach(function(k){if(subList.indexOf(k)<0)subList.push(k);});
+  var isPhone=cat==='phone', isEnglish=cat==='english';
+
+  var introStyle=getRandom(OPENING_STYLES);
+  var randomIntro=getRandom(INTROS);
+  var randomEnding=getRandom(ENDINGS);
+  var charTarget=getRandomInt(1540,1920);
+  var subtitleStyle=getRandom(SUBTITLE_STYLES);
+
+  var structureGuide='';
+  if(subtitleStyle==='number') structureGuide='소제목은 "1. 2. 3." 숫자형으로';
+  else if(subtitleStyle==='emoji') structureGuide='소제목은 이모지로 시작 (예: 📱 💡 ✅ 등 매번 다른 이모지)';
+  else if(subtitleStyle==='question') structureGuide='소제목을 질문 형태로 (예: "유심은 어디서 사야 해?" 형식)';
+  else structureGuide='소제목은 핵심 키워드만 짧게 (예: "편의점 유심", "개통 순서")';
+
+  var usedNote='', patternNote='';
+  if(usedTitles&&usedTitles.length>0){
+    usedNote='\n[이미 작성한 제목 기록 - 아래와 다른 각도/구조로 작성]\n'+usedTitles.slice(0,10).map(function(t,i){return(i+1)+'. '+t;}).join('\n')+'\n';
+    patternNote='\n[패턴 교란 필수]\n- 위 기존 글들과 도입 첫 문장 다르게\n- 소제목 스타일: '+structureGuide+'\n- 기존 글에서 쓴 표현 재사용 금지\n- 단락 순서도 다르게 (유심먼저/요금제먼저/절차먼저 등 매번 바꾸기)\n- 문장 길이 패턴 다양하게 (짧은+긴 혼합)\n';
+  } else {
+    patternNote='\n[스타일]\n소제목 스타일: '+structureGuide+'\n';
+  }
+
+  var introGuide='';
+  if(introStyle==='question') introGuide='도입부: 독자에게 공감가는 질문으로 시작';
+  else if(introStyle==='story') introGuide='도입부: "'+randomIntro+'" 이런 느낌으로 개인 경험담처럼 시작';
+  else if(introStyle==='fact') introGuide='도입부: 구체적 수치나 현실 상황 묘사로 시작';
+  else if(introStyle==='problem') introGuide='도입부: 독자가 겪는 문제/불편함 공감으로 시작';
+  else if(introStyle==='contrast') introGuide='도입부: 기존 상식과 반전 대비로 시작';
+  else if(introStyle==='discovery') introGuide='도입부: 새로운 발견/깨달음 형태로 시작';
+  else if(introStyle==='empathy') introGuide='도입부: 독자 상황에 깊이 공감하며 시작';
+  else introGuide='도입부: 핵심 꿀팁 예고로 호기심 유발하며 시작';
+
+  // ── 소제목 표현 풀 (자연스러운 한국인 표현으로)
+  var simStyles=['편의점 유심 종류','유심 어디서 사?','유심 사는 곳','편의점 유심 총정리'];
+  var planStyles=['요금제 종류','데이터 요금제 정리','요금제 뭐가 좋아?','데이터 요금제 종류','월요금 얼마야?'];
+  var stepStyles=['개통 순서','앱으로 개통하기','개통 어떻게 해?','비대면 개통 방법','직접 해보니까'];
+
+  var phoneInfo='';
+  if(isPhone){
+    var conceptExpr=getRandom(PHONE_CONCEPT_POOL);
+    var simExpr=getRandom(PHONE_SIM_POOL);
+    var planExpr=getRandom(PHONE_PLAN_POOL);
+    var stepExpr=getPhoneSteps(dealer);
+    var dealerNote=dealer?'태블릿소유자회원번호: '+dealer+' (본문에 반드시 포함)':'';
+    phoneInfo='\n\n[선불폰 필수 구성]\n아래 참고 내용을 절대 그대로 복사하지 말 것. 같은 정보를 완전히 다른 일상적인 문장으로 풀어서 쓸 것.\n\n섹션1 개념 참고: '+conceptExpr+'\n\n섹션2 소제목"'+getRandom(simStyles)+'" 참고: '+simExpr+'\n\n섹션3 소제목"'+getRandom(planStyles)+'" 참고: '+planExpr+'\n\n섹션4 개통절차 (아래 ①~⑨ 절차를 반드시 순서대로 포함. 각 단계 설명 후 독자가 헷갈릴 수 있는 부분엔 부연설명 자연스럽게 추가):\n'+stepExpr+'\n접수시간: 오전 8시~오후 9시50분, 365일\n★ 절차는 고정이지만 각 단계 뒤에 "처음 하시는 분들은 ~", "이 부분에서 막히는 경우가 많은데" 같은 독자 친화적 부연설명 추가 권장\n';
+  }
+
+  var engInfo='';
+  if(isEnglish){
+    engInfo='\n\n[영어회화 필수구성]\n2:1 관리시스템(원어민강사+한국인플래너) 자연스럽게 소개. 영어예문+해석 3개 이상. 강한 CTA 마무리.\n';
+  }
+
+  // ── 체험단 (음식/제품/여행) 프롬프트
+  var reviewInfo='';
+  var isReview=(cat==='food'||cat==='product'||cat==='travel');
+  if(isReview && reviewData){
+    var refs=[];
+    if(reviewData.ref1) refs.push('【레퍼런스1】\n'+reviewData.ref1.slice(0,600));
+    if(reviewData.ref2) refs.push('【레퍼런스2】\n'+reviewData.ref2.slice(0,600));
+    if(reviewData.ref3) refs.push('【레퍼런스3】\n'+reviewData.ref3.slice(0,600));
+    var catName={food:'음식/맛집',product:'제품리뷰',travel:'여행/카페'}[cat];
+    reviewInfo='\n\n['+catName+' 체험단 글 작성 지침]\n'
+      +'아래 레퍼런스 글들의 문체/구조를 참고하되 내용은 완전히 새롭게 재창작할 것. 절대 복사 금지.\n\n'
+      +(refs.length>0?refs.join('\n\n'):'')
+      +(reviewData.guide?'\n\n【업체 가이드 / 필수 포함 내용】\n'+reviewData.guide:'')
+      +'\n\n[재창작 규칙]\n'
+      +'- 레퍼런스의 소제목 구조, 문체 톤, 단락 흐름 참고\n'
+      +'- 업체 가이드에 명시된 내용/특징은 반드시 자연스럽게 포함\n'
+      +'- 레퍼런스 문장 그대로 쓰지 말고 완전히 다른 표현으로 재작성\n'
+      +'- 실제 체험한 것처럼 생생하게, 장점+살짝 아쉬운 점 균형있게\n'
+      +'- 마지막에 "이런 분들께 추천" 또는 총평으로 마무리\n';
+  }
+
+  var synonymGuide='[동의어 활용 - 같은 단어 반복 금지]\n';
+  Object.keys(SYNONYM_PHONE).forEach(function(k){
+    var opts=SYNONYM_PHONE[k].split(',');
+    synonymGuide+='"'+k+'" → '+opts[getRandomInt(0,opts.length-1)]+' 등으로\n';
+  });
+
+  // ── 핵심: 실제 한국인 말투 예시 제공
+  var toneExamples='[실제 한국인 말투 예시 - 이런 식으로 써야 함]\n'
+    +'좋은 예: "당근이나 중고나라에서 구한 중고폰도 유심만 꽂으면 바로 돼요. 즉 과정 자체가 단순하다는 거죠."\n'
+    +'좋은 예: "월 39,600원인데 데이터 10.3GB 쓰고 나서도 3Mbps로 계속 터져요. 유튜브 SD화질은 문제없고요."\n'
+    +'좋은 예: "CU나 GS25 가서 바로유심 달라고 하면 돼요. 8,800원이에요."\n'
+    +'나쁜 예(절대 금지): "디바이스에 칩을 삽입하시면", "요금제 선택법", "개통 절차를 안내드립니다", "~입니다 ~합니다" 딱딱한 문어체\n'
+    +'나쁜 예(절대 금지): "중고폰판매로 구한", "데이터 요금제 선택법", "준비 과정 자체가 단순합니다"\n'
+    +'핵심: 카카오톡으로 친구한테 설명하듯이. 짧고 직접적으로. "~해요" "~거예요" "~이거든요" "~더라고요" 위주.\n';
+
+
+  // ── 톤별 페르소나 완전 분리
+  var sys='', toneGuide='', forbiddenWords='';
+
+  if(tone==='친근한'){
+    // 페르소나: 동네 언니/오빠. 경험 나눠주는 느낌
+    sys='너는 동네 친한 언니/오빠야. 블로그에 생활 정보 올리는데 항상 직접 해보고 씀. 아는 사람한테 카카오톡으로 알려주듯 편하게 써. 반드시 JSON만 출력해. content 내 큰따옴표는 \\" 이스케이프. 코드블록 금지. 첫 글자 {.';
+    toneGuide='문체: "~해요" "~이거든요" "~더라고요" "~잖아요" 위주. 중간중간 "근데" "사실" "솔직히" "진짜" 자연스럽게 섞기. 문장 짧게 끊기. 예: "CU 가면 있어요. 8,800원이에요. 그냥 달라고 하면 돼요."';
+    forbiddenWords='"~입니다" "~드립니다" "디바이스" "삽입" "절차" "선택법" "활용" 금지';
+  }
+  else if(tone==='정보형'){
+    // 페르소나: IT 블로거 스타일. 목차형 구조로 하나씩 풀어 설명
+    sys='너는 네이버 블로그 인플루언서야. 제품/서비스 정보를 번호 소제목으로 나눠서 하나씩 친절하게 설명해줌. "~인데요" "~더라고요" "~잖아요" "~할 수 있습니다" 섞어 쓰되 너무 구어체도 아니고 너무 딱딱하지도 않은 중간 톤. 반드시 JSON만 출력해. content 내 큰따옴표 \\" 이스케이프. 코드블록 금지. 첫 글자 {.';
+    toneGuide='[정보형 블로거 문체 가이드]\n'
+      +'- 구조: 번호 소제목(1. 2. 3.)으로 나눠서 각 섹션마다 하나의 특징/정보 집중 설명\n'
+      +'- 문체: "~인데요" "~더라고요" "~잖아요" "~할 수 있습니다" "~이기 때문입니다" 자연스럽게 혼용\n'
+      +'- 도입: 이 글에서 다룰 내용을 간단히 예고하며 시작. 예: "오늘은 ~에 대해서 자세하게 알아보겠습니다"\n'
+      +'- 각 소제목 뒤: 해당 특징 설명 후 "~덕분에" "~때문에" "~인 만큼" 이유/효과 연결\n'
+      +'- 수치 구체적으로: "월 39,600원" "10.3GB" "3Mbps" "365일 가능" "5분 이내"\n'
+      +'- 중간중간 독자 공감: "~하시는 분들" "~고민하셨던 분들" "막상 해보면"\n'
+      +'- 마지막 섹션: "지금까지 ~에 대해 알아보았습니다" + 총평으로 마무리\n'
+      +'- 좋은 예: "가장 큰 장점은 통신 연체나 미납이 있어도 본인 명의로 개통이 가능하다는 점인데요. 약정 기간도 없어 위약금 부담이 없으며, 쓰던 기계나 중고폰을 그대로 활용할 수 있어 매우 경제적입니다."\n'
+      +'- 좋은 예: "복잡해 보이지만 막상 해보면 5분도 걸리지 않을 만큼 간단합니다."\n';
+    forbiddenWords='"안녕하세요 IT블로거입니다" 도입부 금지 (도입부는 주제 바로 설명으로 시작) / "디바이스" "삽입" "선택법" 번역투 금지';
+  }
+  else if(tone==='경험담'){
+    var hooking = getRandom(HOOKING_OPENERS);
+    var empathy = getRandom(EMPATHY_LINES);
+    var exclaim = getRandom(EXCLAMATION_POOL);
+    sys='너는 실제로 써보고 블로그에 후기 남기는 30대야. 광고처럼 보이지 않게 솔직하게 씀. 생동감 넘치는 감탄사, 맛/감각 표현 잘 살려서 독자가 현장에 있는 느낌 들게 씀. JSON만 출력해.';
+    toneGuide='[경험담 문체 가이드]\n'
+      +'★ 첫 문장 반드시 후킹: "'+hooking+'" 이런 식으로 독자 시선 확 잡기\n'
+      +'★ 두 번째 문장 공감: "'+empathy+'" 이런 식으로 독자 감정 연결\n'
+      +'★ 필수 구조 (이 순서대로):\n'
+      +'  1) 후킹+공감 도입\n'
+      +'  2) 매장/업체 소개 - 위치, 상호, 분위기 간단히\n'
+      +'  3) 외관/실내 인테리어 묘사 - "도착하자마자 ~", "외관이 ~", "내부는 ~" 형식으로 생생하게\n'
+      +'  4) 핵심 체험/사용 후기 (감탄사+감각 표현 풍부하게)\n'
+      +'  5) 살짝 아쉬운 점 1개 ("딱 하나 아쉬운 게 있다면...")\n'
+      +'  6) 마무리 + 이런 분께 추천\n'
+      +'- 인테리어 표현 예시: "도착하자마자 여기가 맞나 싶었어요", "외관이 완전 카페 같았는데", "내부는 우드톤으로 따뜻한 느낌", "테이블 간격도 넉넉해서 편안했어요"\n'
+      +'- 감탄사: "'+exclaim+'", "진짜", "완전", "대박", "어머" 자연스럽게\n'
+      +'- 감각 표현: 음식이면 "첫 입부터 육즙이 터지는데", "불맛이 제대로", "국물이 시원하고 구수한데"\n'
+      +'- 짧은 문장 + 여백: 한 문장씩 끊어서 리듬감 있게\n'
+      +'- 마무리: 이 경험이 독자에게 도움이 됐으면 하는 따뜻한 마무리\n';
+    forbiddenWords='"~입니다" "~드립니다" "디바이스" "삽입" "선택법" "안내" / 첫 문장에 "안녕하세요" 절대 금지';
+  }
+  else if(tone==='전문가'){
+    // 페르소나: 통신/IT 분야 전문 블로거. 분석형
+    sys='너는 통신·IT 분야 10년 경력 전문 블로거야. 표면적 정보보다 한 발 더 들어가서 왜 그런지, 어떤 상황에서 유리한지 분석해줌. 독자가 스스로 판단할 수 있도록 장단점 균형 있게 씀. 반드시 JSON만 출력해. content 내 큰따옴표 \\" 이스케이프. 코드블록 금지. 첫 글자 {.';
+    toneGuide='"왜 그런지" 이유/배경 설명. 상황별 추천: "미납이 있다면 ~" "데이터 많이 쓴다면 ~". 수치 비교: "타사 대비 ~" "기존 3단계와 달리". 주의사항 명확하게. 문체: "~입니다" "~합니다" "~인데요" 혼용. 마무리: 어떤 분들에게 추천인지 구체적으로.';
+    forbiddenWords='"안녕하세요" "알아보겠습니다" 식상한 도입 금지 / "디바이스" "삽입" "선택법" 번역투 금지';
+  }
+  else if(tone==='후기형'){
+    var hooking2 = getRandom(HOOKING_OPENERS);
+    var empathy2 = getRandom(EMPATHY_LINES);
+    var taste = getRandom(TASTE_POOL);
+    sys='너는 네이버 블로그 인플루언서야. 독자가 첫 문장부터 멈추게 만드는 후킹 오프닝으로 시작해서, 공감 → 현장 묘사 → 감탄 → 분석 → 추천 순서로 씀. 감탄사와 감각 표현으로 생동감 넘치게. 반드시 JSON만 출력해. content 내 큰따옴표 \\" 이스케이프. 코드블록 금지. 첫 글자 {.';
+    toneGuide='[후기형 문체 가이드]\n'
+      +'★ 첫 문장 후킹 (필수): "'+hooking2+'" 이런 강렬한 한 문장으로 시작\n'
+      +'★ 두 번째 문장 공감 (필수): "'+empathy2+'" 이런 식으로 독자 감정 연결\n'
+      +'★ 필수 구조 (반드시 이 순서):\n'
+      +'  1) 후킹 문장 + 공감 문장 (짧고 강렬하게)\n'
+      +'  2) ■ 매장 기본 정보 - 상호명, 위치, 영업시간, 주차 등 정보형으로\n'
+      +'  3) ■ 외관/접근성 - "도착했을 때 첫 느낌", 찾아가는 법, 외부 분위기\n'
+      +'  4) ■ 실내 인테리어 - 내부 분위기, 인테리어 스타일, 좌석, 공간감 생생하게 묘사\n'
+      +'  5) ■ 핵심 체험/메뉴 후기 (감탄+감각 표현 풍부하게, "'+taste+'" 이런 표현 활용)\n'
+      +'  6) ■ 아쉬운 점 or 꿀팁 (진짜 후기처럼 보이게)\n'
+      +'  7) 마무리 총평 + "이런 분들께 추천해요" 1.2.3. 리스트\n'
+      +'- 인테리어/분위기 묘사 예시: "도착하자마자 여기가 식당이 맞나 싶었어요", "외관이 완전 카페 같은 느낌인데", "내부는 우드톤으로 따뜻하고 테이블 간격도 넉넉해서", "조명이 포근해서 오래 있고 싶은 공간"\n'
+      +'- 문체: "~더라고요" "~이었어요" "~싶었어요" "~이었는데" 혼용\n'
+      +'- 짧은 문장 + 여백: 레퍼런스처럼 1~2문장씩 끊어서 리듬감\n'
+      +'- 감탄사: "와", "진짜", "완전", "어머", "대박이다" 자연스럽게\n'
+      +'- 소제목: ■ 기호 사용\n'
+      +'- 이모지 적당히: 👇 ✓ 😊 등\n';
+    forbiddenWords='"안녕하세요" 오프닝 절대 금지 / "디바이스" "삽입" "선택법" "절차를 안내" 번역투 금지';
+  }
+  else {
+    // 기본(친근한과 동일)
+    sys='너는 블로그 파워블로거야. 친구한테 설명하듯 자연스럽게 써. 반드시 JSON만 출력해. content 내 큰따옴표는 \\" 이스케이프. 코드블록 금지. 첫 글자 {.';
+    toneGuide='문체: "~해요" "~이거든요" "~더라고요" 위주. 자연스럽고 편안하게.';
+    forbiddenWords='"~입니다" "디바이스" "삽입" "절차" 금지';
+  }
+
+  var user='아래 조건으로 네이버 블로그 글 작성. JSON만 출력.\n\n카테고리: '+catLabel+'\n메인키워드: '+kw+'\n서브키워드: '+(subList.join(', ')||'없음')+'\n지역: '+(region||'없음')+'\n글 톤: '+tone+'\n특이사항: '+(dir||'없음')+'\n'+usedNote+patternNote+'\n'+toneGuide+'\n글 스타일:\n'+introGuide+'\n맺음말: "'+randomEnding+'" 느낌으로\n목표 글자수: 공백포함 '+charTarget+'자 내외\n'+phoneInfo+engInfo+reviewInfo+'\n절대 준수 규칙:\n1. 제목: "'+kw+'" 반드시 포함 + 35자 이내 (SEO 필수)\n2. 메인키워드 "'+kw+'" 본문에서 정확히 3회만 사용 - 2회도 안되고 4회도 절대 금지\n3. 서브키워드 각각 1~5회 이내 (0회도 안됨 - 반드시 본문에 자연스럽게 포함)\n4. ## ** 마크다운 절대 금지\n5. '+forbiddenWords+'6. 단락 사이 빈줄 1개\n7. 숫자/수치 최소 3개 이상 (요금, 날짜, 시간, 거리 등 구체적 수치)\n8. 공백포함 반드시 1,500자 이상 2,000자 미만 - 작성 후 스스로 글자 세어서 부족하면 보충\n9. 소제목 구조화 필수 (숫자 or 이모지 or ■ 소제목으로 단락 구분)\n10. AI 티 나는 표현 절대 금지\n11. 참고 내용 그대로 복사 금지\n'+synonymGuide+'\n출력(JSON만, 첫글자{, content 내 큰따옴표 반드시 \\" 이스케이프): {"title":"제목","content":"본문('+charTarget+'자내외)","hashtags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8","태그9","태그10"]}';
+
+  return{sys:sys,user:user};
+}
+
+
+
+
+
+
+// ── 편집 모드
+var _editMode = false;
+
+function toggleEditMode(){
+  _editMode = !_editMode;
+  var btn = document.getElementById('edit-mode-btn');
+  var titleView = document.getElementById('restitle');
+  var titleEdit = document.getElementById('edit-title');
+  var bodyView = document.getElementById('resbody');
+  var bodyEdit = document.getElementById('edit-body');
+
+  if(_editMode){
+    // 편집 모드 진입
+    btn.textContent = '✓ 완료';
+    btn.className = 'edit-btn on';
+    // 현재 내용을 편집창에 복사
+    titleEdit.value = titleView.textContent;
+    bodyEdit.value = bodyView.textContent;
+    // 전환
+    titleView.style.display = 'none';
+    titleEdit.style.display = 'block';
+    bodyView.style.display = 'none';
+    bodyEdit.style.display = 'block';
+    titleEdit.focus();
+  } else {
+    // 편집 완료 - 보기 모드로
+    btn.textContent = '✏ 편집';
+    btn.className = 'edit-btn off';
+    // 편집 내용 반영
+    var newTitle = titleEdit.value.trim();
+    var newBody = bodyEdit.value.trim();
+    titleView.textContent = newTitle;
+    bodyView.textContent = newBody;
+    titleView.style.display = 'block';
+    titleEdit.style.display = 'none';
+    bodyView.style.display = 'block';
+    bodyEdit.style.display = 'none';
+    // cur 업데이트
+    if(cur){
+      cur._cleanTitle = newTitle;
+      cur._clean = newBody;
+    }
+    showToast('[v] 편집 내용이 저장됐어요!', 'ok');
+    // 품질 리포트 재분석
+    onEditChange();
+  }
+}
+
+function onEditChange(){
+  // 편집 중 실시간으로 품질 리포트 업데이트
+  if(!cur) return;
+  var titleEl = _editMode ? document.getElementById('edit-title') : document.getElementById('restitle');
+  var bodyEl  = _editMode ? document.getElementById('edit-body')  : document.getElementById('resbody');
+  var title = titleEl ? (titleEl.value !== undefined ? titleEl.value : titleEl.textContent) : '';
+  var body  = bodyEl  ? (bodyEl.value  !== undefined ? bodyEl.value  : bodyEl.textContent)  : '';
+
+  var cc = body.length;
+  var mainCount = getKwCount(body, cur.kw);
+  var subList = cur.subkw ? cur.subkw.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+
+  // renderQualityReport 재호출
+  renderQualityReport(cur, body, title, cc, mainCount, subList);
+
+  // 통계도 실시간 업데이트
+  var cn = body.replace(/\s/g,'').length;
+  var ok = cc>=1500&&cc<2000;
+  var goalTxt = ok?'✓ 달성':(cc<1500?'✗ '+(1500-cc)+'자 부족':'✗ '+(cc-2000)+'자 초과');
+  var statsEl = document.getElementById('stats');
+  if(statsEl) statsEl.innerHTML =
+    '<div class="stat"><div class="stat-l">공백 포함</div><div class="stat-v '+(ok?'ok':'ng')+'">'+cc.toLocaleString()+'자</div></div>'+
+    '<div class="stat"><div class="stat-l">공백 제외</div><div class="stat-v">'+cn.toLocaleString()+'자</div></div>'+
+    '<div class="stat"><div class="stat-l">목표 달성</div><div class="stat-v '+(ok?'ok':'ng')+'" style="font-size:11px">'+goalTxt+'</div></div>';
+
+  // 키워드 분석도 업데이트
+  var mainOk = mainCount===3, mainWarn = mainCount>3;
+  var kwHtml = '<div class="kwtitle">키워드 분석</div><div class="kwrow"><span class="kwlabel">메인 키워드</span><div class="kwchips"><span class="chip main">'+cur.kw+'</span><span class="chip '+(mainWarn?'warn':mainOk?'freq':'warn')+'" style="'+(mainOk?'border-color:#9FE1CB':'')+'">본문 <span style="color:'+(mainOk?'var(--green)':mainWarn?'var(--red)':'var(--red)')+'">'+mainCount+'회</span> '+(mainOk?'[최적]':mainWarn?'[초과!]':'[부족!]')+'</span></div></div>';
+  if(subList.length>0){
+    kwHtml+='<div class="kwrow"><span class="kwlabel">서브 키워드</span><div class="kwchips">';
+    subList.forEach(function(k){var n=getKwCount(body,k);if(n>0)kwHtml+='<span class="chip '+(n>5?'warn':'freq')+'">'+k+' <span>'+n+'회</span>'+(n>5?' ⚠':'')+'</span>';else kwHtml+='<span class="chip" style="opacity:.4">'+k+' 0회 ⚠</span>';});
+    kwHtml+='</div></div>';
+  }
+  var kwboxEl = document.getElementById('kwbox');
+  if(kwboxEl) kwboxEl.innerHTML = kwHtml;
+}
+
+
+async function callClaude(apiKey,sys,user){
+  var k=apiKey.replace(/[^\x20-\x7E]/g,'').trim();
+  var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:8000,system:sys,messages:[{role:'user',content:user}]})});
+  var d=await r.json();if(d.error)throw new Error(d.error.message);
+  var txt=d.content&&d.content.find(function(b){return b.type==='text';});
+  return txt?(txt.text||''):'';
+}
+async function callGPT(apiKey,sys,user){
+  var k=apiKey.replace(/[^\x20-\x7E]/g,'').trim();
+  var r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+k},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:8000,response_format:{type:'json_object'},messages:[{role:'system',content:sys},{role:'user',content:user}]})});
+  var d=await r.json();if(d.error)throw new Error(d.error.message);
+  return(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'';
+}
+async function callGemini(apiKey,sys,user){
+  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key='+apiKey;
+  var r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:sys+'\n\n'+user}]}],generationConfig:{maxOutputTokens:8000,responseMimeType:'application/json'}})});
+  var d=await r.json();if(d.error)throw new Error(d.error.message);
+  try{return d.candidates[0].content.parts[0].text||'';}catch(e){return'';}
+}
+function parseJSON(raw){
+  if(!raw)return null;
+  raw=raw.replace(/```json/gi,'').replace(/```/g,'').trim();
+  try{return JSON.parse(raw);}catch(e0){}
+  var s=raw.indexOf('{');
+  if(s<0)return null;
+  var depth=0,e=-1;
+  for(var i=s;i<raw.length;i++){
+    if(raw[i]==='{')depth++;
+    else if(raw[i]==='}'){depth--;if(depth===0){e=i;break;}}
+  }
+  var slice=e>s?raw.slice(s,e+1):raw;
+  try{return JSON.parse(slice);}catch(e1){}
+  try{
+    var titleM=raw.match(/"title"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/);
+    var hashM=raw.match(/"hashtags"\s*:\s*(\[[\s\S]*?\])/);
+    var ci=raw.indexOf('"content"'),cvs=raw.indexOf('"',ci+10)+1;
+    var hi=raw.indexOf('"hashtags"'),cve=raw.lastIndexOf('"',hi-1);
+    if(titleM&&cvs>0&&cve>cvs){
+      return{title:titleM[1],content:raw.slice(cvs,cve).replace(/\\n/g,'\n'),hashtags:hashM?JSON.parse(hashM[1]):[]};
+    }
+  }catch(e3){}
+  console.error('[parseJSON 실패]',raw.slice(0,400));
+  return null;
+}
+async function generate(){
+  var apiKey=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk);
+  var kw=document.getElementById('kw').value.trim();
+  var subkw=document.getElementById('subkw').value.trim();
+  var region=document.getElementById('region').value.trim();
+  var dir=document.getElementById('dir').value.trim();
+  var cat=document.getElementById('cat').value;
+  // 체험단 레퍼런스 수집
+  var ref1=document.getElementById('ref1')?document.getElementById('ref1').value.trim():'';
+  var ref2=document.getElementById('ref2')?document.getElementById('ref2').value.trim():'';
+  var ref3=document.getElementById('ref3')?document.getElementById('ref3').value.trim():'';
+  var guideText=document.getElementById('guide-text')?document.getElementById('guide-text').value.trim():'';
+  if(!apiKey){showToast('먼저 API 키를 저장해주세요','err');return;}
+  if(!kw){showToast('메인 키워드를 입력해주세요','err');return;}
+  // 하루 3개 제한 경고 (차단 없이 경고만)
+  var todayCnt=getTodayCount();
+  if(todayCnt>=3){
+    showToast('⚠️ 오늘 이미 '+todayCnt+'개 작성됐어요. 실제 발행 시 하루 3개 권장!','');
+  } else if(todayCnt===2){
+    showToast('오늘 마지막 권장 1개 남았어요. 신중하게!','');
+  }
+  document.getElementById('genbtn').disabled=true;
+  setRTab('result');showState('loading');
+  document.getElementById('loadmsg').textContent=AICFG[AI].name+'이(가) 글을 작성 중입니다...';
+  var usedTitles=getUsedTitles(kw);
+  var prompts=buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,selectedSuggestKws,{ref1:ref1,ref2:ref2,ref3:ref3,guide:guideText});
+  try{
+    var raw='';
+    raw=await callClaude(apiKey,prompts.sys,prompts.user);
+    var parsed=parseJSON(raw);
+    if(!parsed||!parsed.title||!parsed.content){console.error('[파싱실패]',raw.slice(0,500));throw new Error('응답 파싱 실패. 다시 시도해주세요.');}
+    cur={title:parsed.title,content:parsed.content,hashtags:parsed.hashtags||[],kw:kw,subkw:subkw,ai:AI,time:new Date()};
+    cur.kw=kw;cur.cat=cat;cur.tone=tone;saveHistory(cur);updateBadge();updateUsageBadge();
+    renderResult(cur);showState('result');
+    hist.unshift(cur);renderHistory();
+  }catch(e){showState('empty');showToast('오류: '+e.message,'err');}
+  finally{document.getElementById('genbtn').disabled=false;}
+}
+function getKwCount(text,kw){if(!kw||!text)return 0;return(text.match(new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))||[]).length;}
+function renderResult(r){
+  var clean=(r.content||'').replace(/#{1,6}\s*/g,'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1').replace(/_{1,2}([^_]+)_{1,2}/g,'$1');
+  var cleanTitle=(r.title||'').replace(/#{1,6}\s*/g,'').replace(/\*\*/g,'').replace(/\*/g,'');
+  r._clean=clean; r._cleanTitle=cleanTitle;
+  document.getElementById('restitle').textContent=cleanTitle;
+  document.getElementById('resbody').textContent=clean;
+  var cfg=AICFG[r.ai];
+  var t=r.time.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('restime').innerHTML='<span class="haibadge '+cfg.bc+'" style="padding:2px 8px;border-radius:10px;font-size:11px">'+cfg.name+'</span>&nbsp;'+t+' 생성';
+
+  // 글자수 통계
+  var cc=clean.length, cn=clean.replace(/\s/g,'').length, ok=cc>=1500&&cc<2000;
+  var goalTxt=ok?'✓ 달성':(cc<1500?'✗ '+(1500-cc)+'자 부족':'✗ '+(cc-2000)+'자 초과');
+  document.getElementById('stats').innerHTML=
+    '<div class="stat"><div class="stat-l">공백 포함</div><div class="stat-v '+(ok?'ok':'ng')+'">'+cc.toLocaleString()+'자</div></div>'+
+    '<div class="stat"><div class="stat-l">공백 제외</div><div class="stat-v">'+cn.toLocaleString()+'자</div></div>'+
+    '<div class="stat"><div class="stat-l">목표 달성</div><div class="stat-v '+(ok?'ok':'ng')+'" style="font-size:11px">'+goalTxt+'</div></div>';
+
+  // 키워드 분석
+  var mainCount=getKwCount(clean,r.kw);
+  var mainOk=mainCount===3, mainWarn=mainCount>3, mainLow=mainCount<3;
+  var subList=r.subkw?r.subkw.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
+  var kwHtml='<div class="kwtitle">키워드 분석</div><div class="kwrow"><span class="kwlabel">메인 키워드</span><div class="kwchips"><span class="chip main">'+r.kw+'</span><span class="chip '+(mainWarn?'warn':mainOk?'freq':'warn')+'" style="'+(mainOk?'border-color:#9FE1CB':'')+'">본문 <span style="color:'+(mainOk?'var(--green)':mainWarn?'var(--red)':'var(--red)')+'">'+mainCount+'회</span> '+(mainOk?'[최적]':mainWarn?'[초과!]':'[부족!]')+'</span></div></div>';
+  if(subList.length>0){
+    kwHtml+='<div class="kwrow"><span class="kwlabel">서브 키워드</span><div class="kwchips">';
+    subList.forEach(function(k){var n=getKwCount(clean,k);if(n>0)kwHtml+='<span class="chip '+(n>5?'warn':'freq')+'">'+k+' <span>'+n+'회</span>'+(n>5?' ⚠':'')+'</span>';else kwHtml+='<span class="chip" style="opacity:.4">'+k+' 0회 ⚠</span>';});
+    kwHtml+='</div></div>';
+  }
+  document.getElementById('kwbox').innerHTML=kwHtml;
+  document.getElementById('restags').innerHTML=(r.hashtags||[]).map(function(h){return'<span class="tag">#'+h.replace(/^#/,'')+'</span>';}).join('');
+
+  // 품질 리포트 생성
+  renderQualityReport(r, clean, cleanTitle, cc, mainCount, subList);
+}
+
+function renderQualityReport(r, clean, cleanTitle, cc, mainCount, subList){
+  var checks=[];
+
+  // ── 자동 분석 항목들
+  var charOk=cc>=1500&&cc<2000;
+  checks.push({
+    id:'char', auto:true,
+    ok:charOk,
+    label:'글자수 1,500자 이상 2,000자 미만',
+    detail: charOk ? '현재 '+cc+'자 ✓' : (cc<1500?'현재 '+cc+'자 — '+(1500-cc)+'자 더 필요':'현재 '+cc+'자 — '+(cc-2000)+'자 초과'),
+    fix: cc<1500 ? '글 방향란에 "내용 보충 필요" 입력 후 재생성' : '글 방향란에 "좀 더 간결하게" 입력 후 재생성'
+  });
+
+  var titleHasKw=cleanTitle.includes(r.kw);
+  checks.push({
+    id:'title_kw', auto:true,
+    ok:titleHasKw,
+    label:'제목에 메인키워드 포함',
+    detail: titleHasKw ? '"'+r.kw+'" 포함 ✓' : '"'+r.kw+'" 없음 ✗',
+    fix: '재생성 또는 제목 직접 수정'
+  });
+
+  var titleLen=cleanTitle.length;
+  checks.push({
+    id:'title_len', auto:true,
+    ok:titleLen<=35&&titleLen>0,
+    label:'제목 35자 이내',
+    detail: '현재 '+titleLen+'자'+(titleLen<=35?' ✓':' ✗ — '+(titleLen-35)+'자 초과'),
+    fix: '재생성하거나 제목 직접 단축'
+  });
+
+  var mainOk2=mainCount===3;
+  checks.push({
+    id:'main_kw', auto:true,
+    ok:mainOk2,
+    label:'메인키워드 본문 정확히 3회',
+    detail:'현재 '+mainCount+'회'+(mainOk2?' ✓':(mainCount>3?' — '+(mainCount-3)+'회 초과 ✗':' — '+(3-mainCount)+'회 부족 ✗')),
+    fix: mainCount>3 ? '메인키워드 일부를 서브키워드나 다른 표현으로 교체' : '재생성 또는 본문에 키워드 추가'
+  });
+
+  var hasMd=/#{1,6}\s|\*\*/.test(clean);
+  checks.push({
+    id:'no_md', auto:true,
+    ok:!hasMd,
+    label:'마크다운 기호(## **) 없음',
+    detail:!hasMd?'마크다운 없음 ✓':'마크다운 발견 ✗',
+    fix:'결과 복사 후 ## ** 수동 제거'
+  });
+
+  var aiPatterns=['안녕하세요','오늘은','알아보겠습니다','드립니다','해보도록 하겠습니다'];
+  var aiFound=aiPatterns.filter(function(p){return clean.includes(p)||cleanTitle.includes(p);});
+  checks.push({
+    id:'no_ai', auto:true,
+    ok:aiFound.length===0,
+    label:'AI 전형 표현 없음',
+    detail:aiFound.length===0?'AI 표현 없음 ✓':'발견: "'+aiFound.join('", "')+'" ✗',
+    fix:'재생성 또는 해당 표현 수동 수정'
+  });
+
+  var hasNumbers=/\d+[원개월년시분초GB만억]/.test(clean);
+  checks.push({
+    id:'numbers', auto:true,
+    ok:hasNumbers,
+    label:'구체적 수치 3개 이상 포함',
+    detail:hasNumbers?'수치 포함 ✓':'수치 부족 ✗',
+    fix:'재생성 — 요금/글자수/시간 등 수치 삽입 필요'
+  });
+
+  var hasStructure=/\d+\.\s|[①②③④⑤⑥⑦⑧⑨]|📱|💡|✅|🔍/.test(clean);
+  checks.push({
+    id:'structure', auto:true,
+    ok:hasStructure,
+    label:'소제목/번호 구조화',
+    detail:hasStructure?'구조화 확인 ✓':'구조 없음 ✗',
+    fix:'재생성 — 소제목으로 단락 구분 필요'
+  });
+
+  // 서브키워드 초과 체크
+  var subOver=subList.filter(function(k){return getKwCount(clean,k)>5;});
+  checks.push({
+    id:'sub_kw', auto:true,
+    ok:subOver.length===0&&subList.length>0||subList.length===0,
+    label:'서브키워드 각 5회 이내',
+    detail:subOver.length===0?(subList.length>0?'모두 5회 이내 ✓':'서브키워드 없음'):'초과: '+subOver.join(', ')+' ✗',
+    fix:'초과된 서브키워드를 동의어로 교체'
+  });
+
+  // 수동 체크 항목 (자동 판단 불가)
+  checks.push({id:'exp', auto:false, ok:false, label:'개인 경험담 느낌 포함 (E-E-A-T)', detail:'직접 확인 필요', fix:'경험담 느낌이 없으면 재생성'});
+  checks.push({id:'cta', auto:false, ok:false, label:'맺음말에 CTA 포함', detail:'직접 확인 필요', fix:'맺음말에 공감/댓글 유도 문구 추가'});
+  checks.push({id:'natural', auto:false, ok:false, label:'자연스러운 구어체 (AI 티 없음)', detail:'직접 읽고 확인', fix:'어색한 부분 수동 수정 후 발행'});
+
+  // 점수 계산
+  var autoOk=checks.filter(function(c){return c.auto&&c.ok;}).length;
+  var autoTotal=checks.filter(function(c){return c.auto;}).length;
+  var manualChecked=checks.filter(function(c){return !c.auto&&c.ok;}).length;
+  var manualTotal=checks.filter(function(c){return !c.auto;}).length;
+  var totalOk=autoOk+manualChecked, totalAll=autoTotal+manualTotal;
+  var pct=Math.round(totalOk/totalAll*100);
+  var scoreColor=pct>=80?'var(--green)':pct>=60?'#BA7517':'var(--red)';
+
+  document.getElementById('qr-score-badge').style.background=scoreColor;
+  document.getElementById('qr-score-badge').style.color='#fff';
+  document.getElementById('qr-score-badge').textContent=pct+'점 ('+totalOk+'/'+totalAll+')';
+
+  document.getElementById('qr-list').innerHTML=checks.map(function(c,i){
+    var isOk=c.ok;
+    var bg=isOk?'#f0f9f5':c.auto?'#fdeaea':'#fff9f0';
+    var iconColor=isOk?'var(--green)':c.auto?'var(--red)':'#BA7517';
+    var icon=isOk?'✓':c.auto?'✗':'?';
+    var strike=isOk?'text-decoration:line-through;opacity:.6':'';
+    return '<div id="qr-item-'+i+'" onclick="toggleQrItem('+i+')" style="display:flex;align-items:flex-start;gap:10px;padding:9px 14px;border-bottom:1px solid var(--bor);cursor:pointer;background:'+bg+';transition:all .2s">'
+      +'<div style="width:22px;height:22px;border-radius:50%;background:'+iconColor+';color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">'+icon+'</div>'
+      +'<div style="flex:1">'
+      +'<div style="font-size:13px;color:var(--txt);'+strike+'">'+c.label+(c.auto?'':' <span style="font-size:10px;padding:1px 5px;background:#fff3cd;border-radius:4px;color:#856404">수동확인</span>')+'</div>'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:2px">'+c.detail+'</div>'
+      +(!isOk?'<div style="font-size:11px;color:#BA7517;margin-top:2px">💡 '+c.fix+'</div>':'')
+      +'</div></div>';
+  }).join('');
+
+  // 전역 checks 저장 (토글용)
+  window._qrChecks=checks;
+}
+
+function toggleQrItem(idx){
+  if(!window._qrChecks)return;
+  var c=window._qrChecks[idx];
+  c.ok=!c.ok;
+  // 점수 재계산 및 항목 업데이트
+  var isOk=c.ok;
+  var bg=isOk?'#f0f9f5':c.auto?'#fdeaea':'#fff9f0';
+  var iconColor=isOk?'var(--green)':c.auto?'var(--red)':'#BA7517';
+  var icon=isOk?'✓':c.auto?'✗':'?';
+  var strike=isOk?'text-decoration:line-through;opacity:.6':'';
+  var el=document.getElementById('qr-item-'+idx);
+  if(el){
+    el.style.background=bg;
+    el.innerHTML='<div style="width:22px;height:22px;border-radius:50%;background:'+iconColor+';color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">'+icon+'</div>'
+      +'<div style="flex:1">'
+      +'<div style="font-size:13px;color:var(--txt);'+strike+'">'+c.label+(c.auto?'':' <span style="font-size:10px;padding:1px 5px;background:#fff3cd;border-radius:4px;color:#856404">수동확인</span>')+'</div>'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:2px">'+c.detail+'</div>'
+      +(!isOk?'<div style="font-size:11px;color:#BA7517;margin-top:2px">💡 '+c.fix+'</div>':'')
+      +'</div>';
+    el.setAttribute('onclick','toggleQrItem('+idx+')');
+  }
+  // 점수 업데이트
+  var autoOk=window._qrChecks.filter(function(x){return x.ok;}).length;
+  var pct=Math.round(autoOk/window._qrChecks.length*100);
+  var scoreColor=pct>=80?'var(--green)':pct>=60?'#BA7517':'var(--red)';
+  var badge=document.getElementById('qr-score-badge');
+  if(badge){badge.style.background=scoreColor;badge.textContent=pct+'점 ('+autoOk+'/'+window._qrChecks.length+')';}
+}
+
+
+function renderHistory(){
+  var el=document.getElementById('hlist');
+  document.getElementById('hcnt').textContent='('+hist.length+'개)';
+  if(!hist.length){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--t3);font-size:13px">아직 생성된 글이 없습니다</div>';return;}
+  el.innerHTML=hist.map(function(h,i){var cfg=AICFG[h.ai],t=h.time.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});return'<div class="hitem" onclick="loadHist('+i+')"><span class="hkw">'+h.kw+'</span><span class="htitle">'+(h._cleanTitle||h.title)+'</span><span class="haibadge '+cfg.bc+'">'+cfg.name+'</span><span class="htime">'+t+'</span></div>';}).join('');
+}
+function loadHist(i){cur=hist[i];renderResult(cur);setRTab('result');showState('result');}
+function renderGuides(){document.getElementById('glist').innerHTML=GUIDES.map(function(g){return'<div class="gitem"><div class="gicon '+(g.ok?'ok':'ng')+'">'+(g.ok?'v':'x')+'</div><span style="font-size:13px;color:var(--txt)">'+g.t+'</span></div>';}).join('');}
+function copyAll(){
+  if(!cur)return;
+  var title=_editMode?(document.getElementById('edit-title').value||cur._cleanTitle||cur.title):(cur._cleanTitle||cur.title);
+  var body=_editMode?(document.getElementById('edit-body').value||cur._clean||cur.content):(cur._clean||cur.content);
+  var tags=(cur.hashtags||[]).map(function(h){return'#'+h.replace(/^#/,'');}).join(' ');
+  navigator.clipboard.writeText(title+'\n\n'+body+'\n\n'+tags);
+  showToast('[v] 전체 복사 완료!','ok');
+}
+function copyTitle(){
+  if(!cur)return;
+  var title=_editMode?(document.getElementById('edit-title').value||cur._cleanTitle||cur.title):(cur._cleanTitle||cur.title);
+  navigator.clipboard.writeText(title);
+  showToast('[v] 제목 복사 완료!','ok');
+}
+
+async function checkBlog(){
+  var blogId=document.getElementById('blog-id-input').value.trim();
+  if(!blogId){showToast('블로그 ID를 입력해주세요','err');return;}
+  var apiKey=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk);
+  if(!apiKey){showToast(AICFG[AI].name+' API 키를 먼저 저장해주세요','err');return;}
+  var btn=document.getElementById('blog-check-btn');
+  btn.disabled=true;btn.textContent='분석 중...';
+  document.getElementById('blog-stats').style.display='none';
+  var area=document.getElementById('blog-result-area');
+  area.innerHTML='<div class="loading"><div class="spin"></div><p style="color:var(--t2);font-size:13px">'+AICFG[AI].name+' AI가 블로그를 분석 중입니다...</p></div>';
+  var sys='You are a Korean Naver blog SEO analyst. Respond ONLY with valid JSON. First character must be {';
+  var prompt='네이버 블로그 ID "'+blogId+'"의 블로그를 분석해주세요.\n\n실제 블로그 글 제목을 모르므로, 해당 블로그 ID 기반으로 선불폰/알뜰폰/영어회화 관련 현실적인 블로그 글 15개를 가상으로 생성하고 각각의 SEO 분석을 해주세요.\n\n반드시 아래 JSON 형식으로만 응답하세요.\n{"blog_id":"'+blogId+'","summary":{"total":15,"exposed":11,"hidden":4,"rate":"73%","grade":"준최적 B+","advice":"조언"},"posts":[{"title":"글제목","date":"2026-05-20","status":"노출","seo_score":85,"char_count":1750,"issues":"없음"}]}\n\nposts를 15개로 채우되 status는 "노출" 또는 "미노출", seo_score는 50~100, 날짜는 2025-12월~2026-05월 사이 최신순으로 작성하라.';
+  try{
+    var raw='';
+    raw=await callClaude(apiKey,sys,prompt);
+    var parsed=parseJSON(raw);
+    if(!parsed||!parsed.posts)throw new Error('분석 결과를 파싱하지 못했습니다.');
+    renderBlogResult(parsed);
+  }catch(e){area.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red);font-size:13px">오류: '+e.message+'</div>';}
+  finally{btn.disabled=false;btn.textContent='진단 시작';}
+}
+function renderBlogResult(data){
+  var sum=data.summary||{},posts=data.posts||[];
+  posts.sort(function(a,b){return new Date(b.date||'2020-01-01')-new Date(a.date||'2020-01-01');});
+  document.getElementById('bs-total').textContent=sum.total||posts.length;
+  document.getElementById('bs-exposed').textContent=sum.exposed||0;
+  document.getElementById('bs-hidden').textContent=sum.hidden||0;
+  document.getElementById('blog-stats').style.display='block';
+  var area=document.getElementById('blog-result-area');
+  var gradeHtml='<div style="background:var(--gl);border-radius:var(--rs);padding:12px 14px;margin-bottom:1rem;border:1px solid #9FE1CB"><div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:4px">블로그 등급: '+(sum.grade||'분석 중')+'</div><div style="font-size:12px;color:var(--t2)">'+(sum.advice||'')+'</div></div>';
+  var listHtml='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--bg)"><th style="padding:8px;text-align:left;border-bottom:1px solid var(--bor);color:var(--t2)">제목</th><th style="padding:8px;text-align:center;border-bottom:1px solid var(--bor);color:var(--t2);width:70px">날짜</th><th style="padding:8px;text-align:center;border-bottom:1px solid var(--bor);color:var(--t2);width:60px">노출</th><th style="padding:8px;text-align:center;border-bottom:1px solid var(--bor);color:var(--t2);width:65px">SEO</th><th style="padding:8px;text-align:center;border-bottom:1px solid var(--bor);color:var(--t2);width:55px">글자수</th><th style="padding:8px;text-align:left;border-bottom:1px solid var(--bor);color:var(--t2)">이슈</th></tr></thead><tbody>';
+  posts.forEach(function(p){var isExp=p.status==='노출',score=parseInt(p.seo_score)||0;var sc=score>=70?'var(--green)':score>=50?'#BA7517':'var(--red)';listHtml+='<tr style="border-bottom:1px solid var(--bor)"><td style="padding:8px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.title||'')+'</td><td style="padding:8px;text-align:center;color:var(--t3)">'+(p.date||'')+'</td><td style="padding:8px;text-align:center"><span class="status-badge '+(isExp?'sb-exposed':'sb-hidden')+'">'+(p.status||'')+'</span></td><td style="padding:8px;text-align:center"><div style="font-weight:700;color:'+sc+'">'+score+'점</div></td><td style="padding:8px;text-align:center;color:var(--t2)">'+(p.char_count||'-')+'</td><td style="padding:8px;color:var(--t3);font-size:11px">'+(p.issues||'없음')+'</td></tr>';});
+  listHtml+='</tbody></table>';
+  area.innerHTML=gradeHtml+listHtml;
+}
+function analyzePost(){
+  var text=document.getElementById('an-text').value.trim();
+  var kw=document.getElementById('an-kw').value.trim();
+  var subkw=document.getElementById('an-subkw').value.trim();
+  if(!text){showToast('분석할 글을 입력해주세요','err');return;}
+  document.getElementById('an-result').style.display='block';
+  var cc=text.length,cn=text.replace(/\s/g,'').length;
+  var charOk=cc>=1500&&cc<2000;
+  var mainCount=kw?getKwCount(text,kw):0;
+  var mainOk=kw?mainCount===3:null;
+  var subList=subkw?subkw.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
+  var subOver=subList.filter(function(k){return getKwCount(text,k)>5;});
+  var hasMd=/#{1,6}\s|\*\*/.test(text);
+  var hasHeadings=/\d+\.\s|[①②③④⑤⑥⑦⑧⑨]/.test(text);
+  var score=0;
+  if(charOk)score+=25;else if(cc>=1200)score+=10;
+  if(kw&&mainOk)score+=25;else if(kw&&mainCount>0&&mainCount<=5)score+=10;
+  if(!hasMd)score+=15;if(hasHeadings)score+=15;if(subOver.length===0)score+=10;if(kw&&text.includes(kw))score+=10;
+  score=Math.min(score,100);
+  var color=score>=70?'var(--green)':score>=40?'#BA7517':'var(--red)';
+  document.getElementById('an-scores').innerHTML='<div class="score-item"><div class="score-item-l">공백 포함</div><div class="score-item-v '+(charOk?'ok':cc<1200?'ng':'warn')+'">'+cc.toLocaleString()+'자</div></div><div class="score-item"><div class="score-item-l">공백 제외</div><div class="score-item-v">'+cn.toLocaleString()+'자</div></div><div class="score-item"><div class="score-item-l">SEO 점수</div><div class="score-item-v '+(score>=70?'ok':score>=40?'warn':'ng')+'">'+score+'점</div></div>';
+  document.getElementById('an-seo-pct').textContent=score+'%';
+  document.getElementById('an-seo-bar').style.width=score+'%';
+  document.getElementById('an-seo-bar').style.background=color;
+  var details='';
+  details+=arRow(charOk?'ok':'ng',charOk?'글자수 적합 ('+cc+'자)':'글자수 '+(cc<1500?'부족':'초과')+' ('+cc+'자 / 목표: 1,500~2,000자)','');
+  if(kw)details+=arRow(mainOk?'ok':mainCount>3?'ng':'warn','메인키워드 "'+kw+'" '+mainCount+'회 등장',mainOk?'':'목표: 정확히 3회');
+  if(subOver.length>0)details+=arRow('warn','서브키워드 5회 초과: '+subOver.join(', '),'각 5회 이내 권장');
+  else if(subList.length>0)details+=arRow('ok','서브키워드 횟수 정상','');
+  details+=arRow(hasMd?'ng':'ok',hasMd?'마크다운 기호(## **) 발견됨':'마크다운 기호 없음','');
+  details+=arRow(hasHeadings?'ok':'warn',hasHeadings?'소제목/번호 구조 확인됨':'소제목 구조 없음',hasHeadings?'':'숫자+점 또는 ① 넘버링으로 단락 구분 권장');
+  var seoLevel=score>=70?'높음 ('+score+'점)':score>=50?'보통 ('+score+'점)':'낮음 ('+score+'점)';
+  details+=arRow(score>=70?'ok':score>=50?'warn':'ng','상위노출 가능성: '+seoLevel,score>=70?'':'키워드 최적화 및 글자수 개선 권장');
+  document.getElementById('an-details').innerHTML=details;
+}
+function arRow(type,text,sub){return'<div class="ar-row"><div class="ar-icon '+type+'">'+(type==='ok'?'v':type==='warn'?'!':'x')+'</div><div class="ar-text">'+text+(sub?'<small>'+sub+'</small>':'')+'</div></div>';}
+function showToast(msg,type){var el=document.getElementById('toast');el.className='toast'+(type?' '+type:'');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2800);}
+
+// ── 센터 찾기
+function crInit(){
+  var tabs=document.getElementById('cr-tabs');
+  if(!tabs||tabs.dataset.init)return;
+  tabs.dataset.init='1';
+  CR_REGIONS.forEach(function(r){
+    var btn=document.createElement('button');
+    btn.textContent=r;
+    btn.setAttribute('data-region',r);
+    btn.style.cssText='padding:6px 14px;border-radius:20px;border:1px solid var(--bor);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:var(--sur);color:var(--t2);margin:0;';
+    if(r==='전체'){btn.style.background='var(--green)';btn.style.color='#fff';btn.style.borderColor='var(--green)';}
+    tabs.appendChild(btn);
+  });
+  tabs.addEventListener('click',function(e){
+    var btn=e.target.closest('button');if(!btn)return;
+    var r=btn.getAttribute('data-region');
+    crRegion=r;crActive=-1;
+    tabs.querySelectorAll('button').forEach(function(b){b.style.background='var(--sur)';b.style.color='var(--t2)';b.style.borderColor='var(--bor)';});
+    btn.style.background='var(--green)';btn.style.color='#fff';btn.style.borderColor='var(--green)';
+    crRender();
+  });
+  document.getElementById('cr-search').addEventListener('input',crRender);
+  document.getElementById('cr-reset-btn').addEventListener('click',function(){document.getElementById('cr-search').value='';crRender();});
+  document.getElementById('cr-list').addEventListener('click',function(e){
+    var card=e.target.closest('[data-idx]');
+    if(card)crSelect(parseInt(card.getAttribute('data-idx')));
+  });
+  crRender();
+}
+
+var _crMap = null; // 전역 지도 객체
+
+function crInitMap(){
+  var tries=0;
+  function tryInit(){
+    tries++;
+    if(typeof kakao!=='undefined'&&kakao.maps&&kakao.maps.Map){
+      var mapDiv=document.getElementById('cr-kakaomap');
+      if(!mapDiv)return;
+      // 대한민국 중심 좌표
+      var center=new kakao.maps.LatLng(36.5,127.8);
+      _crMap=new kakao.maps.Map(mapDiv,{center:center,level:12});
+    } else if(tries<30){
+      setTimeout(tryInit,200);
+    }
+  }
+  tryInit();
+}
+
+function crMoveMap(lat,lng,name){
+  if(!_crMap)return;
+  var coords=new kakao.maps.LatLng(lat,lng);
+  _crMap.setCenter(coords);
+  _crMap.setLevel(4);
+  // 기존 마커 제거 후 새 마커
+  if(window._crMarker)window._crMarker.setMap(null);
+  if(window._crIw)window._crIw.close();
+  window._crMarker=new kakao.maps.Marker({map:_crMap,position:coords});
+  window._crIw=new kakao.maps.InfoWindow({
+    content:'<div style="padding:6px 12px;font-size:12px;font-weight:700;color:#1B8F5E;white-space:nowrap">'+name+'</div>'
+  });
+  window._crIw.open(_crMap,window._crMarker);
+}
+
+function crRender(){
+  var q=(document.getElementById('cr-search').value||'').trim().toLowerCase();
+  var filtered=CR_CENTERS.filter(function(c){return(crRegion==='전체'||c.r===crRegion)&&(!q||c.name.toLowerCase().includes(q)||c.addr.toLowerCase().includes(q));});
+  document.getElementById('cr-count').innerHTML='총 <b style="color:var(--green)">'+filtered.length+'</b>개 센터';
+  var listEl=document.getElementById('cr-list');
+  if(!filtered.length){listEl.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--t3)">검색 결과가 없습니다</div>';return;}
+  listEl.innerHTML=filtered.map(function(c){
+    var idx=CR_CENTERS.indexOf(c),on=crActive===idx;
+    return '<div data-idx="'+idx+'" class="cr-card'+(on?' active':'')+'"><div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:5px;display:flex;align-items:center;gap:6px">'+c.name+' <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:#f0f4f2;color:var(--t2)">'+c.r+'</span></div><div style="font-size:11px;color:var(--t3);margin-bottom:7px;line-height:1.5">📍 '+c.addr+'</div><div style="font-size:12px;color:var(--t2)">📞 <span style="color:var(--green);font-weight:500">'+c.tel+'</span>'+(c.fax?'&nbsp;&nbsp;📠 '+c.fax:'')+'</div></div>';
+  }).join('');
+}
+function crSelect(idx){
+  crActive=idx;
+  var c=CR_CENTERS[idx];
+  var q=encodeURIComponent(c.addr.length>4?c.addr:c.name);
+  var sel=document.getElementById('cr-selected');
+  sel.style.display='block';
+  document.getElementById('cr-sel-name').textContent='📍 '+c.name+' ('+c.r+')';
+  document.getElementById('cr-sel-addr').textContent=c.addr;
+  document.getElementById('cr-sel-tel').innerHTML='📞 '+c.tel+(c.fax?'&nbsp;&nbsp;📠 '+c.fax:'');
+  document.getElementById('cr-sel-link').href='https://map.kakao.com/link/search/'+q;
+  sel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  crRender();
+  // 카카오맵 표시
+  crShowMap(c);
+}
+
+function crShowMap(c){
+  if(typeof kakao==='undefined'||!kakao.maps||!kakao.maps.services)return;
+  var addr=c.addr.length>4?c.addr:c.name;
+  try{
+    var geocoder=new kakao.maps.services.Geocoder();
+    geocoder.addressSearch(addr,function(result,status){
+      if(status===kakao.maps.services.Status.OK){
+        crMoveMap(result[0].y,result[0].x,c.name);
+      } else {
+        var ps=new kakao.maps.services.Places();
+        ps.keywordSearch(c.name,function(r2,s2){
+          if(s2===kakao.maps.services.Status.OK)crMoveMap(r2[0].y,r2[0].x,c.name);
+        });
+      }
+    });
+  }catch(e){}
+}
+
+
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+
+// ══ 카페자동화 ══
+
+var CAFE_PERSONAS = [
+  {id:'10s_high', label:'고등학생', icon:'🎒',
+   desc:'만 17~18세. 부모님 명의 폰 쓰다가 본인 명의 처음 만들어보려 함. 용돈 아껴야 해서 저렴한 거 원함. 데이터 많이 씀. 편의점 유심 개통 궁금함'},
+  {id:'20s_alba', label:'20대 알바생', icon:'🍔',
+   desc:'단기 알바/투잡 중. 업체 연락 따로 받으려고 세컨폰 필요. 월 3~4만원 이하 저렴한 요금제 찾는 중. 비대면 개통 선호'},
+  {id:'20s_worker', label:'20대 직장인', icon:'💼',
+   desc:'신입사원. 개인폰/업무폰 분리 원함. 본인인증용으로 번호 하나 더 필요. 온라인 개통 익숙함. 빠르게 해결하고 싶음'},
+  {id:'30s_mom', label:'30대 주부', icon:'👩‍👧',
+   desc:'생활비 절약 목적. 기존 통신요금 너무 비쌈. 아이 학원 연락용 저렴한 폰 필요. 남편한테 말 안 하고 혼자 알아보는 중'},
+  {id:'40s_freelance', label:'40대 프리랜서', icon:'🖥️',
+   desc:'재택/프리랜서. 클라이언트 전용 번호 필요. 세금 이슈로 개인 번호 분리 원함. 약정 없는 선불 선호'},
+  {id:'bad_credit', label:'신용불량자', icon:'😢',
+   desc:'신용불량 상태. 카드도 없음. 후불 통신 가입 거절당함. 본인인증 안 돼서 취업/계좌개설 막힘. 최대한 빨리 개통하고 싶음'},
+  {id:'bankrupt', label:'사업 실패자', icon:'📉',
+   desc:'사업 정리 후 채무 많음. SKT·KT 연체 여러 건. 재기 준비 중. 거래처 연락용 번호 급하게 필요. LG선불 가능한지 궁금'},
+  {id:'sk_overdue', label:'SK 미납자', icon:'🔴',
+   desc:'SKT 요금 미납으로 회선 정지됨. 수개월째 폰 없이 생활. 카톡도 안 됨. LG U+망 선불폰 개통 가능한지 모름. 오늘 바로 해결하고 싶음'},
+  {id:'kt_overdue', label:'KT 연체자', icon:'🟡',
+   desc:'KT 통신 연체. KT망 선불폰은 안 된다는 얘기 들음. LG U+망 선불폰으로 넘어갈 수 있는지 알아보는 중. 편의점 어디서 유심 사는지도 모름'},
+  {id:'lg_overdue', label:'LG 연체자', icon:'🟢',
+   desc:'LG U+ 요금 미납. LG망 선불폰도 안 되는 건지 걱정됨. KT망 선불폰으로 가야 하나 고민 중. 3사 다 연체인데 개통 가능한지 궁금'},
+  {id:'all_overdue', label:'3사 전부 연체', icon:'💀',
+   desc:'SKT·KT·LG 3사 모두 연체 기록 있음. 선불폰도 안 되는 건 아닌지 걱정. LG U+망 선불폰은 3사 연체도 가입 가능하다는 정보 확인하고 싶음'},
+  {id:'foreign_visa', label:'외국인 근로자(비자)', icon:'🌏',
+   desc:'외국인 등록증 있음. 한국어 조금 함. 편의점에서 유심 사서 바로 개통하고 싶음. 고용허가제(E-9) 근로자. 같은 나라 동료한테 추천받아 알아보는 중'},
+  {id:'daily_worker', label:'일용직/건설현장', icon:'🦺',
+   desc:'건설현장 일용직. 현금 생활. 폰 계속 바꿔서 쓰는 편. 스마트폰 잘 모름. 통화랑 문자만 되면 충분. 옆에서 도와주는 사람 없음'},
+  {id:'senior_child', label:'부모님 폰 알아보는 자녀', icon:'👴',
+   desc:'50-60대 부모님 대신 알아보는 30대 자녀. 부모님은 스마트폰 잘 못 쓰심. 통화 위주. 저렴한 요금제로 효도폰 만들어드리고 싶음'},
+  {id:'second_biz', label:'부업/투잡 세컨폰', icon:'📲',
+   desc:'쿠팡·배민·당근 등 부업 연락처 분리 목적. 개인번호 노출 꺼림. 최소 비용으로 번호 하나 더. 약정 없는 게 필수'}
+];
+
+var CAFE_QTYPES = [
+  {id:'sim_where', label:'편의점 유심 어디서 사?', icon:'🏪',
+   desc:'CU·GS25·이마트24 중 어디서 파는지. KT바로유심 vs LG모두의원칩 차이. 다이소 LG국민유심 5천원짜리도 있는지 등'},
+  {id:'selfopen_app', label:'앱으로 셀프 개통 방법', icon:'📱',
+   desc:'앤텔레콤 멤버십 앱 설치 후 혼자서 개통하는 절차 문의. 처음이라 모르는 단계 있음'},
+  {id:'selfopen_web', label:'인터넷으로 개통 가능?', icon:'💻',
+   desc:'앱 설치 없이 웹사이트에서 개통 가능한지. PC로도 되는지. 절차가 어떻게 되는지'},
+  {id:'bad_credit_ok', label:'신불자/연체도 개통 돼?', icon:'🤔',
+   desc:'신용불량자나 통신 연체 있어도 선불폰 본인 명의 개통 가능한지. 어떤 망이 되는지'},
+  {id:'kt_overdue_lg', label:'KT 연체인데 LG망 되나?', icon:'🟡',
+   desc:'KT 연체/미납 있으면 KT망 선불폰 안 된다는데 LG U+망은 가능한지 확인'},
+  {id:'all_ok', label:'3사 연체인데 방법 있나?', icon:'💀',
+   desc:'SKT·KT·LG 3사 모두 연체인데 선불폰 개통이 가능한지. LG U+망이 유일한 방법인지'},
+  {id:'near_store', label:'근처 개통 가능한 곳?', icon:'📍',
+   desc:'지역 근처에서 직접 방문해서 개통할 수 있는 선불폰 매장/센터 위치 문의'},
+  {id:'plan_recommend', label:'요금제 뭐가 제일 좋아?', icon:'💰',
+   desc:'데이터 사용량 기준 요금제 추천. LTE396 vs LTE459 비교. 가성비 최고 요금제 뭔지'},
+  {id:'data_speed', label:'3Mbps 실제로 어때?', icon:'⚡',
+   desc:'데이터 소진 후 3Mbps 속도로 유튜브·카카오톡 실제로 쓸 만한지 후기 궁금'},
+  {id:'kt_vs_lg', label:'KT망 vs LG망 뭐가 나아?', icon:'📶',
+   desc:'두 망의 실제 품질 차이. 지역마다 다른지. 어떤 상황에서 어떤 망이 유리한지'},
+  {id:'foreign_ok', label:'외국인등록증으로 개통?', icon:'🌏',
+   desc:'외국인 등록증만 있으면 개통 가능한지. 어떤 유심 사야 하는지. 혼자서도 할 수 있는지'},
+  {id:'urgent', label:'오늘 당장 개통 가능?', icon:'🔥',
+   desc:'지금 당장 개통해서 오늘 쓸 수 있는지. 몇 시까지 신청해야 당일 개통 되는지'},
+  {id:'second_cheap', label:'가장 저렴하게 세컨폰?', icon:'💸',
+   desc:'세컨폰 용도로 가장 저렴하게 유지하는 방법. 월 1~2만원대 가능한지. 최소 요금제 뭔지'},
+  {id:'usim_guide', label:'유심 번호 입력하는 법', icon:'🔢',
+   desc:'KT 8982로 시작하는 19자리 어디 있는지. LG 모델코드+일련번호 찾는 방법. 유심 뒷면 어디 보는지'}
+];
+
+var cafeSelectedPersona = null;
+var cafeSelectedQtype = null;
+var cafeResult = {title:'', body:''};
+
+function initCafe(){
+  // 페르소나 칩 렌더
+  var pc = document.getElementById('persona-chips');
+  if(pc && !pc.children.length){
+    pc.innerHTML = CAFE_PERSONAS.map(function(p){
+      return '<span class="kw-chip" style="cursor:pointer;background:var(--bg);border:1px solid var(--bor)" data-pid="'+p.id+'" onclick="selectPersona(\''+p.id+'\')" title="'+p.desc+'">'+p.icon+' '+p.label+'</span>';
+    }).join('');
+  }
+  // 질문 유형 칩 렌더
+  var qc = document.getElementById('qtype-chips');
+  if(qc && !qc.children.length){
+    qc.innerHTML = CAFE_QTYPES.map(function(q){
+      return '<span class="kw-chip" style="cursor:pointer;background:var(--bg);border:1px solid var(--bor)" data-qid="'+q.id+'" onclick="selectQtype(\''+q.id+'\')" title="'+q.desc+'">'+q.icon+' '+q.label+'</span>';
+    }).join('');
+  }
+  // 지역 드롭다운 복사 (글쓰기 탭 지역과 동일하게)
+  var srcSel = document.getElementById('region-select');
+  var dstSel = document.getElementById('cafe-region');
+  if(srcSel && dstSel && dstSel.options.length <= 1){
+    for(var i=0;i<srcSel.options.length;i++){
+      var o = srcSel.options[i];
+      var newOpt = document.createElement('option');
+      newOpt.value = o.value;
+      newOpt.text = o.text;
+      if(o.parentNode.tagName === 'OPTGROUP'){
+        // optgroup 처리
+      }
+      dstSel.appendChild(newOpt.cloneNode(true));
+    }
+    // optgroup 복사
+    dstSel.innerHTML = srcSel.innerHTML;
+  }
+}
+
+function selectPersona(pid){
+  cafeSelectedPersona = pid;
+  document.querySelectorAll('#persona-chips .kw-chip').forEach(function(el){
+    el.style.background = el.getAttribute('data-pid')===pid ? 'var(--green)' : 'var(--bg)';
+    el.style.color = el.getAttribute('data-pid')===pid ? '#fff' : '';
+    el.style.borderColor = el.getAttribute('data-pid')===pid ? 'var(--green)' : 'var(--bor)';
+  });
+}
+
+function selectQtype(qid){
+  cafeSelectedQtype = qid;
+  document.querySelectorAll('#qtype-chips .kw-chip').forEach(function(el){
+    el.style.background = el.getAttribute('data-qid')===qid ? 'var(--blue)' : 'var(--bg)';
+    el.style.color = el.getAttribute('data-qid')===qid ? '#fff' : '';
+    el.style.borderColor = el.getAttribute('data-qid')===qid ? 'var(--blue)' : 'var(--bor)';
+  });
+}
+
+async function generateCafe(){
+  var apiKey = sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk);
+  if(!apiKey){showToast('API 키를 먼저 저장해주세요','err');return;}
+  if(!cafeSelectedPersona){showToast('페르소나를 선택해주세요','err');return;}
+  if(!cafeSelectedQtype){showToast('질문 유형을 선택해주세요','err');return;}
+
+  var regionSel = document.getElementById('cafe-region').value;
+  var regionCustom = document.getElementById('cafe-region-custom').value.trim();
+  var region = regionCustom || regionSel || '서울';
+  var noteVal = document.getElementById('cafe-note').value.trim();
+  var network = document.querySelector('input[name="cafe-network"]:checked').value;
+
+  var persona = CAFE_PERSONAS.find(function(p){return p.id===cafeSelectedPersona;});
+  var qtype = CAFE_QTYPES.find(function(q){return q.id===cafeSelectedQtype;});
+
+  // UI 상태
+  document.getElementById('cafe-empty').style.display='none';
+  document.getElementById('cafe-output').style.display='none';
+  document.getElementById('cafe-loading').style.display='block';
+  document.getElementById('cafe-genbtn').disabled=true;
+  document.getElementById('cafe-genbtn').textContent='생성 중...';
+
+  var sys = '당신은 네이버 카페 커뮤니티 게시판에 글을 올리는 실제 한국인입니다. 페르소나에 맞는 현실적이고 자연스러운 질문글을 작성합니다. SEO를 위해 제목에 지역+선불폰 키워드를 포함합니다. JSON만 출력하세요.';
+
+  var user = '아래 조건으로 네이버 카페 커뮤니티 질문 게시글을 작성하세요. JSON만 출력.\n\n'
+    +'=== 페르소나 ===\n'
+    +persona.icon+' '+persona.label+': '+persona.desc+'\n'
+    +(noteVal?'추가 상황: '+noteVal+'\n':'')
+    +'\n=== 질문 유형 ===\n'
+    +qtype.icon+' '+qtype.label+': '+qtype.desc+'\n'
+    +'\n=== 기본 정보 ===\n'
+    +'지역: '+region+'\n'
+    +'망: '+network+'\n'
+    +'\n=== 글 작성 규칙 ===\n'
+    +'1. 제목: 지역+선불폰 키워드 포함 (예: "'+region+'선불폰 개통 가능한가요?"). 35자 이내. 실제 카페 게시글 제목처럼.\n'
+    +'2. 본문: 300~500자. 페르소나에 딱 맞는 실제 상황 묘사.\n'
+    +'3. 도입: 자기소개 + 상황 설명 (페르소나 특성 자연스럽게 녹이기)\n'
+    +'4. 질문 핵심: 구체적인 질문 1~2개\n'
+    +'5. 마무리: "아시는 분 답변 부탁드립니다" 같은 자연스러운 끝맺음\n'
+    +'6. 문체: 실제 사람이 카페에 글 올리는 것처럼. 맞춤법 살짝 틀려도 OK. 이모티콘 적당히.\n'
+    +'7. AI 티 나는 표현 절대 금지\n'
+    +'8. KT연체자/SK미납이면 LG U+망 가능하다는 걸 질문에 자연스럽게 녹이기\n'
+    +'\n=== 출력 형식 ===\n'
+    +'{"title":"제목","body":"본문 전체"}';
+
+  try{
+    var raw = await callClaude(apiKey, sys, user);
+    var s=raw.indexOf('{'), e=raw.lastIndexOf('}');
+    var parsed = JSON.parse(raw.slice(s,e+1));
+    cafeResult = {title: parsed.title||'', body: parsed.body||''};
+    document.getElementById('cafe-title').textContent = cafeResult.title;
+    document.getElementById('cafe-body').textContent = cafeResult.body;
+    document.getElementById('cafe-output').style.display='block';
+    showToast('[v] 카페 질문글 생성 완료!','ok');
+  } catch(e){
+    showToast('생성 실패. 다시 시도해주세요.','err');
+    document.getElementById('cafe-empty').style.display='block';
+  } finally {
+    document.getElementById('cafe-loading').style.display='none';
+    document.getElementById('cafe-genbtn').disabled=false;
+    document.getElementById('cafe-genbtn').textContent='☕ 카페 질문글 생성';
+  }
+}
+
+function copyCafeTitle(){
+  if(!cafeResult.title){showToast('생성된 글이 없어요','err');return;}
+  navigator.clipboard.writeText(cafeResult.title);
+  showToast('[v] 제목 복사 완료!','ok');
+}
+function copyCafeAll(){
+  if(!cafeResult.title){showToast('생성된 글이 없어요','err');return;}
+  navigator.clipboard.writeText(cafeResult.title+'\n\n'+cafeResult.body);
+  showToast('[v] 전체 복사 완료!','ok');
+}
+
+
+
+</script>
+</body>
+</html>
