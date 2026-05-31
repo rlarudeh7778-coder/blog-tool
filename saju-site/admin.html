@@ -7,6 +7,7 @@
 <title>AI 사주명리 분석 · 고급 프리미엄</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Nanum+Myeongjo:wght@700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root{--navy:#0e1530;--navy2:#162149;--gold:#e8c97a;--gold2:#c9a44f;--bg:#0c1228;--sur:#fff;--bor:#2a3766;--txt:#1a2230;--t2:#4a5570;--t3:#8a93ad;--r:14px;--rs:9px}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -135,7 +136,7 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 <div class="wrap">
   <div class="card">
     <div class="ctitle">📝 고객 정보 입력</div>
-    <div class="steps"><b>운영 흐름:</b> ① 고객이 결제(외부 링크) → ② 받은 정보를 아래 입력 → ③ <b>분석 생성</b> → ④ PDF/이미지로 저장해 전달</div>
+    <div class="steps"><b>운영 흐름:</b> ① 고객이 신청·결제 → ② 받은 정보를 아래 입력 → ③ <b>분석 생성</b> → ④ <b>PDF로 저장해 전달</b> 또는 <b>고객 이메일로 자동 발송</b></div>
     <div class="field"><label>이름 / 호칭 (선택)</label><input id="iName" placeholder="예: 홍길동 님"></div>
     <div class="field"><label>성별</label>
       <div class="seg" id="iGender">
@@ -169,6 +170,10 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
       <div class="hint">참고용입니다. 표준시·진태양시 보정은 KST(+9h) 기준으로 계산합니다.</div>
     </div>
     <div class="field"><label>고객이 특히 궁금해하는 점 (선택)</label><textarea id="iAsk" placeholder="예: 올해 이직운, 결혼 시기, 사업 시작해도 될지 등 — 적으면 분석에 비중 있게 반영됩니다."></textarea></div>
+    <div class="field"><label>📧 고객 이메일 <span class="csub">결과 자동 발송용</span></label><input id="iEmail" type="email" placeholder="고객이 신청 시 입력한 이메일">
+      <div class="hint">입력해 두면 분석 완료 후 「고객 이메일로 발송」 버튼으로 바로 보낼 수 있습니다(⚙️설정에서 이메일 발송 1회 설정 필요).</div>
+    </div>
+    <div class="field"><label>고객 연락처 (선택)</label><input id="iPhone" placeholder="010-0000-0000"></div>
     <button class="btn btn2" onclick="calcAndShow()">🀄 사주판 계산하기</button>
   </div>
   <div>
@@ -182,7 +187,7 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
         • 이 도구는 <b>운영자 전용</b>입니다. ⚙️설정에 Claude API 키를 한 번만 저장하면 됩니다.<br>
         • 고객은 키가 필요 없습니다. 분석 비용(1건당 수백 원)은 운영자 API로 청구됩니다.<br>
         • 결제는 카카오페이·토스 등 <b>외부 결제 링크</b>로 받은 뒤, 정보를 입력해 분석을 생성하세요.<br>
-        • 결과는 <b>PDF / 이미지</b>로 저장해 카톡·메일로 전달하면 됩니다.
+        • 결과는 <b>PDF / 이미지</b>로 저장해 전달하거나, <b>📧 고객 이메일로 자동 발송</b>할 수 있습니다(⚙️설정에서 EmailJS 1회 설정).
       </div>
     </div>
   </div>
@@ -198,6 +203,7 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 <div class="panel" id="p-result">
   <div class="toolbar" id="resultBar" style="display:none">
     <button class="tbtn gold" onclick="savePDF()">📄 PDF로 저장</button>
+    <button class="tbtn" onclick="emailToCustomer()">📧 고객 이메일로 발송</button>
     <button class="tbtn" onclick="savePNG()">🖼 이미지(PNG) 저장</button>
     <button class="tbtn" onclick="copyText()">📋 텍스트 복사</button>
     <button class="tbtn" onclick="regenerate()">↻ 다시 생성</button>
@@ -224,6 +230,14 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
         <option value="claude-opus-4-8">Claude Opus 4.8 — 최고 품질·깊이 (비용 ↑)</option>
       </select>
     </div>
+  </div>
+  <div class="card">
+    <div class="ctitle">📧 이메일 자동 발송 <span class="csub">EmailJS · 선택</span></div>
+    <div class="field"><label>Public Key</label><input id="ejsPub" placeholder="EmailJS Public Key"></div>
+    <div class="field"><label>Service ID</label><input id="ejsService" placeholder="service_xxxxxxx"></div>
+    <div class="field"><label>Template ID</label><input id="ejsTemplate" placeholder="template_xxxxxxx"></div>
+    <button class="savebtn" onclick="saveEmailCfg()">이메일 설정 저장</button>
+    <div class="hint"><a href="https://emailjs.com" target="_blank">emailjs.com</a> 무료 가입 → 이메일 서비스 연결 → 템플릿 생성. 템플릿 변수에 <b>{{to_email}} {{to_name}} {{subject}} {{message_html}}</b> 를 넣고, 받는사람(To)을 <b>{{to_email}}</b> 로 설정하세요. 미설정 시에는 PDF/이미지로 수동 전달하면 됩니다.</div>
   </div>
   <div class="card">
     <div class="ctitle">🎚 분석 분량</div>
@@ -361,7 +375,7 @@ function calcAndShow(){
   let h=noTime?null:parseInt($('iH').value), mi=noTime?0:(parseInt($('iMin').value)||0);
   if(!noTime&&(isNaN(h)||h<0||h>23)){toast('시각을 입력하거나 「시각 모름」을 체크하세요','err');return;}
   let a=analyzeSaju(solY,solM,solD,h,mi,gender);
-  cust={name:$('iName').value.trim()||'고객', gender, cal, inY:y,inM:m,inD:d, solY,solM,solD, h,mi,noTime, place:$('iPlace').value.trim(), ask:$('iAsk').value.trim(), a};
+  cust={name:$('iName').value.trim()||'고객', gender, cal, inY:y,inM:m,inD:d, solY,solM,solD, h,mi,noTime, place:$('iPlace').value.trim(), ask:$('iAsk').value.trim(), email:$('iEmail').value.trim(), phone:$('iPhone').value.trim(), a};
   renderSaju();
   go('saju');
   toast('사주판이 계산되었습니다','ok');
@@ -507,10 +521,58 @@ function inline(s){return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').re
 
 /* ═══════════ 저장 ═══════════ */
 function savePDF(){toast('인쇄 창에서 「PDF로 저장」을 선택하세요','');setTimeout(()=>window.print(),400);}
-function copyText(){
+function textVersion(){
   let t='【'+cust.name+' 님 사주명리 운명 리포트】\n\n';
   results.forEach((r,i)=>{t+='■ PART '+(i+1)+'. '+PARTS[i].t+'\n'+r.replace(/[*#>]/g,'')+'\n\n';});
-  navigator.clipboard.writeText(t).then(()=>toast('텍스트가 복사되었습니다','ok'),()=>toast('복사 실패','err'));
+  return t;
+}
+function copyText(){
+  navigator.clipboard.writeText(textVersion()).then(()=>toast('텍스트가 복사되었습니다','ok'),()=>toast('복사 실패','err'));
+}
+
+/* ═══════════ 이메일 자동 발송 (EmailJS) ═══════════ */
+function getEmailCfg(){return {pub:(localStorage.getItem('saju_ejs_pub')||'').trim(),service:(localStorage.getItem('saju_ejs_service')||'').trim(),template:(localStorage.getItem('saju_ejs_template')||'').trim()};}
+function saveEmailCfg(){
+  localStorage.setItem('saju_ejs_pub',$('ejsPub').value.trim());
+  localStorage.setItem('saju_ejs_service',$('ejsService').value.trim());
+  localStorage.setItem('saju_ejs_template',$('ejsTemplate').value.trim());
+  toast('이메일 설정이 저장되었습니다','ok');
+}
+function reportHTML(){
+  const a=cust.a;
+  const calTxt=cust.cal==='양'?'양력':(cust.cal==='윤'?'음력 윤달':'음력');
+  const born=cust.inY+'년 '+cust.inM+'월 '+cust.inD+'일'+(cust.noTime?'':' '+pad(cust.h)+':'+pad(cust.mi));
+  let h='<div style="font-family:\'Apple SD Gothic Neo\',Malgun Gothic,sans-serif;color:#222;line-height:1.75;max-width:640px;margin:0 auto">';
+  h+='<div style="background:#0c1228;color:#e8c97a;padding:28px;border-radius:12px;text-align:center">'
+    +'<div style="font-size:13px;letter-spacing:2px;color:#c9a44f">A. 고급 프리미엄 사주분석</div>'
+    +'<h1 style="margin:10px 0;color:#fff;font-size:22px">'+esc(cust.name)+' 님의 사주명리 운명 리포트</h1>'
+    +'<div style="font-size:13px;color:#9aa6c8">'+calTxt+' '+born+' · '+cust.gender+'성 · 일간 '+GAN[a.ilG]+'('+GAN_HJA[a.ilG]+')</div></div>';
+  results.forEach((r,i)=>{
+    h+='<h2 style="color:#1a2a5e;border-left:4px solid #c9a44f;padding-left:10px;margin-top:28px;font-size:18px">PART '+(i+1)+'. '+PARTS[i].t+'</h2>'
+      +'<div style="font-size:15px;color:#333">'+md(r)+'</div>';
+  });
+  h+='<hr style="margin-top:30px;border:none;border-top:1px solid #ddd"><p style="font-size:12px;color:#999;text-align:center">본 분석은 명리학(사주팔자) 이론에 기반한 상담·참고용 콘텐츠이며, 의료·법률·투자 등 전문적 판단을 대체하지 않습니다. © AI 사주명리 분석</p></div>';
+  return h;
+}
+async function emailToCustomer(){
+  if(!results.length||results.some(x=>!x)){toast('먼저 분석을 완료해 주세요','err');return;}
+  if(!cust||!cust.email){toast('고객 이메일이 없습니다 — 「고객정보 입력」에 이메일을 넣어주세요','err');go('input');return;}
+  const cfg=getEmailCfg();
+  if(!cfg.pub||!cfg.service||!cfg.template){toast('⚙️설정에서 EmailJS 정보를 먼저 입력하세요','err');go('settings');return;}
+  if(typeof emailjs==='undefined'){toast('이메일 모듈 로드 실패 — 네트워크를 확인하세요','err');return;}
+  if(!confirm(cust.email+' 으로 사주 리포트를 발송할까요?'))return;
+  toast('이메일 발송 중…','');
+  try{
+    emailjs.init({publicKey:cfg.pub});
+    await emailjs.send(cfg.service,cfg.template,{
+      to_email:cust.email,
+      to_name:cust.name,
+      subject:cust.name+' 님 사주명리 운명 리포트',
+      message_html:reportHTML(),
+      message:textVersion()
+    });
+    toast('✅ '+cust.email+' 으로 발송되었습니다','ok');
+  }catch(e){toast('발송 실패: '+(e&&(e.text||e.message)||e),'err');}
 }
 async function savePNG(){
   let el=$('resultView');
@@ -533,6 +595,7 @@ $('lenSel').onchange=function(){localStorage.setItem('saju_len',this.value);};
   updateApiStat();
   $('modelSel').value=getModel();
   $('lenSel').value=getLen();
+  let c=getEmailCfg();$('ejsPub').value=c.pub;$('ejsService').value=c.service;$('ejsTemplate').value=c.template;
 })();
 </script>
 </body>

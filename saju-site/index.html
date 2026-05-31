@@ -102,6 +102,24 @@
 
   footer{border-top:1px solid var(--line);padding:40px 0 60px;color:#6f6f6f;font-size:13px;text-align:center}
   footer .dis{max-width:680px;margin:0 auto 18px;line-height:1.7}
+
+  /* 신청 폼 */
+  .formwrap{max-width:620px;margin:0 auto;padding:30px 26px}
+  .form-field{margin-bottom:16px;text-align:left}
+  .form-field>label{display:block;font-size:13px;color:#cfcfcf;margin-bottom:7px;font-weight:600}
+  .form-field>label i{color:var(--gold);font-style:normal}
+  .form-field input,.form-field select,.form-field textarea{width:100%;background:#0f0f0f;border:1px solid var(--line);border-radius:10px;color:var(--tx);padding:12px 14px;font-size:15px;font-family:inherit;transition:border-color .15s}
+  .form-field input:focus,.form-field select:focus,.form-field textarea:focus{outline:none;border-color:var(--gold2)}
+  .form-field textarea{resize:vertical}
+  .form-field input:disabled{opacity:.45}
+  .form-row{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px}
+  .form-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .inline-chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut);margin-top:9px;font-weight:500;cursor:pointer}
+  .inline-chk input{width:auto}
+  .notice{background:#1b1407;border:1px solid var(--gold2);border-radius:10px;padding:13px 15px;font-size:13.5px;color:#ecdcb4;line-height:1.6}
+  .agree{display:flex;gap:10px;align-items:flex-start;text-align:left;font-size:13px;color:#bdbdbd;line-height:1.6;margin:16px 0;cursor:pointer}
+  .agree input{width:auto;margin-top:3px;flex-shrink:0}
+  .hp{position:absolute!important;left:-9999px}
 </style>
 </head>
 <body>
@@ -213,15 +231,103 @@
 </div></section>
 
 <section id="apply"><div class="wrap">
-  <div class="band">
-    <h2>지금 내 사주를 받아보세요</h2>
-    <p>아래 채널로 <b class="gold">생년월일시(양/음력 구분)</b>와 원하는 패키지를 보내주시면 안내해 드립니다.</p>
-    <!-- ▼▼ 운영자: 아래 링크를 실제 카카오톡 채널 / 네이버폼 / 인스타 DM 등으로 교체하세요 ▼▼ -->
-    <div class="cta-row">
-      <a href="#" class="btn" id="kakao">카카오톡으로 신청</a>
-      <a href="mailto:rlarudeh7778@gmail.com?subject=사주명리%20분석%20신청&body=이름:%0A생년월일시(양/음력):%0A성별:%0A원하는%20패키지:%0A연락처:" class="btn ghost">이메일로 신청</a>
+  <div class="stitle">
+    <div class="k">APPLY</div>
+    <h2>사주 분석 신청하기</h2>
+    <p>정보를 입력해 신청하시면, 결제 안내 후 <b class="gold">24시간 이내</b>에 리포트를 보내드립니다</p>
+  </div>
+
+  <div class="card formwrap" id="formCard">
+    <form id="sajuForm" autocomplete="on">
+      <input type="checkbox" name="botcheck" class="hp" tabindex="-1" aria-hidden="true">
+
+      <div class="form-field">
+        <label>성함 <i>*</i></label>
+        <input name="성함" required placeholder="홍길동">
+      </div>
+
+      <div class="form-row2">
+        <div class="form-field">
+          <label>성별 <i>*</i></label>
+          <select name="성별" required>
+            <option value="">선택</option>
+            <option>남성</option><option>여성</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>달력 기준 <i>*</i></label>
+          <select name="달력" required>
+            <option value="">선택</option>
+            <option>양력</option><option>음력(평달)</option><option>음력(윤달)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>생년월일 <i>*</i></label>
+        <div class="form-row">
+          <input name="출생연도" type="number" required placeholder="연도 (1990)">
+          <input name="출생월" type="number" required min="1" max="12" placeholder="월">
+          <input name="출생일" type="number" required min="1" max="31" placeholder="일">
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>태어난 시각 (24시간제)</label>
+        <div class="form-row2">
+          <input name="출생시" id="bH" type="number" min="0" max="23" placeholder="시 (0~23)">
+          <input name="출생분" id="bMin" type="number" min="0" max="59" placeholder="분 (0~59)">
+        </div>
+        <label class="inline-chk"><input type="checkbox" id="noTime" name="시각모름" value="예"> 태어난 시각을 모름 (시주 제외하고 분석)</label>
+      </div>
+
+      <div class="form-field">
+        <label>분석 패키지 <i>*</i></label>
+        <select name="패키지" required>
+          <option value="">선택</option>
+          <option>기본 (19,000원)</option>
+          <option>프리미엄 10파트 (39,000원)</option>
+          <option>궁합 (49,000원)</option>
+        </select>
+      </div>
+
+      <div class="form-row2">
+        <div class="form-field">
+          <label>이메일 <i>*</i></label>
+          <input name="이메일" type="email" required placeholder="example@email.com">
+        </div>
+        <div class="form-field">
+          <label>연락처 <i>*</i></label>
+          <input name="연락처" type="tel" required placeholder="010-0000-0000">
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>특히 궁금한 점 (선택)</label>
+        <textarea name="궁금한점" rows="3" placeholder="예: 올해 이직운, 결혼 시기, 사업 시작 시기 등 — 적어주시면 분석에 비중 있게 반영됩니다."></textarea>
+      </div>
+
+      <div class="notice">⚠️ <b>발송 전 꼭 확인해 주세요.</b> 입력하신 <b>이메일·연락처가 잘못되면 리포트를 보내드릴 수 없습니다.</b> 다시 한번 정확히 확인 후 신청해 주세요.</div>
+
+      <label class="agree">
+        <input type="checkbox" id="agree" required>
+        <span><b class="gold">[필수]</b> 개인정보 수집·이용에 동의합니다. 수집 항목(성함·생년월일시·이메일·연락처)은 <b>사주 분석 및 결과 발송 목적</b>으로만 이용되며, 발송 완료 후 파기됩니다.</span>
+      </label>
+
+      <button type="submit" class="btn" style="width:100%;margin-top:6px">신청 접수하기</button>
+    </form>
+  </div>
+
+  <div class="card formwrap" id="successCard" style="display:none;text-align:center">
+    <div style="font-size:46px">✅</div>
+    <h2 style="color:var(--gold);margin:8px 0 4px">신청이 접수되었습니다</h2>
+    <p style="color:var(--mut)">입력하신 이메일 <b class="gold" id="successEmail"></b> 로 리포트를 보내드립니다.</p>
+    <div class="notice" style="text-align:left;margin:20px 0">⚠️ 이메일·연락처가 <b>잘못 입력된 경우 발송이 불가</b>합니다. 오기입하셨다면 안내된 연락처로 바로 알려주세요.</div>
+    <div class="band" style="margin:0">
+      <h2 style="font-size:22px">결제 완료 후 24시간 이내 발송</h2>
+      <p>아래 버튼으로 결제를 완료해 주세요.<br><b class="gold">결제가 확인되면 24시간 이내</b>에 프리미엄 사주 리포트(PDF)를 이메일로 보내드립니다.</p>
+      <a href="#" id="payBtn" class="btn">결제하기</a>
     </div>
-    <!-- ▲▲ 교체 끝 ▲▲ -->
   </div>
 </div></section>
 
@@ -245,6 +351,51 @@
   <p>© <span id="yr"></span> 운명을 읽다 · AI 사주명리 분석</p>
 </div></footer>
 
-<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+<script>
+document.getElementById('yr').textContent=new Date().getFullYear();
+
+/* ▼▼ 운영자 설정: 아래 3개 값을 교체하세요 ▼▼ */
+const WEB3FORMS_KEY="YOUR_WEB3FORMS_ACCESS_KEY"; // web3forms.com 무료 Access Key → 신청 내역을 운영자 이메일로 받음
+const PAY_LINK="#";                              // 토스/카카오페이 등 결제 링크
+const FALLBACK_EMAIL="rlarudeh7778@gmail.com";   // Access Key 미설정 시 신청을 받을 운영자 이메일
+/* ▲▲ 교체 끝 ▲▲ */
+
+const f=document.getElementById('sajuForm');
+const noTime=document.getElementById('noTime');
+noTime.addEventListener('change',()=>{
+  ['bH','bMin'].forEach(id=>{const el=document.getElementById(id);el.disabled=noTime.checked;if(noTime.checked)el.value='';});
+});
+document.getElementById('payBtn').setAttribute('href',PAY_LINK);
+
+f.addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  if(!document.getElementById('agree').checked){alert('개인정보 수집·이용에 동의해 주세요.');return;}
+  const btn=f.querySelector('button[type=submit]');
+  btn.disabled=true;const orig=btn.textContent;btn.textContent='접수 중…';
+  const fd=new FormData(f);
+  const email=fd.get('이메일');
+  try{
+    if(WEB3FORMS_KEY && WEB3FORMS_KEY.indexOf('YOUR_')!==0){
+      fd.append('access_key',WEB3FORMS_KEY);
+      fd.append('subject','[사주 신청] '+(fd.get('성함')||''));
+      fd.append('from_name','사주명리 신청 폼');
+      const res=await fetch('https://api.web3forms.com/submit',{method:'POST',body:fd});
+      const j=await res.json();
+      if(!j.success)throw new Error(j.message||'전송에 실패했습니다');
+    }else{
+      // Access Key 미설정 → 운영자 이메일로 mailto 폴백
+      let lines=[];fd.forEach((v,k)=>{if(k!=='botcheck')lines.push(k+': '+v);});
+      window.location.href='mailto:'+FALLBACK_EMAIL+'?subject='+encodeURIComponent('[사주 신청] '+(fd.get('성함')||''))+'&body='+encodeURIComponent(lines.join('\n'));
+    }
+    document.getElementById('formCard').style.display='none';
+    const s=document.getElementById('successCard');
+    document.getElementById('successEmail').textContent=email||'입력하신 이메일';
+    s.style.display='block';s.scrollIntoView({behavior:'smooth'});
+  }catch(err){
+    alert('전송 중 문제가 발생했습니다: '+err.message+'\n잠시 후 다시 시도하시거나 직접 이메일로 신청해 주세요.');
+    btn.disabled=false;btn.textContent=orig;
+  }
+});
+</script>
 </body>
 </html>
