@@ -178,6 +178,15 @@
   .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
   .reveal.in{opacity:1;transform:none}
   @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}.orb,.aurora,header.hero h1 span{animation:none}}
+
+  /* 환불 안내 바 */
+  .refundbar{background:rgba(236,206,134,.07);border-bottom:1px solid var(--line);color:var(--mist);font-size:12.5px;text-align:center;padding:9px 16px;font-weight:300}
+  .refundbar b{color:var(--gold);font-weight:600}
+  /* 카카오 채널 버튼 */
+  .kakao-btn{display:inline-flex;align-items:center;gap:8px;background:#FEE500;color:#181600;font-weight:800;padding:14px 26px;border-radius:999px;font-size:15px;box-shadow:0 8px 26px rgba(254,229,0,.22);transition:transform .15s,box-shadow .15s}
+  .kakao-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(254,229,0,.38)}
+  #contact .card{max-width:560px;margin:0 auto;text-align:center;padding:34px 26px}
+  #contact p{color:var(--mist);font-weight:300;margin:8px 0 20px}
 </style>
 </head>
 <body>
@@ -192,9 +201,11 @@
     <a href="#how">진행 방법</a>
     <a href="#price">가격</a>
     <a href="#faq">FAQ</a>
+    <a href="#contact">문의</a>
     <a href="#apply" class="gold">신청하기</a>
   </div>
 </div></nav>
+<div class="refundbar">🔒 본 서비스는 <b>디지털 콘텐츠</b>를 제공하므로, <b>입금(결제) 완료 후에는 환불이 불가</b>합니다. 신청 전 정보를 정확히 확인해 주세요.</div>
 
 <header class="hero">
   <div class="orb" aria-hidden="true"></div>
@@ -264,7 +275,7 @@
         <li>올해의 운세</li>
         <li>PDF 리포트 전달</li>
       </ul>
-      <a href="#apply" class="btn ghost">신청하기</a>
+      <a href="#apply" class="btn ghost" onclick="pickPkg('기본')">신청하기</a>
     </div>
     <div class="plan feat">
       <span class="tag">BEST</span>
@@ -277,7 +288,8 @@
         <li>PDF + 이미지 소장본</li>
         <li>간단 추가 질문 1회</li>
       </ul>
-      <a href="#apply" class="btn">신청하기</a>
+      <div class="note" style="margin:0 0 16px">※ 추가 질문 1회는 신청서의 「특히 궁금한 점」에 적어주세요.</div>
+      <a href="#apply" class="btn" onclick="pickPkg('프리미엄')">신청하기</a>
     </div>
     <div class="plan">
       <h3>궁합</h3>
@@ -288,7 +300,8 @@
         <li>인연·관계 흐름</li>
         <li>관계 조언 리포트</li>
       </ul>
-      <a href="#apply" class="btn ghost">신청하기</a>
+      <div class="note" style="margin:0 0 16px">※ 신청 시 <b class="gold">두 사람</b>의 생년월일시를 입력합니다.</div>
+      <a href="#apply" class="btn ghost" onclick="pickPkg('궁합')">신청하기</a>
     </div>
   </div>
   <div class="note">※ 본 서비스는 명리학 기반 상담·참고용 콘텐츠입니다.</div>
@@ -347,12 +360,54 @@
 
       <div class="form-field">
         <label>분석 패키지 <i>*</i></label>
-        <select name="패키지" required>
+        <select name="패키지" id="pkgSel" required onchange="onPkgChange()">
           <option value="">선택</option>
-          <option>기본 (19,000원)</option>
-          <option>프리미엄 10파트 (39,000원)</option>
-          <option>궁합 (49,000원)</option>
+          <option value="기본">기본 (19,000원)</option>
+          <option value="프리미엄">프리미엄 10파트 (39,000원)</option>
+          <option value="궁합">궁합 (49,000원)</option>
         </select>
+        <div class="inline-chk" style="color:var(--mist)">※ <b style="color:var(--lav);margin:0 3px">프리미엄</b> 추가 질문 1회는 아래 「특히 궁금한 점」에 적어주세요.</div>
+      </div>
+
+      <!-- 상대방 (궁합 전용) -->
+      <div id="partner" style="display:none">
+        <div class="notice" style="margin-bottom:14px">💞 <b>궁합</b>은 두 사람의 정보가 필요합니다. 아래에 <b>상대방 정보</b>도 입력해 주세요.</div>
+        <div class="form-field">
+          <label>상대방 성함 <i>*</i></label>
+          <input name="상대방_성함" placeholder="상대방 이름">
+        </div>
+        <div class="form-row2">
+          <div class="form-field">
+            <label>상대방 성별 <i>*</i></label>
+            <select name="상대방_성별">
+              <option value="">선택</option>
+              <option>남성</option><option>여성</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>상대방 달력 기준 <i>*</i></label>
+            <select name="상대방_달력">
+              <option value="">선택</option>
+              <option>양력</option><option>음력(평달)</option><option>음력(윤달)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field">
+          <label>상대방 생년월일 <i>*</i></label>
+          <div class="form-row">
+            <input name="상대방_출생연도" type="number" placeholder="연도 (1992)">
+            <input name="상대방_출생월" type="number" min="1" max="12" placeholder="월">
+            <input name="상대방_출생일" type="number" min="1" max="31" placeholder="일">
+          </div>
+        </div>
+        <div class="form-field">
+          <label>상대방 태어난 시각 (24시간제)</label>
+          <div class="form-row2">
+            <input name="상대방_출생시" id="bH2" type="number" min="0" max="23" placeholder="시 (0~23)">
+            <input name="상대방_출생분" id="bMin2" type="number" min="0" max="59" placeholder="분 (0~59)">
+          </div>
+          <label class="inline-chk"><input type="checkbox" id="noTime2" name="상대방_시각모름" value="예"> 상대방 시각을 모름 (시주 제외)</label>
+        </div>
       </div>
 
       <div class="form-row2">
@@ -395,6 +450,8 @@
         <span class="acct-owner">예금주 : 김경도</span>
         <span class="acct-copy" id="acctCopy">📋 한 번 클릭하면 복사됩니다</span>
       </button>
+      <p style="margin:20px 0 14px;color:var(--mist);font-weight:300">입금 후 <b class="gold">카카오톡 채널</b>로 확인 메시지 하나 남겨주시면 좀 더 빠르게 받아보실 수 있어요.</p>
+      <a href="http://pf.kakao.com/_gdCGX" target="_blank" rel="noopener" class="kakao-btn">💬 카카오톡 채널로 문의·확인</a>
     </div>
   </div>
 </div></section>
@@ -413,8 +470,19 @@
   </div>
 </div></section>
 
+<section id="contact"><div class="wrap">
+  <div class="stitle">
+    <div class="k">CONTACT</div>
+    <h2>담당자 문의하기</h2>
+  </div>
+  <div class="card">
+    <p>궁금한 점이나 신청·입금 확인은 <b class="gold">카카오톡 채널</b>로 편하게 문의해 주세요.<br>입금 후 채널로 메시지를 남겨주시면 더 빠르게 처리해 드립니다.</p>
+    <a href="http://pf.kakao.com/_gdCGX" target="_blank" rel="noopener" class="kakao-btn">💬 카카오톡 채널 문의하기</a>
+  </div>
+</div></section>
+
 <footer><div class="wrap">
-  <p class="dis">본 서비스에서 제공하는 모든 콘텐츠는 명리학 이론에 기반한 <b>상담·참고용</b>이며,
+  <p class="dis">본 서비스는 <b>디지털 콘텐츠</b> 제공 서비스로 결제(입금) 후 환불이 불가합니다. 제공되는 모든 콘텐츠는 명리학 이론에 기반한 <b>상담·참고용</b>이며,
     의료·법률·투자 등 전문적 판단을 대체하지 않습니다. 최종 선택과 책임은 이용자 본인에게 있습니다.</p>
   <p>© <span id="yr"></span> 운명을 읽다 · AI 사주명리 분석</p>
 </div></footer>
@@ -472,9 +540,24 @@ noTime.addEventListener('change',()=>{
   ['bH','bMin'].forEach(id=>{const el=document.getElementById(id);el.disabled=noTime.checked;if(noTime.checked)el.value='';});
 });
 
+/* 패키지 선택 → 궁합이면 상대방 정보 표시 */
+function onPkgChange(){
+  const g=document.getElementById('pkgSel').value==='궁합';
+  document.getElementById('partner').style.display=g?'block':'none';
+}
+function pickPkg(v){const s=document.getElementById('pkgSel');if(s){s.value=v;onPkgChange();}}
+const noTime2=document.getElementById('noTime2');
+if(noTime2)noTime2.addEventListener('change',()=>{
+  ['bH2','bMin2'].forEach(id=>{const el=document.getElementById(id);el.disabled=noTime2.checked;if(noTime2.checked)el.value='';});
+});
+
 f.addEventListener('submit',async(e)=>{
   e.preventDefault();
   if(!document.getElementById('agree').checked){alert('개인정보 수집·이용에 동의해 주세요.');return;}
+  if(document.getElementById('pkgSel').value==='궁합'){
+    const need={'상대방_성함':'상대방 성함','상대방_성별':'상대방 성별','상대방_달력':'상대방 달력 기준','상대방_출생연도':'상대방 출생연도','상대방_출생월':'상대방 출생월','상대방_출생일':'상대방 출생일'};
+    for(const k in need){const el=f.elements[k];if(!el||!String(el.value).trim()){alert('궁합은 상대방 정보가 필요합니다.\n['+need[k]+']을(를) 입력해 주세요.');return;}}
+  }
   const btn=f.querySelector('button[type=submit]');
   btn.disabled=true;const orig=btn.textContent;btn.textContent='접수 중…';
   const fd=new FormData(f);

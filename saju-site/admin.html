@@ -136,7 +136,18 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 <div class="wrap">
   <div class="card">
     <div class="ctitle">📝 고객 정보 입력</div>
-    <div class="steps"><b>운영 흐름:</b> ① 고객이 신청·결제 → ② 받은 정보를 아래 입력 → ③ <b>분석 생성</b> → ④ <b>PDF로 저장해 전달</b> 또는 <b>고객 이메일로 자동 발송</b></div>
+    <div class="steps"><b>운영 흐름:</b> ① 고객 신청·입금 → ② <b>패키지</b> 선택 후 정보 입력 → ③ <b>분석 생성</b> → ④ <b>PDF 저장</b> 또는 <b>이메일 자동 발송</b></div>
+
+    <div class="field"><label>신청 패키지 <span class="csub">고객이 신청한 상품 선택</span></label>
+      <div class="seg" id="iPkg">
+        <div class="segbtn on" data-v="기본">기본</div>
+        <div class="segbtn" data-v="프리미엄">프리미엄</div>
+        <div class="segbtn" data-v="궁합">궁합</div>
+      </div>
+      <div class="hint" id="pkgHint">기본: 핵심 3파트 · 프리미엄: 심층 10파트 · 궁합: 두 사람 관계 분석</div>
+    </div>
+
+    <div id="p1head" style="display:none;font-weight:800;color:var(--navy);font-size:13px;margin:.2rem 0 .7rem">👤 본인 정보</div>
     <div class="field"><label>이름 / 호칭 (선택)</label><input id="iName" placeholder="예: 홍길동 님"></div>
     <div class="field"><label>성별</label>
       <div class="seg" id="iGender">
@@ -169,7 +180,41 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
     <div class="field"><label>출생 지역 (선택)</label><input id="iPlace" placeholder="예: 서울 / 부산 / 미국 LA">
       <div class="hint">참고용입니다. 표준시·진태양시 보정은 KST(+9h) 기준으로 계산합니다.</div>
     </div>
-    <div class="field"><label>고객이 특히 궁금해하는 점 (선택)</label><textarea id="iAsk" placeholder="예: 올해 이직운, 결혼 시기, 사업 시작해도 될지 등 — 적으면 분석에 비중 있게 반영됩니다."></textarea></div>
+
+    <!-- 상대방 (궁합 전용) -->
+    <div id="p2block" style="display:none">
+      <div style="font-weight:800;color:var(--navy);font-size:13px;margin:1.1rem 0 .7rem;border-top:1px dashed #d9deea;padding-top:1.1rem">💞 상대방 정보 (궁합)</div>
+      <div class="field"><label>상대방 이름 / 호칭 (선택)</label><input id="iName2" placeholder="예: 김영희 님"></div>
+      <div class="field"><label>상대방 성별</label>
+        <div class="seg" id="iGender2">
+          <div class="segbtn on" data-v="남">남성</div>
+          <div class="segbtn" data-v="여">여성</div>
+        </div>
+      </div>
+      <div class="field"><label>상대방 달력 기준</label>
+        <div class="seg" id="iCal2">
+          <div class="segbtn on" data-v="양">양력</div>
+          <div class="segbtn" data-v="음">음력(평달)</div>
+          <div class="segbtn" data-v="윤">음력(윤달)</div>
+        </div>
+      </div>
+      <div class="field"><label>상대방 생년월일</label>
+        <div class="frow3">
+          <input id="iY2" type="number" placeholder="연도(예:1992)">
+          <input id="iM2" type="number" placeholder="월" min="1" max="12">
+          <input id="iD2" type="number" placeholder="일" min="1" max="31">
+        </div>
+      </div>
+      <div class="field"><label>상대방 태어난 시각 (24시간제)</label>
+        <div class="frow">
+          <input id="iH2" type="number" placeholder="시(0~23)" min="0" max="23">
+          <input id="iMin2" type="number" placeholder="분(0~59)" min="0" max="59">
+        </div>
+        <div class="chk"><input type="checkbox" id="iNoTime2"><label for="iNoTime2">상대방 시각을 모름 (시주 제외)</label></div>
+      </div>
+    </div>
+
+    <div class="field"><label>특히 궁금한 점 / 추가 질문 (선택) <span class="csub">프리미엄 추가질문 1회 반영</span></label><textarea id="iAsk" placeholder="예: 올해 이직운, 결혼 시기, 두 사람 결혼해도 될지 등 — 적으면 분석에 비중 있게 반영됩니다."></textarea></div>
     <div class="field"><label>📧 고객 이메일 <span class="csub">결과 자동 발송용</span></label><input id="iEmail" type="email" placeholder="고객이 신청 시 입력한 이메일">
       <div class="hint">입력해 두면 분석 완료 후 「고객 이메일로 발송」 버튼으로 바로 보낼 수 있습니다(⚙️설정에서 이메일 발송 1회 설정 필요).</div>
     </div>
@@ -178,7 +223,7 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
   </div>
   <div>
     <div class="card" style="margin-bottom:1rem">
-      <div class="ctitle">📦 상품 구성 <span class="csub">이미지 기반 10 PART</span></div>
+      <div class="ctitle">📦 상품 구성 <span class="csub" id="tocSub">기본 · 3 PART</span></div>
       <div id="tocList" style="font-size:13px;color:var(--t2);line-height:2"></div>
     </div>
     <div class="card">
@@ -208,7 +253,7 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
     <button class="tbtn" onclick="copyText()">📋 텍스트 복사</button>
     <button class="tbtn" onclick="regenerate()">↻ 다시 생성</button>
   </div>
-  <div id="resultView"><div class="empty"><div class="ic">📜</div>사주판 계산 후 <b>「프리미엄 분석 생성」</b>을 누르면 10개 PART가 순서대로 작성됩니다.</div></div>
+  <div id="resultView"><div class="empty"><div class="ic">📜</div>사주판 계산 후 <b>「분석 생성」</b>을 누르면 만세력과 함께 선택한 패키지의 PART가 순서대로 작성됩니다.</div></div>
   <div class="disc" id="discBox" style="display:none">
     본 분석은 명리학(사주팔자) 이론에 기반한 <b>상담·참고용 콘텐츠</b>이며, 의료·법률·투자 등의 전문적 판단을 대체하지 않습니다.<br>운명은 정해진 것이 아니라 노력으로 만들어 가는 것입니다. © AI 사주명리 분석
   </div>
@@ -222,8 +267,9 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
     <div class="apirow">
       <input id="apiKey" type="password" placeholder="sk-ant-...">
       <button class="savebtn" onclick="saveKey()">저장</button>
+      <button class="savebtn" style="background:#46d59a;color:#06241a" onclick="testKey()">테스트</button>
     </div>
-    <div class="hint"><a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> 에서 발급. 키는 이 브라우저(localStorage)에만 저장되며 외부로 전송되지 않습니다(분석 시 Anthropic 서버로만 전송).</div>
+    <div class="hint"><a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> 에서 발급(<b>sk-ant-…</b> 형식). <b>한 번 저장하면 이 브라우저에 보관되어 매번 다시 입력할 필요가 없습니다.</b> 키는 외부로 전송되지 않으며 분석 시 Anthropic 서버로만 전송됩니다. <b>「테스트」</b>로 키가 정상인지 먼저 확인하세요.</div>
     <div class="field" style="margin-top:1rem"><label>분석 모델</label>
       <select id="modelSel">
         <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — 빠르고 저렴 (권장, 1건 수백 원)</option>
@@ -324,8 +370,8 @@ function analyzeSaju(y,mo,d,hour,minute,gender){
   return {s,ilG,ilOh,ilYY,oh,ss,fwd,startAge,daeun:dae};
 }
 
-/* ═══════════ PART 정의 ═══════════ */
-const PARTS=[
+/* ═══════════ PART 정의 (패키지별) ═══════════ */
+const PREMIUM_PARTS=[
  {t:'나의 사주팔자 상세분석',g:'일간(나)의 본질과 성격, 타고난 기질, 사주팔자 여덟 글자의 구조, 오행의 균형/과부족, 신강·신약, 격국, 용신(필요한 오행)을 짚어 이 사람이 어떤 사람인지 종합적으로 풀이.'},
  {t:'내 인생의 황금기',g:'대운의 흐름을 바탕으로 인생에서 운이 가장 크게 열리는 시기(연령대)와 그 이유, 반대로 조심할 시기를 구체적으로. 황금기를 어떻게 준비하고 활용할지.'},
  {t:'연애운과 배우자운',g:'배우자궁(일지)과 관성/재성을 근거로 연애 스타일, 이상형, 인연이 오는 시기, 배우자의 특징과 만나는 환경, 결혼운과 부부 관계에서 주의할 점.'},
@@ -337,6 +383,21 @@ const PARTS=[
  {t:'2026년 월별 상세 운명분석',g:'2026년(병오년) 세운과 사주의 상호작용을 바탕으로 1월~12월 각 달의 운세 흐름(일/재물/관계/건강)과 그달의 조언을 월별로 구체적으로.'},
  {t:'앞으로의 10년간 운명 분석',g:'현재부터 향후 10년의 대운·세운 흐름을 연도별 큰 줄기로 짚어, 어느 해에 무엇을 도모하면 좋고 무엇을 조심할지 로드맵 형태로.'}
 ];
+const BASIC_PARTS=[
+ {t:'사주팔자·오행 핵심 분석',g:'일간(나)의 본질, 사주팔자 여덟 글자의 구조, 오행의 균형/과부족, 신강·신약을 핵심만 명료하게 짚어 어떤 사람인지 정리. (기본 패키지이므로 과도하게 길지 않게 핵심 위주로)'},
+ {t:'성격·기질 리포트',g:'오행과 십성을 근거로 타고난 성격, 강점과 약점, 대인관계 성향, 일을 대하는 태도를 구체적이고 따뜻하게.'},
+ {t:'올해의 운세',g:'올해 세운과 사주의 상호작용으로 전반적 흐름과 재물·일·관계·건강의 운, 올 한 해의 핵심 조언을 정리.'}
+];
+const GUNGHAP_PARTS=[
+ {t:'두 사람의 사주 비교',g:'본인과 상대방 각각의 일간·오행·격국·신강신약을 비교해 기질의 닮음과 다름, 서로에게 끌리는 점과 부딪치는 지점을 짚기.'},
+ {t:'오행·십성의 상호작용',g:'두 사주의 오행 생극(생/극/합/충)과 십성 관계를 근거로 두 사람 사이 에너지가 어떻게 흐르는지, 서로 보완되는 부분과 충돌되는 부분.'},
+ {t:'인연·관계의 흐름',g:'일지(배우자궁)·합충과 두 사람의 대운·세운을 근거로 인연의 깊이, 만남·발전·고비의 시기와 장기적 관계 흐름.'},
+ {t:'갈등 요소와 보완점',g:'서로의 부족한 오행과 성향 차이에서 오는 현실적 갈등 포인트와, 그것을 메워주는 구체적인 보완 방법.'},
+ {t:'관계 발전을 위한 조언',g:'두 사람이 오래 좋은 관계를 이어가기 위한 실천적 조언 — 소통 방식, 역할, 서로를 위하는 태도, 좋은 시기 활용법.'}
+];
+function partsFor(p){return p==='프리미엄'?PREMIUM_PARTS:(p==='궁합'?GUNGHAP_PARTS:BASIC_PARTS);}
+let activePkg='기본';
+let PARTS=BASIC_PARTS; // 활성 패키지의 파트(패키지 선택/계산 시 갱신)
 
 /* ═══════════ 상태/공통 ═══════════ */
 const KEY='saju_ak';
@@ -356,36 +417,56 @@ function go(p){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('
 document.querySelectorAll('.seg').forEach(seg=>seg.querySelectorAll('.segbtn').forEach(b=>b.onclick=()=>{seg.querySelectorAll('.segbtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');}));
 function segVal(id){let on=$(id).querySelector('.segbtn.on');return on?on.dataset.v:null;}
 $('iNoTime').onchange=function(){let dis=this.checked;$('iH').disabled=dis;$('iMin').disabled=dis;$('iH').style.opacity=$('iMin').style.opacity=dis?.4:1;};
+$('iNoTime2').onchange=function(){let dis=this.checked;$('iH2').disabled=dis;$('iMin2').disabled=dis;$('iH2').style.opacity=$('iMin2').style.opacity=dis?.4:1;};
 
-// 목차 렌더
-$('tocList').innerHTML=PARTS.map((p,i)=>'<div><b style="color:var(--gold2)">PART '+(i+1)+'</b> · '+p.t+'</div>').join('');
+// 패키지 전환
+const PKG_HINT={기본:'기본: 사주팔자·오행·성격·올해의 운세 (핵심 3파트)',프리미엄:'프리미엄: 대운·재물·애정·직업·건강 등 심층 10파트 + 추가질문 1회',궁합:'궁합: 두 사람 정보를 입력해 관계를 심층 분석 (5파트)'};
+$('iPkg').querySelectorAll('.segbtn').forEach(b=>b.addEventListener('click',()=>{
+  activePkg=b.dataset.v; PARTS=partsFor(activePkg);
+  let isG=(activePkg==='궁합');
+  $('p2block').style.display=isG?'block':'none';
+  $('p1head').style.display=isG?'block':'none';
+  $('pkgHint').textContent=PKG_HINT[activePkg];
+  renderTOC();
+}));
+function renderTOC(){
+  const list=partsFor(activePkg);
+  $('tocList').innerHTML=list.map((p,i)=>'<div><b style="color:var(--gold2)">PART '+(i+1)+'</b> · '+p.t+'</div>').join('');
+  if($('tocSub'))$('tocSub').textContent=activePkg+' · '+list.length+' PART';
+}
+renderTOC();
 
 /* ═══════════ 사주판 계산 ═══════════ */
-function calcAndShow(){
-  let y=parseInt($('iY').value),m=parseInt($('iM').value),d=parseInt($('iD').value);
-  if(!y||!m||!d||m<1||m>12||d<1||d>31){toast('생년월일을 정확히 입력하세요','err');return;}
-  let cal=segVal('iCal'), gender=segVal('iGender');
+function readPerson(suf){
+  const pre=suf?'상대방 ':'';
+  let y=parseInt($('iY'+suf).value),m=parseInt($('iM'+suf).value),d=parseInt($('iD'+suf).value);
+  if(!y||!m||!d||m<1||m>12||d<1||d>31)return {err:pre+'생년월일을 정확히 입력하세요'};
+  let cal=segVal('iCal'+suf), gender=segVal('iGender'+suf);
   let solY=y,solM=m,solD=d;
-  if(cal==='음'||cal==='윤'){
-    let g=lunarToSolar(y,m,d,cal==='윤');
-    if(!g){toast('음력 변환 실패 — 날짜/윤달 여부를 확인하세요','err');return;}
-    solY=g.y;solM=g.m;solD=g.d;
-  }
-  let noTime=$('iNoTime').checked;
-  let h=noTime?null:parseInt($('iH').value), mi=noTime?0:(parseInt($('iMin').value)||0);
-  if(!noTime&&(isNaN(h)||h<0||h>23)){toast('시각을 입력하거나 「시각 모름」을 체크하세요','err');return;}
+  if(cal==='음'||cal==='윤'){let g=lunarToSolar(y,m,d,cal==='윤');if(!g)return {err:pre+'음력 변환 실패 — 날짜/윤달 여부를 확인하세요'};solY=g.y;solM=g.m;solD=g.d;}
+  let noTime=$('iNoTime'+suf).checked;
+  let h=noTime?null:parseInt($('iH'+suf).value), mi=noTime?0:(parseInt($('iMin'+suf).value)||0);
+  if(!noTime&&(isNaN(h)||h<0||h>23))return {err:pre+'시각을 입력하거나 「시각 모름」을 체크하세요'};
   let a=analyzeSaju(solY,solM,solD,h,mi,gender);
-  cust={name:$('iName').value.trim()||'고객', gender, cal, inY:y,inM:m,inD:d, solY,solM,solD, h,mi,noTime, place:$('iPlace').value.trim(), ask:$('iAsk').value.trim(), email:$('iEmail').value.trim(), phone:$('iPhone').value.trim(), a};
+  let placeEl=$('iPlace'+suf);
+  return {name:$('iName'+suf).value.trim()||(suf?'상대방':'고객'), gender, cal, inY:y,inM:m,inD:d, solY,solM,solD, h,mi,noTime, place:placeEl?placeEl.value.trim():'', a};
+}
+function calcAndShow(){
+  const pkg=segVal('iPkg'); activePkg=pkg; PARTS=partsFor(pkg);
+  let p1=readPerson(''); if(p1.err){toast(p1.err,'err');return;}
+  let p2=null;
+  if(pkg==='궁합'){ p2=readPerson('2'); if(p2.err){toast(p2.err,'err');return;} }
+  cust=Object.assign({}, p1, {pkg, ask:$('iAsk').value.trim(), email:$('iEmail').value.trim(), phone:$('iPhone').value.trim(), p2});
   renderSaju();
   go('saju');
   toast('사주판이 계산되었습니다','ok');
 }
 function hanja(gz){let i=gz.indexOf('(');return i<0?gz:gz.slice(i+1,i+3);}
 function kor(gz){return gz.slice(0,2);}
-function renderSaju(){
-  const a=cust.a, s=a.s;
-  const calTxt=cust.cal==='양'?'양력':(cust.cal==='윤'?'음력 윤달':'음력');
-  const born=cust.inY+'.'+pad(cust.inM)+'.'+pad(cust.inD)+(cust.noTime?' (시 불명)':' '+pad(cust.h)+':'+pad(cust.mi));
+function sajuPanelHTML(m,a){
+  const s=a.s;
+  const calTxt=m.cal==='양'?'양력':(m.cal==='윤'?'음력 윤달':'음력');
+  const born=m.inY+'.'+pad(m.inM)+'.'+pad(m.inD)+(m.noTime?' (시 불명)':' '+pad(m.h)+':'+pad(m.mi));
   function pcol(lab,gz,ssg,ssj){
     let body=(gz==='(시 불명)')?'<div class="gz" style="font-size:14px;color:#7e8aae">시 불명</div>'
       :'<div class="gz">'+hanja(gz)+'<small>'+kor(gz)+'</small></div>';
@@ -399,36 +480,46 @@ function renderSaju(){
     +'</div>';
   let ohbar='<div class="ohbar">'+['목','화','토','금','수'].map(k=>'<div class="ohcell oh'+k+'">'+k+'<b>'+a.oh[k]+'</b></div>').join('')+'</div>';
   let daeun='<div class="daeun">'+a.daeun.map(x=>'<div class="dcol"><div class="age">'+x.age+'세</div><div class="dgz">'+hanja(x.gz)+'</div><div class="dss">'+x.ss+'</div></div>').join('')+'</div>';
-  $('sajuView').innerHTML='<div class="sajupan">'
-    +'<h3>'+esc(cust.name)+' · '+(cust.gender)+'</h3>'
-    +'<div class="sajusub">'+calTxt+' '+born+(cust.place?' · '+esc(cust.place):'')+'</div>'
+  return '<div class="sajupan">'
+    +'<h3>'+esc(m.name)+' · '+(m.gender)+'</h3>'
+    +'<div class="sajusub">'+calTxt+' '+born+(m.place?' · '+esc(m.place):'')+'</div>'
     +'<div style="font-size:12px;color:#9aa6c8;margin-bottom:.6rem">일간 <b style="color:var(--gold)">'+GAN[a.ilG]+'('+GAN_HJA[a.ilG]+'·'+a.ilOh+')</b> · '+(a.fwd?'순행':'역행')+' 대운 · 대운수 '+a.startAge+'</div>'
     +pillars
     +'<div style="font-size:11px;color:#9aa6c8;margin:.2rem 0 .3rem">오행 분포</div>'+ohbar
     +'<div style="font-size:11px;color:#9aa6c8;margin:.2rem 0 .3rem">대운 흐름</div>'+daeun
-    +'<button class="btn" style="margin-top:1.2rem" onclick="generate()">🔮 프리미엄 분석 생성 (10 PART)</button>'
     +'</div>';
+}
+function renderSaju(){
+  let html=sajuPanelHTML(cust,cust.a);
+  if(cust.pkg==='궁합'&&cust.p2) html+='<div style="height:.9rem"></div>'+sajuPanelHTML(cust.p2,cust.p2.a);
+  html+='<button class="btn" style="margin-top:1.2rem" onclick="generate()">🔮 '+cust.pkg+' 분석 생성 ('+PARTS.length+' PART)</button>';
+  $('sajuView').innerHTML=html;
 }
 function pad(n){return String(n).padStart(2,'0');}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 /* ═══════════ 분석 생성 (PART별 순차) ═══════════ */
-function sajuDataText(){
-  const a=cust.a,s=a.s;
+function personData(m){
+  const a=m.a,s=a.s;
   let cols=[['연주',s.year,a.ss.year],['월주',s.month,a.ss.month],['일주',s.day,{gan:'일간(나 자신)',ji:a.ss.day.ji}]];
   if(s.hour!=='(시 불명)')cols.push(['시주',s.hour,a.ss.hour]);
   let pil=cols.map(c=>c[0]+' '+c[1]+' [천간 '+c[2].gan+'·지지 '+c[2].ji+']').join(' / ');
   let ohText=['목','화','토','금','수'].map(k=>k+a.oh[k]).join(' ');
   let dae=a.daeun.map(x=>x.age+'세 '+x.gz+'('+x.ss+')').join(', ');
-  const calTxt=cust.cal==='양'?'양력':(cust.cal==='윤'?'음력 윤달':'음력');
-  return '■ 고객: '+cust.name+' / '+cust.gender+'성'
-    +'\n■ 생년월일시: '+calTxt+' '+cust.inY+'년 '+cust.inM+'월 '+cust.inD+'일 '+(cust.noTime?'(태어난 시 모름)':cust.h+'시 '+cust.mi+'분')+(cust.cal!=='양'?' (양력환산 '+cust.solY+'-'+pad(cust.solM)+'-'+pad(cust.solD)+')':'')
-    +(cust.place?'\n■ 출생지: '+cust.place:'')
-    +'\n■ 사주팔자: '+pil
-    +'\n■ 일간(나): '+GAN[a.ilG]+'('+GAN_HJA[a.ilG]+') · 오행 '+a.ilOh+' · '+(a.ilYY?'양간':'음간')
-    +'\n■ 오행 분포(개수): '+ohText
-    +'\n■ 대운: '+(a.fwd?'순행':'역행')+', 대운수 '+a.startAge+'세 → '+dae
-    +(cust.ask?'\n■ 고객이 특히 궁금해하는 점: '+cust.ask:'');
+  const calTxt=m.cal==='양'?'양력':(m.cal==='윤'?'음력 윤달':'음력');
+  return '・이름: '+m.name+' / '+m.gender+'성'
+    +'\n・생년월일시: '+calTxt+' '+m.inY+'년 '+m.inM+'월 '+m.inD+'일 '+(m.noTime?'(태어난 시 모름)':m.h+'시 '+m.mi+'분')+(m.cal!=='양'?' (양력환산 '+m.solY+'-'+pad(m.solM)+'-'+pad(m.solD)+')':'')
+    +(m.place?'\n・출생지: '+m.place:'')
+    +'\n・사주팔자: '+pil
+    +'\n・일간: '+GAN[a.ilG]+'('+GAN_HJA[a.ilG]+') · 오행 '+a.ilOh+' · '+(a.ilYY?'양간':'음간')
+    +'\n・오행 분포(개수): '+ohText
+    +'\n・대운: '+(a.fwd?'순행':'역행')+', 대운수 '+a.startAge+'세 → '+dae;
+}
+function sajuDataText(){
+  if(cust.pkg==='궁합'&&cust.p2){
+    return '■ 본인\n'+personData(cust)+'\n\n■ 상대방\n'+personData(cust.p2)+(cust.ask?'\n\n■ 추가 질문: '+cust.ask:'');
+  }
+  return '■ 고객\n'+personData(cust)+(cust.ask?'\n\n■ 고객이 특히 궁금해하는 점: '+cust.ask:'');
 }
 function sysPrompt(){
   return '당신은 30년 경력의 정통 명리학자이자 따뜻한 사주 상담가입니다. 사주팔자(천간·지지), 오행의 생극제화, 십성(비겁·식상·재성·관성·인성), 신강신약, 용신, 대운·세운을 근거로 깊이 있고 구체적으로 풀이합니다.\n\n[작성 원칙]\n- 반드시 제공된 사주 데이터(팔자·오행·십성·대운)를 근거로 들어 설명하세요. "당신의 일간 OO은…", "월지 OO가 …이므로" 처럼 구체적 명리 근거를 자연스럽게 녹입니다.\n- 따뜻하고 품격 있는 존댓말. 단정적 공포 조성 금지, 희망과 실천 방향을 함께 제시.\n- 한국어. 마크다운 사용(## 소제목, **강조**, 목록, > 인용으로 핵심 조언 강조).\n- 두루뭉술한 일반론 금지. 이 사람만의 사주에 맞춘 개인화된 내용으로.\n- 의료·법률·투자의 단정적 보장은 피하고 경향성으로 서술.\n- 요청된 PART의 내용만 작성하고, 다른 PART와 중복하지 마세요. 인사말·맺음말·"안녕하세요" 같은 군더더기 없이 본문만.';
@@ -437,11 +528,31 @@ function lenGuide(){return {표준:'4~6개 문단 분량으로 충실히',상세
 
 async function callClaude(sys,user){
   const k=getKey().replace(/[^\x20-\x7E]/g,'').trim();
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:getModel(),max_tokens:4000,system:sys,messages:[{role:'user',content:user}]})});
-  const d=await r.json();
-  if(d.error)throw new Error(d.error.message||'API 오류');
+  if(!k)throw new Error('API 키가 없습니다 — ⚙️설정에서 키를 저장하세요.');
+  let r;
+  try{
+    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:getModel(),max_tokens:4000,system:sys,messages:[{role:'user',content:user}]})});
+  }catch(netErr){throw new Error('네트워크 오류 — 인터넷 연결을 확인하세요');}
+  let d={}; try{d=await r.json();}catch(_){}
+  if(r.status===401||(d.error&&/x-api-key|authentication|invalid.*key/i.test(d.error.message||''))){
+    throw new Error('API 키 인증 실패(401). 키가 정확한 sk-ant-… 인지, 만료·오타·공백이 없는지 ⚙️설정의 「테스트」로 확인하세요.');
+  }
+  if(!r.ok||d.error)throw new Error((d.error&&d.error.message)||('API 오류 ('+r.status+')'));
   const t=d.content&&d.content.find(b=>b.type==='text');
   return t?(t.text||''):'';
+}
+async function testKey(){
+  let k=($('apiKey').value.trim()||getKey()).replace(/[^\x20-\x7E]/g,'').trim();
+  if(!k){toast('키를 입력하세요','err');return;}
+  if(!/^sk-ant-/.test(k)){toast('Anthropic 키는 sk-ant- 로 시작합니다. 키 형식을 확인하세요','err');return;}
+  toast('키 확인 중…','');
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:getModel(),max_tokens:1,messages:[{role:'user',content:'hi'}]})});
+    let d={}; try{d=await r.json();}catch(_){}
+    if(r.ok&&!d.error){toast('✅ 키 정상 — 분석을 생성할 수 있습니다','ok');}
+    else if(r.status===401){toast('❌ 키 인증 실패(401) — 키가 잘못되었거나 만료됨','err');}
+    else{toast('⚠️ '+((d.error&&d.error.message)||('오류 '+r.status)),'err');}
+  }catch(e){toast('네트워크 오류 — 연결을 확인하세요','err');}
 }
 
 async function generate(){
@@ -453,34 +564,46 @@ async function generate(){
   const data=sajuDataText();
   renderCover();
   const allTitles=PARTS.map((p,i)=>'PART '+(i+1)+': '+p.t).join(' / ');
+  const ctx=cust.pkg==='궁합'
+    ? '[궁합 분석] 아래에는 본인과 상대방, 두 사람의 사주 데이터가 함께 주어집니다. 반드시 두 사람의 사주를 비교·교차하여 "관계" 관점에서 풀이하세요.'
+    : (cust.pkg==='기본' ? '[기본 분석] 핵심을 명료하게, 군더더기 없이 작성하세요.' : '[프리미엄 심층 분석] 풍부하고 깊이 있게, 구체적 근거와 함께 작성하세요.');
   for(let i=0;i<PARTS.length;i++){
     renderProgress(i);
-    let user='[전체 보고서 목차] '+allTitles+'\n\n[이 고객의 사주 데이터]\n'+data
-      +'\n\n위 사주를 근거로 아래 PART를 '+lenGuide()+' 작성하세요.\n\n■ PART '+(i+1)+': '+PARTS[i].t+'\n▶ 다뤄야 할 내용: '+PARTS[i].g;
+    let user=ctx+'\n\n[전체 보고서 목차] '+allTitles+'\n\n[사주 데이터]\n'+data
+      +'\n\n위 데이터를 근거로 아래 PART를 '+lenGuide()+' 작성하세요.\n\n■ PART '+(i+1)+': '+PARTS[i].t+'\n▶ 다뤄야 할 내용: '+PARTS[i].g;
     try{
-      let txt=await callClaude(sysPrompt(),user);
-      results[i]=txt;
+      results[i]=await callClaude(sysPrompt(),user);
     }catch(e){
-      results[i]='⚠️ 이 PART 생성 중 오류: '+e.message+' — 「다시 생성」을 눌러 재시도하세요.';
-      renderResults(); toast('오류: '+e.message,'err'); generating=false; return;
+      results[i]='⚠️ 생성 오류: '+e.message;
+      generating=false; renderResults();           // 먼저 종료 → 다음 PART 스피너가 남지 않음
+      toast('생성 중단: '+e.message,'err'); return;
     }
     renderResults();
   }
   generating=false;
+  renderResults();   // 최종 정리 — 남은 진행 스피너 제거
   $('resultBar').style.display='flex'; $('discBox').style.display='block';
-  toast('프리미엄 분석 완료! PDF/이미지로 저장하세요','ok');
+  toast(cust.pkg+' 분석이 완료되었습니다!','ok');
 }
 function regenerate(){if(generating)return;generate();}
 
+function coverWho(m){
+  const calTxt=m.cal==='양'?'양력':(m.cal==='윤'?'음력 윤달':'음력');
+  const born=m.inY+'년 '+m.inM+'월 '+m.inD+'일'+(m.noTime?'':' '+pad(m.h)+':'+pad(m.mi));
+  return esc(m.name)+' · '+calTxt+' '+born+' · '+m.gender+'성 · 일간 <b>'+GAN[m.a.ilG]+'('+GAN_HJA[m.a.ilG]+')</b>';
+}
 function renderCover(){
-  const a=cust.a;
-  const calTxt=cust.cal==='양'?'양력':(cust.cal==='윤'?'음력 윤달':'음력');
-  const born=cust.inY+'년 '+cust.inM+'월 '+cust.inD+'일'+(cust.noTime?'':' '+pad(cust.h)+':'+pad(cust.mi));
-  $('resultView').innerHTML='<div class="cover" id="cover"><div class="badge">A. 고급 프리미엄 사주분석</div>'
-    +'<h1>'+esc(cust.name)+' 님의<br>사주명리 운명 리포트</h1>'
-    +'<div class="who">'+calTxt+' '+born+' · '+cust.gender+'성<br>'
-    +'일간 <b>'+GAN[a.ilG]+'('+GAN_HJA[a.ilG]+')</b> · '+cust.a.s.year+' '+cust.a.s.month+' '+cust.a.s.day+(cust.a.s.hour!=='(시 불명)'?' '+cust.a.s.hour:'')+'</div></div>'
-    +'<div class="parts" id="partsBox"></div>';
+  const badge=cust.pkg==='기본'?'B · 기본 사주분석':(cust.pkg==='궁합'?'C · 궁합 분석':'A · 고급 프리미엄 사주분석');
+  const title=cust.pkg==='궁합'?'궁합 운명 리포트':'사주명리 운명 리포트';
+  const names=esc(cust.name)+(cust.pkg==='궁합'&&cust.p2?(' &amp; '+esc(cust.p2.name)):'');
+  let cover='<div class="cover" id="cover"><div class="badge">'+badge+'</div>'
+    +'<h1>'+names+' 님의<br>'+title+'</h1>'
+    +'<div class="who">'+coverWho(cust)+(cust.pkg==='궁합'&&cust.p2?('<br>'+coverWho(cust.p2)):'')+'</div></div>';
+  // 만세력은 패키지와 무관하게 항상 결과 최상단에
+  let manse='<div style="font-family:\'Nanum Myeongjo\',serif;font-size:16px;font-weight:800;color:#e8c97a;margin:.2rem 0 .7rem">🀄 만세력 (사주팔자 · 오행 · 대운)</div>'
+    +sajuPanelHTML(cust,cust.a);
+  if(cust.pkg==='궁합'&&cust.p2) manse+='<div style="height:.9rem"></div>'+sajuPanelHTML(cust.p2,cust.p2.a);
+  $('resultView').innerHTML=cover+'<div style="margin-bottom:1.2rem">'+manse+'</div><div class="parts" id="partsBox"></div>';
 }
 function renderProgress(i){
   let box=$('partsBox'); if(!box)return;
@@ -521,8 +644,19 @@ function inline(s){return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').re
 
 /* ═══════════ 저장 ═══════════ */
 function savePDF(){toast('인쇄 창에서 「PDF로 저장」을 선택하세요','');setTimeout(()=>window.print(),400);}
+function reportNames(){return cust.name+(cust.pkg==='궁합'&&cust.p2?(' & '+cust.p2.name):'');}
+function reportTitle(){return cust.pkg==='궁합'?'궁합 운명 리포트':'사주명리 운명 리포트';}
+function manseSummary(m){
+  const a=m.a,s=a.s;
+  let pil=[s.year,s.month,s.day].concat(s.hour!=='(시 불명)'?[s.hour]:[]).join(' ');
+  let oh=['목','화','토','금','수'].map(k=>k+a.oh[k]).join(' ');
+  return m.name+' — 사주 '+pil+' · 오행 '+oh+' · 일간 '+GAN[a.ilG]+'('+GAN_HJA[a.ilG]+')';
+}
 function textVersion(){
-  let t='【'+cust.name+' 님 사주명리 운명 리포트】\n\n';
+  let t='【'+reportNames()+' 님 '+reportTitle()+'】\n';
+  t+='○ '+manseSummary(cust)+'\n';
+  if(cust.pkg==='궁합'&&cust.p2)t+='○ '+manseSummary(cust.p2)+'\n';
+  t+='\n';
   results.forEach((r,i)=>{t+='■ PART '+(i+1)+'. '+PARTS[i].t+'\n'+r.replace(/[*#>]/g,'')+'\n\n';});
   return t;
 }
@@ -539,14 +673,12 @@ function saveEmailCfg(){
   toast('이메일 설정이 저장되었습니다','ok');
 }
 function reportHTML(){
-  const a=cust.a;
-  const calTxt=cust.cal==='양'?'양력':(cust.cal==='윤'?'음력 윤달':'음력');
-  const born=cust.inY+'년 '+cust.inM+'월 '+cust.inD+'일'+(cust.noTime?'':' '+pad(cust.h)+':'+pad(cust.mi));
+  const label=cust.pkg==='기본'?'기본 사주분석':(cust.pkg==='궁합'?'궁합 분석':'고급 프리미엄 사주분석');
   let h='<div style="font-family:\'Apple SD Gothic Neo\',Malgun Gothic,sans-serif;color:#222;line-height:1.75;max-width:640px;margin:0 auto">';
   h+='<div style="background:#0c1228;color:#e8c97a;padding:28px;border-radius:12px;text-align:center">'
-    +'<div style="font-size:13px;letter-spacing:2px;color:#c9a44f">A. 고급 프리미엄 사주분석</div>'
-    +'<h1 style="margin:10px 0;color:#fff;font-size:22px">'+esc(cust.name)+' 님의 사주명리 운명 리포트</h1>'
-    +'<div style="font-size:13px;color:#9aa6c8">'+calTxt+' '+born+' · '+cust.gender+'성 · 일간 '+GAN[a.ilG]+'('+GAN_HJA[a.ilG]+')</div></div>';
+    +'<div style="font-size:13px;letter-spacing:2px;color:#c9a44f">'+label+'</div>'
+    +'<h1 style="margin:10px 0;color:#fff;font-size:22px">'+esc(reportNames())+' 님의 '+reportTitle()+'</h1>'
+    +'<div style="font-size:13px;color:#9aa6c8">'+esc(manseSummary(cust))+(cust.pkg==='궁합'&&cust.p2?('<br>'+esc(manseSummary(cust.p2))):'')+'</div></div>';
   results.forEach((r,i)=>{
     h+='<h2 style="color:#1a2a5e;border-left:4px solid #c9a44f;padding-left:10px;margin-top:28px;font-size:18px">PART '+(i+1)+'. '+PARTS[i].t+'</h2>'
       +'<div style="font-size:15px;color:#333">'+md(r)+'</div>';
@@ -567,7 +699,7 @@ async function emailToCustomer(){
     await emailjs.send(cfg.service,cfg.template,{
       to_email:cust.email,
       to_name:cust.name,
-      subject:cust.name+' 님 사주명리 운명 리포트',
+      subject:reportNames()+' 님 '+reportTitle(),
       message_html:reportHTML(),
       message:textVersion()
     });
