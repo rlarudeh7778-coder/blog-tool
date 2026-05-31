@@ -121,7 +121,6 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
   <div class="logo">🔮 AI 사주명리 <span>· 고급 프리미엄 분석</span></div>
   <div class="hright">
     <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
-    <a class="home" href="index.html">← 도구 홈</a>
   </div>
 </header>
 <div class="tabs">
@@ -218,7 +217,7 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
       <input id="apiKey" type="password" placeholder="sk-ant-...">
       <button class="savebtn" onclick="saveKey()">저장</button>
     </div>
-    <div class="hint"><a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> 에서 발급. 키는 이 브라우저(localStorage)에만 저장되며 외부로 전송되지 않습니다(분석 시 Anthropic 서버로만 전송). 블로그 도구와 키를 공유합니다.</div>
+    <div class="hint"><a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> 에서 발급. 키는 이 브라우저(localStorage)에만 저장되며 외부로 전송되지 않습니다(분석 시 Anthropic 서버로만 전송).</div>
     <div class="field" style="margin-top:1rem"><label>분석 모델</label>
       <select id="modelSel">
         <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — 빠르고 저렴 (권장, 1건 수백 원)</option>
@@ -326,7 +325,7 @@ const PARTS=[
 ];
 
 /* ═══════════ 상태/공통 ═══════════ */
-const KEY='ak_claude';
+const KEY='saju_ak';
 let cust=null, results=[], generating=false;
 function $(id){return document.getElementById(id);}
 function toast(m,t){let e=$('toast');e.textContent=m;e.className='show '+(t||'');setTimeout(()=>e.className=e.className.replace('show',''),2600);}
