@@ -308,7 +308,9 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
   <div class="maintab" id="mt-crawl" data-tab="crawl">🔍 블로그 분석기</div>
   <div class="maintab" id="mt-guide" data-tab="guide">📱 선불폰 가이드</div>
   <div class="maintab" id="mt-video" data-tab="video">🎬 동영상 후킹</div>
-  <div class="maintab" id="mt-aitools" data-tab="aitools">🤖 AI툴 가이드</div>
+  <a href="tax.html" class="maintab" id="mt-tax" style="position:relative;text-decoration:none">🧾 AI 세무사
+    <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
+  </a>
   <div class="maintab" id="mt-homepage" data-tab="homepage" style="position:relative">🏠 홈페이지 제작
     <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
   </div>
@@ -1250,202 +1252,6 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
 </div>
 </div>
 
-<!-- 🤖 AI툴 가이드 패널 -->
-<div class="mainpanel" id="mp-aitools">
-<div style="max-width:960px;margin:0 auto;padding:1.5rem 0 4rem">
-
-  <div style="margin-bottom:1.5rem">
-    <div style="font-size:18px;font-weight:800;color:var(--txt)">🤖 AI 도구 완전 가이드 2026</div>
-    <div style="font-size:12px;color:var(--t3);margin-top:4px">텍스트·이미지·코딩·검색·특화·자율 에이전트 AI — 분야별 강점과 실전 활용법</div>
-  </div>
-
-  <!-- 섹션 네비 -->
-  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.5rem">
-    <button onclick="scrollToSection('sec-text')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--bor);background:var(--sur);font-size:12px;cursor:pointer;font-family:inherit">01 텍스트 AI</button>
-    <button onclick="scrollToSection('sec-image')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--bor);background:var(--sur);font-size:12px;cursor:pointer;font-family:inherit">02 이미지 AI</button>
-    <button onclick="scrollToSection('sec-code')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--bor);background:var(--sur);font-size:12px;cursor:pointer;font-family:inherit">03 코딩 AI</button>
-    <button onclick="scrollToSection('sec-search')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--bor);background:var(--sur);font-size:12px;cursor:pointer;font-family:inherit">04 검색 AI</button>
-    <button onclick="scrollToSection('sec-special')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--bor);background:var(--sur);font-size:12px;cursor:pointer;font-family:inherit">05 특화 AI</button>
-    <button onclick="scrollToSection('sec-agent')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--bor);background:var(--sur);font-size:12px;cursor:pointer;font-family:inherit">06 에이전트 AI</button>
-    <button onclick="scrollToSection('sec-rank')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--bor);background:var(--sur);font-size:12px;cursor:pointer;font-family:inherit">07 코딩 순위</button>
-    <button onclick="scrollToSection('sec-combo')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--bor);background:var(--sur);font-size:12px;cursor:pointer;font-family:inherit">08 조합 추천</button>
-  </div>
-
-  <!-- 01 텍스트 AI -->
-  <div id="sec-text" style="margin-bottom:2rem">
-    <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:2px;margin-bottom:4px">01 / TEXT AI</div>
-    <div style="font-size:16px;font-weight:800;color:var(--txt);margin-bottom:4px">텍스트 AI</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:1rem">글쓰기·분석·추론·대화를 처리하는 핵심 AI들</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 14px;background:linear-gradient(135deg,#1B8F5E,#136b46);display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">C</div>
-          <div><div style="font-size:13px;font-weight:700;color:#fff">Claude 클로드 <span style="font-size:10px;background:rgba(255,255,255,.2);padding:1px 6px;border-radius:10px">추천</span></div><div style="font-size:10px;color:rgba(255,255,255,.75)">Anthropic · AI 대화·분석·코딩</div></div>
-        </div>
-        <div style="padding:12px 14px">
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px"><span style="font-size:10px;padding:2px 7px;background:#e8f7f1;color:var(--green);border-radius:10px">긴 문서 분석</span><span style="font-size:10px;padding:2px 7px;background:#e8f7f1;color:var(--green);border-radius:10px">추론·논리</span><span style="font-size:10px;padding:2px 7px;background:#e8f7f1;color:var(--green);border-radius:10px">한국어 우수</span><span style="font-size:10px;padding:2px 7px;background:#e8f7f1;color:var(--green);border-radius:10px">코딩</span></div>
-          <div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">1M 토큰 컨텍스트로 방대한 문서를 통째로 처리. 논리적 추론과 안전한 답변이 강점. 한국어 자연스러움.</div>
-          <div style="font-size:11px;color:#8a6a00;background:#fff8e8;padding:6px 8px;border-radius:var(--rs);margin-bottom:8px;line-height:1.6"><b>이럴 때 최고:</b> 긴 계약서·보고서 분석 / 복잡한 추론 / 한국어 문서 작성</div>
-          <a href="https://claude.ai" target="_blank" style="display:block;text-align:center;padding:7px;background:var(--green);color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a>
-        </div>
-      </div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 14px;background:linear-gradient(135deg,#10a37f,#0e8c6e);display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">G</div>
-          <div><div style="font-size:13px;font-weight:700;color:#fff">ChatGPT 챗GPT</div><div style="font-size:10px;color:rgba(255,255,255,.75)">OpenAI · 범용 AI 대화</div></div>
-        </div>
-        <div style="padding:12px 14px">
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px"><span style="font-size:10px;padding:2px 7px;background:#e8f7f1;color:var(--green);border-radius:10px">범용성</span><span style="font-size:10px;padding:2px 7px;background:#e8f7f1;color:var(--green);border-radius:10px">플러그인 생태계</span><span style="font-size:10px;padding:2px 7px;background:#e8f7f1;color:var(--green);border-radius:10px">이미지 생성</span></div>
-          <div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">가장 널리 쓰이는 범용 AI. GPT-4o는 텍스트·이미지·음성 통합. 풍부한 GPTs 생태계와 DALL-E 내장.</div>
-          <div style="font-size:11px;color:#8a6a00;background:#fff8e8;padding:6px 8px;border-radius:var(--rs);margin-bottom:8px;line-height:1.6"><b>이럴 때 최고:</b> DALL-E 이미지 생성 / GPTs 플러그인 활용 / 음성 대화</div>
-          <a href="https://chatgpt.com" target="_blank" style="display:block;text-align:center;padding:7px;background:var(--green);color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a>
-        </div>
-      </div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 14px;background:linear-gradient(135deg,#4285F4,#1a73e8);display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Ge</div>
-          <div><div style="font-size:13px;font-weight:700;color:#fff">Gemini 제미나이</div><div style="font-size:10px;color:rgba(255,255,255,.75)">Google · 구글 AI 통합</div></div>
-        </div>
-        <div style="padding:12px 14px">
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px"><span style="font-size:10px;padding:2px 7px;background:#e8f0fe;color:#4285F4;border-radius:10px">멀티모달</span><span style="font-size:10px;padding:2px 7px;background:#e8f0fe;color:#4285F4;border-radius:10px">구글 연동</span><span style="font-size:10px;padding:2px 7px;background:#e8f0fe;color:#4285F4;border-radius:10px">최신 정보</span></div>
-          <div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">구글 서비스와 네이티브 통합. Gmail·Docs·Drive·유튜브 연동. 최신 정보 검색 능력 우수.</div>
-          <a href="https://gemini.google.com" target="_blank" style="display:block;text-align:center;padding:7px;background:#4285F4;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a>
-        </div>
-      </div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 14px;background:linear-gradient(135deg,#1a1a1a,#333);display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Gk</div>
-          <div><div style="font-size:13px;font-weight:700;color:#fff">Grok 그록</div><div style="font-size:10px;color:rgba(255,255,255,.6)">xAI · X(트위터) 연동 AI</div></div>
-        </div>
-        <div style="padding:12px 14px">
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px"><span style="font-size:10px;padding:2px 7px;background:#f0f4f2;color:var(--t2);border-radius:10px">X 실시간 연동</span><span style="font-size:10px;padding:2px 7px;background:#f0f4f2;color:var(--t2);border-radius:10px">솔직한 답변</span><span style="font-size:10px;padding:2px 7px;background:#f0f4f2;color:var(--t2);border-radius:10px">유머</span></div>
-          <div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">X(트위터) 실시간 데이터 연동. 검열 없이 솔직하고 유머러스한 답변. 트렌드·밈·시사 이슈에 강함.</div>
-          <a href="https://grok.x.ai" target="_blank" style="display:block;text-align:center;padding:7px;background:#1a1a1a;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 02 이미지 AI -->
-  <div id="sec-image" style="margin-bottom:2rem">
-    <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:2px;margin-bottom:4px">02 / IMAGE AI</div>
-    <div style="font-size:16px;font-weight:800;color:var(--txt);margin-bottom:4px">이미지 AI</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:1rem">텍스트로 이미지를 생성·편집하는 도구들</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#7C3AED,#5B21B6);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">MJ</div><div><div style="font-size:13px;font-weight:700;color:#fff">Midjourney 미드저니 <span style="font-size:10px;background:rgba(255,255,255,.2);padding:1px 6px;border-radius:10px">품질 1위</span></div><div style="font-size:10px;color:rgba(255,255,255,.75)">Midjourney Inc. · AI 이미지 생성</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">현존 최고 수준의 예술적 이미지 생성. 브랜드 비주얼·광고·컨셉 아트에 상업적 퀄리티. <b>파라미터:</b> --ar 16:9 --style raw --v 6 --sref</div><a href="https://midjourney.com" target="_blank" style="display:block;text-align:center;padding:7px;background:#7C3AED;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#10a37f,#0e8c6e);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">D3</div><div><div style="font-size:13px;font-weight:700;color:#fff">DALL-E 3 달리</div><div style="font-size:10px;color:rgba(255,255,255,.75)">OpenAI · 텍스트→이미지 생성</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">복잡한 지시를 정확하게 따르는 능력 탁월. ChatGPT 내에서 바로 사용 가능해 워크플로 통합 편리. 텍스트 포함 이미지에 강함.</div><a href="https://openai.com/dall-e-3" target="_blank" style="display:block;text-align:center;padding:7px;background:#10a37f;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#E25822,#c44a1a);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">SD</div><div><div style="font-size:13px;font-weight:700;color:#fff">Stable Diffusion</div><div style="font-size:10px;color:rgba(255,255,255,.75)">Stability AI · 무료 오픈소스</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">오픈소스로 로컬 PC에서 무료 실행. LoRA·ControlNet으로 무한 커스텀. 개인 데이터 보호 완벽. <b>추천 UI:</b> Automatic1111, ComfyUI</div><a href="https://stability.ai" target="_blank" style="display:block;text-align:center;padding:7px;background:#E25822;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#2563EB,#1d4ed8);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Fx</div><div><div style="font-size:13px;font-weight:700;color:#fff">Flux 플럭스</div><div style="font-size:10px;color:rgba(255,255,255,.75)">Black Forest Labs · 차세대 이미지 모델</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">차세대 이미지 모델. 사실적 인물 묘사와 이미지 내 텍스트 렌더링이 특히 뛰어남. SD 대비 더 자연스러운 결과물.</div><a href="https://blackforestlabs.ai" target="_blank" style="display:block;text-align:center;padding:7px;background:#2563EB;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-    </div>
-  </div>
-
-  <!-- 03 코딩 AI -->
-  <div id="sec-code" style="margin-bottom:2rem">
-    <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:2px;margin-bottom:4px">03 / CODE AI</div>
-    <div style="font-size:16px;font-weight:800;color:var(--txt);margin-bottom:4px">코딩 AI</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:1rem">개발 생산성을 극적으로 높이는 AI 도구들</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#111827,#374151);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Cu</div><div><div style="font-size:13px;font-weight:700;color:#fff">Cursor 커서 <span style="font-size:10px;background:rgba(255,255,255,.2);padding:1px 6px;border-radius:10px">IDE 최강</span></div><div style="font-size:10px;color:rgba(255,255,255,.6)">Anysphere · AI 코드 에디터</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">VS Code 기반 AI-first 에디터. 전체 코드베이스 이해 후 멀티파일 수정. Supermaven 자동완성. <b>핵심:</b> @코드베이스 탐색, Cmd+K 인라인 수정</div><a href="https://cursor.com" target="_blank" style="display:block;text-align:center;padding:7px;background:#111827;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#24292f,#3d444d);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Co</div><div><div style="font-size:13px;font-weight:700;color:#fff">GitHub Copilot</div><div style="font-size:10px;color:rgba(255,255,255,.6)">Microsoft · AI 코드 자동완성</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">모든 IDE에 설치 가능. 기업 보안·컴플라이언스 인증 완비. GitHub Actions·PR 리뷰 자동화. 최저가 $10/월.</div><a href="https://github.com/features/copilot" target="_blank" style="display:block;text-align:center;padding:7px;background:#24292f;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#000,#222);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">v0</div><div><div style="font-size:13px;font-weight:700;color:#fff">v0 브이제로</div><div style="font-size:10px;color:rgba(255,255,255,.6)">Vercel · UI 컴포넌트 생성</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">UI 컴포넌트 생성 특화. Shadcn/Tailwind 기반 컴포넌트를 텍스트로 즉시 생성. Vercel 원클릭 배포. 레퍼런스 이미지 첨부 시 그대로 컴포넌트 생성.</div><a href="https://v0.dev" target="_blank" style="display:block;text-align:center;padding:7px;background:#000;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#06B6D4,#0891b2);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Wi</div><div><div style="font-size:13px;font-weight:700;color:#fff">Windsurf 윈드서프</div><div style="font-size:10px;color:rgba(255,255,255,.75)">Codeium · AI 코드 에디터 (무료)</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">Cursor의 강력한 대안. Cascade 에이전트가 파일 생성·수정·실행 자율 처리. 무료 플랜이 넉넉함.</div><a href="https://windsurf.com" target="_blank" style="display:block;text-align:center;padding:7px;background:#06B6D4;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-    </div>
-  </div>
-
-  <!-- 04 검색 AI -->
-  <div id="sec-search" style="margin-bottom:2rem">
-    <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:2px;margin-bottom:4px">04 / SEARCH AI</div>
-    <div style="font-size:16px;font-weight:800;color:var(--txt);margin-bottom:4px">검색 AI</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:1rem">실시간 정보 검색과 AI 답변을 결합한 도구들</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#20B2AA,#178a84);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Px</div><div><div style="font-size:13px;font-weight:700;color:#fff">Perplexity <span style="font-size:10px;background:rgba(255,255,255,.2);padding:1px 6px;border-radius:10px">검색 1위</span></div><div style="font-size:10px;color:rgba(255,255,255,.75)">Perplexity AI · AI 검색엔진</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">AI + 검색엔진의 결합. 실시간 웹 검색 후 출처를 명시하며 답변. 구글 검색의 강력한 대체재. <b>팁:</b> Pro Search로 심층 리서치</div><a href="https://perplexity.ai" target="_blank" style="display:block;text-align:center;padding:7px;background:#20B2AA;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#4285F4,#1a73e8);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">NB</div><div><div style="font-size:13px;font-weight:700;color:#fff">NotebookLM 노트북LM</div><div style="font-size:10px;color:rgba(255,255,255,.75)">Google · 문서 기반 Q&amp;A (무료)</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">업로드한 문서 기반으로만 질문·요약·팟캐스트 생성. 할루시네이션 없음. PDF 여러 개 묶어서 비교 분석 가능.</div><a href="https://notebooklm.google.com" target="_blank" style="display:block;text-align:center;padding:7px;background:#4285F4;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-    </div>
-  </div>
-
-  <!-- 05 특화 AI -->
-  <div id="sec-special" style="margin-bottom:2rem">
-    <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:2px;margin-bottom:4px">05 / SPECIAL AI</div>
-    <div style="font-size:16px;font-weight:800;color:var(--txt);margin-bottom:4px">특화 AI</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:1rem">음악·영상·음성·문서·인포그래픽·AI 아바타 전문 도구들</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#F59E0B,#d97706);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Su</div><div><div style="font-size:13px;font-weight:700;color:#fff">Suno 수노</div><div style="font-size:10px;color:rgba(255,255,255,.75)">AI 음악 생성</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">텍스트로 완성된 노래(가사+멜로디+보컬)를 즉시 생성. 장르·분위기·악기 지정 가능. <b>팁:</b> "K-pop, upbeat, female vocal, 120bpm"처럼 구체적으로</div><a href="https://suno.com" target="_blank" style="display:block;text-align:center;padding:7px;background:#F59E0B;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#DC2626,#b91c1c);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Rw</div><div><div style="font-size:13px;font-weight:700;color:#fff">RunwayML 런웨이</div><div style="font-size:10px;color:rgba(255,255,255,.75)">AI 영상 생성·편집</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">텍스트·이미지로 고품질 영상 생성. Gen-3으로 숏폼 영상 제작. 배경 제거·교체 자동화. 광고·소셜 미디어 영상 제작.</div><a href="https://runwayml.com" target="_blank" style="display:block;text-align:center;padding:7px;background:#DC2626;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#7C3AED,#6d28d9);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">EL</div><div><div style="font-size:13px;font-weight:700;color:#fff">ElevenLabs 일레븐랩스</div><div style="font-size:10px;color:rgba(255,255,255,.75)">AI 음성 복제·TTS 1위</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">현존 최고 품질 TTS. 자신의 목소리 클론 가능. 29개 언어 지원. 감정·억양 정밀 제어. 영상·팟캐스트 나레이션.</div><a href="https://elevenlabs.io" target="_blank" style="display:block;text-align:center;padding:7px;background:#7C3AED;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#EC4899,#db2777);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Ga</div><div><div style="font-size:13px;font-weight:700;color:#fff">Gamma 감마</div><div style="font-size:10px;color:rgba(255,255,255,.75)">AI 프레젠테이션·문서</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">텍스트로 아름다운 프레젠테이션·문서·웹페이지 즉시 생성. 디자인 실력 없이도 고품질 결과물. 제안서·보고서 PPT 초안.</div><a href="https://gamma.app" target="_blank" style="display:block;text-align:center;padding:7px;background:#EC4899;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#059669,#047857);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Na</div><div><div style="font-size:13px;font-weight:700;color:#fff">Napkin AI 냅킨</div><div style="font-size:10px;color:rgba(255,255,255,.75)">AI 인포그래픽 자동 생성</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">텍스트를 자동으로 인포그래픽·다이어그램으로 변환. 복잡한 개념 시각화에 최적. 프로세스 플로우차트 자동 생성.</div><a href="https://napkin.ai" target="_blank" style="display:block;text-align:center;padding:7px;background:#059669;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#0EA5E9,#0284c7);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Hg</div><div><div style="font-size:13px;font-weight:700;color:#fff">HeyGen 헤이젠</div><div style="font-size:10px;color:rgba(255,255,255,.75)">AI 아바타·영상 자동 제작</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">AI 아바타로 영상 자동 제작. 기존 영상 입 모양 바꿔 다국어 더빙. 직접 촬영 없이 발표 영상 가능.</div><a href="https://heygen.com" target="_blank" style="display:block;text-align:center;padding:7px;background:#0EA5E9;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-    </div>
-  </div>
-
-  <!-- 06 에이전트 AI -->
-  <div id="sec-agent" style="margin-bottom:2rem">
-    <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:2px;margin-bottom:4px">06 / AGENT AI</div>
-    <div style="font-size:16px;font-weight:800;color:var(--txt);margin-bottom:4px">자율 에이전트 AI</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:1rem">목표만 주면 계획·실행·결과물까지 혼자 처리하는 차세대 도구들</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#1a1a1a,#333);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">M</div><div><div style="font-size:13px;font-weight:700;color:#fff">Manus 마누스 <span style="font-size:10px;background:rgba(255,255,255,.15);padding:1px 6px;border-radius:10px">Meta 인수</span></div><div style="font-size:10px;color:rgba(255,255,255,.6)">자율 실행 1위 · GAIA 벤치마크 1위</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">목표를 주고 자리를 비워도 됩니다. 퇴근 전 할당 → 다음날 완성 결과물 확인. 출시 8개월 만에 ARR $100M 돌파.</div><a href="https://manus.im" target="_blank" style="display:block;text-align:center;padding:7px;background:#1a1a1a;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#F59E0B,#d97706);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">GS</div><div><div style="font-size:13px;font-weight:700;color:#fff">Genspark 젠스파크</div><div style="font-size:10px;color:rgba(255,255,255,.75)">검색+에이전트 결합</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">Sparkpage 자동 생성. 여행 계획·쇼핑 비교·리서치 등 실생활 자동화에 특화. 멀티 모델 슈퍼에이전트.</div><a href="https://genspark.ai" target="_blank" style="display:block;text-align:center;padding:7px;background:#F59E0B;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#EF4444,#dc2626);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Lo</div><div><div style="font-size:13px;font-weight:700;color:#fff">Lovable 러버블 <span style="font-size:10px;background:rgba(255,255,255,.2);padding:1px 6px;border-radius:10px">$300M ARR</span></div><div style="font-size:10px;color:rgba(255,255,255,.75)">웹앱 즉시 생성</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">텍스트로 풀스택 웹앱을 즉시 생성하고 배포까지 완료. 개발자 없이도 앱 제작. Figma→코드 지원. Lovable 2.0으로 20인 협업 가능.</div><a href="https://lovable.dev" target="_blank" style="display:block;text-align:center;padding:7px;background:#EF4444;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#6366F1,#4f46e5);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Dv</div><div><div style="font-size:13px;font-weight:700;color:#fff">Devin 데빈</div><div style="font-size:10px;color:rgba(255,255,255,.75)">Cognition · 자율 코딩 에이전트</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">가장 자율적인 코딩 에이전트. 계획·코드·테스트·PR까지 독립 처리. $500/월 → $20/월로 대폭 인하.</div><a href="https://devin.ai" target="_blank" style="display:block;text-align:center;padding:7px;background:#6366F1;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#111827,#374151);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Bl</div><div><div style="font-size:13px;font-weight:700;color:#fff">Bolt.new 볼트</div><div style="font-size:10px;color:rgba(255,255,255,.6)">StackBlitz · 브라우저 내 앱 개발</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">브라우저에서 바로 앱을 만들고 즉시 실행 가능. Figma와 GitHub 연동. 설치 없이 프롬프트로 웹앱 즉시 프로토타이핑.</div><a href="https://bolt.new" target="_blank" style="display:block;text-align:center;padding:7px;background:#111827;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-      <div class="card" style="padding:0;overflow:hidden"><div style="padding:12px 14px;background:linear-gradient(135deg,#F97316,#ea580c);display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">Re</div><div><div style="font-size:13px;font-weight:700;color:#fff">Replit 리플릿</div><div style="font-size:10px;color:rgba(255,255,255,.75)">브라우저 개발+배포 올인원</div></div></div><div style="padding:12px 14px"><div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px">브라우저·모바일에서 앱을 만들고 호스팅까지. 에이전트 모드로 $10M→$100M ARR 9개월 만에 달성.</div><a href="https://replit.com" target="_blank" style="display:block;text-align:center;padding:7px;background:#F97316;color:#fff;border-radius:var(--rs);text-decoration:none;font-size:12px;font-weight:700">사이트 바로가기 →</a></div></div>
-    </div>
-  </div>
-
-  <!-- 07 코딩 순위 -->
-  <div id="sec-rank" style="margin-bottom:2rem">
-    <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:2px;margin-bottom:4px">07 / CODING RANK</div>
-    <div style="font-size:16px;font-weight:800;color:var(--txt);margin-bottom:4px">2026 코딩 AI 순위</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:1rem">실제 개발자 선호도 및 SWE-bench 기준</div>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1rem">
-      <div class="card" style="border-left:4px solid var(--green)"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:20px;font-weight:900;color:var(--green)">01</span><div><div style="font-size:14px;font-weight:700">Claude Code <span style="font-size:10px;background:var(--gl);color:var(--green);padding:1px 6px;border-radius:10px">현재 사용 중</span></div><div style="font-size:11px;color:var(--t3)">SWE-bench 80.8% · 1M 토큰 · 개발자 선호도 46%</div></div></div><div style="font-size:12px;color:var(--t2);line-height:1.7">터미널에서 코드베이스 전체를 분석·수정·실행하는 진정한 에이전트. 1M 토큰으로 30,000줄 코드를 분할 없이 처리 — 경쟁사 대비 5~8배 큰 컨텍스트 윈도우.</div></div>
-      <div class="card" style="border-left:4px solid #185FA5"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:20px;font-weight:900;color:#185FA5">02</span><div><div style="font-size:14px;font-weight:700">Cursor</div><div style="font-size:11px;color:var(--t3)">AI-first IDE · 개발자 선호도 19%</div></div></div><div style="font-size:12px;color:var(--t2);line-height:1.7">일상적 코딩에서 가장 매끄러운 경험. "일상 편집은 Cursor + 복잡한 작업은 Claude Code"로 병행하는 패턴이 가장 보편적.</div></div>
-      <div class="card" style="border-left:4px solid #8a6a00"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:20px;font-weight:900;color:#8a6a00">03</span><div><div style="font-size:14px;font-weight:700">GitHub Copilot</div><div style="font-size:11px;color:var(--t3)">모든 IDE 지원 · 월 $10 최저가</div></div></div><div style="font-size:12px;color:var(--t2);line-height:1.7">모든 IDE에 설치 가능한 가장 대중적인 도구. 기업 보안·컴플라이언스 완비. GitHub 생태계 통합과 낮은 가격이 강점.</div></div>
-    </div>
-    <!-- 비교표 -->
-    <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:#f0f4f2"><th style="padding:8px 10px;text-align:left;border-bottom:2px solid var(--bor)">항목</th><th style="padding:8px 10px;text-align:center;border-bottom:2px solid var(--green);color:var(--green)">Claude Code</th><th style="padding:8px 10px;text-align:center;border-bottom:2px solid var(--bor)">Cursor</th><th style="padding:8px 10px;text-align:center;border-bottom:2px solid var(--bor)">Copilot</th><th style="padding:8px 10px;text-align:center;border-bottom:2px solid var(--bor)">Windsurf</th></tr></thead>
-        <tbody>
-          <tr style="border-bottom:1px solid var(--bor)"><td style="padding:7px 10px;color:var(--t2)">컨텍스트</td><td style="padding:7px 10px;text-align:center;font-weight:700;color:var(--green)">1M 토큰</td><td style="padding:7px 10px;text-align:center">200K</td><td style="padding:7px 10px;text-align:center">128K</td><td style="padding:7px 10px;text-align:center">200K</td></tr>
-          <tr style="border-bottom:1px solid var(--bor)"><td style="padding:7px 10px;color:var(--t2)">자율 에이전트</td><td style="padding:7px 10px;text-align:center;font-weight:700;color:var(--green)">최상</td><td style="padding:7px 10px;text-align:center">상</td><td style="padding:7px 10px;text-align:center">중</td><td style="padding:7px 10px;text-align:center">상</td></tr>
-          <tr style="border-bottom:1px solid var(--bor)"><td style="padding:7px 10px;color:var(--t2)">SWE-bench</td><td style="padding:7px 10px;text-align:center;font-weight:700;color:var(--green)">80.8%</td><td style="padding:7px 10px;text-align:center">모델 의존</td><td style="padding:7px 10px;text-align:center">모델 의존</td><td style="padding:7px 10px;text-align:center">모델 의존</td></tr>
-          <tr><td style="padding:7px 10px;color:var(--t2)">월 요금</td><td style="padding:7px 10px;text-align:center">$17~$200</td><td style="padding:7px 10px;text-align:center">$20~$200</td><td style="padding:7px 10px;text-align:center;color:var(--green);font-weight:700">$10 최저</td><td style="padding:7px 10px;text-align:center">무료~$15</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- 08 조합 추천 -->
-  <div id="sec-combo" style="margin-bottom:2rem">
-    <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:2px;margin-bottom:4px">08 / COMBO</div>
-    <div style="font-size:16px;font-weight:800;color:var(--txt);margin-bottom:4px">상황별 AI 조합 추천</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:1rem">목적에 맞는 최적 도구 조합 플로우</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
-      <div class="card"><div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:10px">💻 웹·앱 개발</div><div style="font-size:11px;color:var(--t3);margin-bottom:8px">Claude Code + Cursor 병행이 가장 강력한 조합</div><div style="display:flex;flex-direction:column;gap:6px"><div style="padding:6px 10px;background:#f0f9f5;border-radius:var(--rs);font-size:12px"><b style="color:var(--green)">Claude Code</b> — 복잡한 아키텍처, 대규모 리팩토링</div><div style="padding:6px 10px;background:#f0f4f2;border-radius:var(--rs);font-size:12px"><b>Cursor</b> — 일상적 편집, 빠른 자동완성</div><div style="padding:6px 10px;background:#f0f4f2;border-radius:var(--rs);font-size:12px"><b>v0</b> — React UI 컴포넌트 빠른 프로토타이핑</div></div></div>
-      <div class="card"><div style="font-size:13px;font-weight:700;color:#185FA5;margin-bottom:10px">📊 제안서·보고서 작성</div><div style="font-size:11px;color:var(--t3);margin-bottom:8px">기획 → 작성 → 시각화 → 이미지</div><div style="display:flex;flex-direction:column;gap:6px"><div style="padding:6px 10px;background:#f0f9f5;border-radius:var(--rs);font-size:12px"><b style="color:var(--green)">Claude</b> — 논리 구성, 초안 작성, 분석</div><div style="padding:6px 10px;background:#f0f4f2;border-radius:var(--rs);font-size:12px"><b>Gamma</b> — PPT·슬라이드로 즉시 변환</div><div style="padding:6px 10px;background:#f0f4f2;border-radius:var(--rs);font-size:12px"><b>Midjourney</b> — 커버 이미지·시각 소재</div></div></div>
-      <div class="card"><div style="font-size:13px;font-weight:700;color:#8a6a00;margin-bottom:10px">🔍 시장 조사·리서치</div><div style="font-size:11px;color:var(--t3);margin-bottom:8px">수집 → 분석 → 비교</div><div style="display:flex;flex-direction:column;gap:6px"><div style="padding:6px 10px;background:#fff8e8;border-radius:var(--rs);font-size:12px"><b style="color:#8a6a00">Perplexity</b> — 최신 트렌드, 출처 포함 조사</div><div style="padding:6px 10px;background:#f0f4f2;border-radius:var(--rs);font-size:12px"><b>Claude</b> — 수집 자료 구조화·인사이트</div><div style="padding:6px 10px;background:#f0f4f2;border-radius:var(--rs);font-size:12px"><b>NotebookLM</b> — 보고서·논문 비교 분석</div></div></div>
-      <div class="card"><div style="font-size:13px;font-weight:700;color:#7C3AED;margin-bottom:10px">🎨 콘텐츠·마케팅 제작</div><div style="font-size:11px;color:var(--t3);margin-bottom:8px">글 → 이미지 → 영상 → 음악</div><div style="display:flex;flex-direction:column;gap:6px"><div style="padding:6px 10px;background:#f5f0ff;border-radius:var(--rs);font-size:12px"><b style="color:#7C3AED">Claude</b> — 카피라이팅, 블로그, SNS 문구</div><div style="padding:6px 10px;background:#f0f4f2;border-radius:var(--rs);font-size:12px"><b>Midjourney</b> — 광고·SNS 비주얼 이미지</div><div style="padding:6px 10px;background:#f0f4f2;border-radius:var(--rs);font-size:12px"><b>Runway</b> — 숏폼 영상·소셜 클립</div><div style="padding:6px 10px;background:#f0f4f2;border-radius:var(--rs);font-size:12px"><b>Suno</b> — 광고 BGM·징글</div></div></div>
-    </div>
-  </div>
-
-  <!-- Claude Code 실전 명령 패턴 -->
-  <div id="sec-claude" style="margin-bottom:2rem">
-    <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:2px;margin-bottom:4px">BONUS / CLAUDE CODE</div>
-    <div style="font-size:16px;font-weight:800;color:var(--txt);margin-bottom:4px">Claude Code 실전 명령 패턴</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:1rem">터미널에서 바로 쓸 수 있는 강력한 지시 예시</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
-      <div class="card" style="border-left:3px solid var(--green)"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px">🔄 대규모 리팩토링</div><div style="font-size:12px;color:var(--t2);background:#f8f8f8;padding:8px;border-radius:var(--rs);font-family:monospace;line-height:1.7">"전체 코드베이스에서 fetch를 axios로 교체하고, 에러 핸들링 패턴도 통일해줘"</div></div>
-      <div class="card" style="border-left:3px solid #185FA5"><div style="font-size:12px;font-weight:700;color:#185FA5;margin-bottom:6px">🐛 버그 심층 분석</div><div style="font-size:12px;color:var(--t2);background:#f8f8f8;padding:8px;border-radius:var(--rs);font-family:monospace;line-height:1.7">"이 에러의 루트 원인을 전체 파일에서 추적해서 수정해줘"</div></div>
-      <div class="card" style="border-left:3px solid #DC2626"><div style="font-size:12px;font-weight:700;color:#DC2626;margin-bottom:6px">🔒 보안 감사</div><div style="font-size:12px;color:var(--t2);background:#f8f8f8;padding:8px;border-radius:var(--rs);font-family:monospace;line-height:1.7">"전체 코드에서 SQL 인젝션, XSS 취약점을 스캔하고 수정해줘"</div></div>
-      <div class="card" style="border-left:3px solid #F59E0B"><div style="font-size:12px;font-weight:700;color:#F59E0B;margin-bottom:6px">✅ 테스트 자동화</div><div style="font-size:12px;color:var(--t2);background:#f8f8f8;padding:8px;border-radius:var(--rs);font-family:monospace;line-height:1.7">"커버리지 낮은 모듈을 파악하고 누락된 유닛 테스트를 전부 작성해줘"</div></div>
-    </div>
-  </div>
-
-</div>
-</div>
-
 <!-- 🎬 동영상 후킹 패널 -->
 <div class="mainpanel" id="mp-homepage">
 <div style="max-width:960px;margin:0 auto;padding:1.5rem 0 4rem">
@@ -2230,7 +2036,7 @@ function init(){
 }
 
 function setMainTab(n){
-  ['write','analyze','center','cafe','crawl','guide','video','aitools','homepage','care'].forEach(function(x){
+  ['write','analyze','center','cafe','crawl','guide','video','homepage','care'].forEach(function(x){
     var mt=document.getElementById('mt-'+x);
     var mp=document.getElementById('mp-'+x);
     if(mt)mt.className='maintab'+(x===n?' on':'');
@@ -2259,9 +2065,6 @@ function setMainTab(n){
   }
   if(n==='video'){
     setTimeout(initVideo, 50);
-  }
-  if(n==='aitools'){
-    setTimeout(initAitools, 50);
   }
   if(n==='homepage'){
     // 홈페이지 빌더 탭 - 별도 초기화 불필요
