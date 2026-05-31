@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https: blob:; connect-src 'self' https:; frame-src 'self' https:;">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="사진 한 장, 소득 내역만 넣으면 부가세·종합소득세 등 내야 할 세금과 환급액을 AI가 자동 분석해주는 개인 AI 세무사입니다."/>
+<title>AI 세무사 · 내 세금 자동 분석</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<!-- ════════ 애드센스 광고 (나중에 활성화) ════════
+     1) 아래 줄의 ca-pub-XXXXXXXXXX 를 본인 게시자 ID로 바꾸고
+     2) 이 주석을 풀면 페이지 곳곳의 "광고 슬롯"에 광고가 노출됩니다.
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXX" crossorigin="anonymous"></script>
+═══════════════════════════════════════════════ -->
+<style>
+:root{--green:#1B8F5E;--gl:#e8f7f1;--gd:#136b46;--red:#E24B4A;--rl:#fdeaea;--blue:#2a7ab5;--bl:#e8f4ff;--amber:#b8860b;--al:#fff8e8;--bg:#f6f8f7;--sur:#fff;--bor:#e2e8e5;--txt:#1a2520;--t2:#4a6058;--t3:#8aaa9e;--r:14px;--rs:9px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.6;min-height:100vh}
+a{color:var(--green)}
+header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.25rem;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100}
+.logo{font-size:17px;font-weight:800;color:var(--green);display:flex;align-items:center;gap:7px}
+.logo span{color:var(--txt);font-weight:500;font-size:13px}
+.hright{display:flex;align-items:center;gap:10px}
+.yearsel{padding:6px 10px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:12px;background:var(--sur);color:var(--txt)}
+.astat{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3)}
+.dot{width:8px;height:8px;border-radius:50%;background:#ccc}.dot.ok{background:var(--green)}
+.maintabs{display:flex;border-bottom:2px solid var(--bor);padding:0 .5rem;background:var(--sur);overflow-x:auto;white-space:nowrap}
+.maintab{padding:13px 16px;font-size:13px;font-weight:600;cursor:pointer;color:var(--t3);border-bottom:2px solid transparent;margin-bottom:-2px;flex-shrink:0}
+.maintab.on{color:var(--green);border-bottom-color:var(--green)}
+.maintab:hover{color:var(--green)}
+.panel{display:none;max-width:1040px;margin:0 auto;padding:1.5rem 1rem 4rem}
+.panel.on{display:block}
+.card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.03);margin-bottom:1.1rem}
+.ctitle{font-size:14px;font-weight:800;color:var(--txt);margin-bottom:.25rem;display:flex;align-items:center;gap:7px}
+.csub{font-size:12px;color:var(--t3);margin-bottom:1rem}
+.field{margin-bottom:.8rem}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);transition:border-color .15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--green)}
+.field textarea{resize:vertical;min-height:80px;line-height:1.6}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:620px){.frow,.frow3{grid-template-columns:1fr}}
+.btn{padding:10px 16px;border:none;border-radius:var(--rs);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.15s}
+.btn-pri{background:var(--green);color:#fff}.btn-pri:hover{background:var(--gd)}
+.btn-pri:disabled{opacity:.5;cursor:not-allowed}
+.btn-out{background:var(--sur);color:var(--t2);border:1px solid var(--bor)}.btn-out:hover{border-color:var(--green);color:var(--green)}
+.btn-red{background:var(--rl);color:var(--red);border:1px solid #f3c9c9}.btn-red:hover{background:#fbdada}
+.btn-sm{padding:6px 11px;font-size:12px}
+.btn-block{width:100%}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.pill-g{background:var(--gl);color:var(--gd)}.pill-b{background:var(--bl);color:var(--blue)}.pill-a{background:var(--al);color:var(--amber)}.pill-r{background:var(--rl);color:var(--red)}
+.hint{font-size:11px;color:var(--t3);margin-top:5px;line-height:1.6}
+.apirow{display:flex;gap:7px}
+.apirow input{flex:1}
+/* 소득 카드 */
+.inc-card{border:1px solid var(--bor);border-radius:var(--r);padding:1rem;margin-bottom:.8rem;background:var(--sur);position:relative}
+.inc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;gap:8px}
+.inc-name{font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
+.inc-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:4px 8px;border-radius:6px}
+.inc-del:hover{background:var(--rl);color:var(--red)}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--t3);font-size:13px}
+.empty b{display:block;font-size:15px;color:var(--t2);margin-bottom:6px}
+/* 대시보드 */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:1rem}
+.kpi{border:1px solid var(--bor);border-radius:var(--r);padding:1rem;text-align:center;background:var(--sur)}
+.kpi .lbl{font-size:11px;color:var(--t3);font-weight:600;margin-bottom:6px}
+.kpi .val{font-size:20px;font-weight:800;color:var(--txt)}
+.kpi .val.pay{color:var(--red)}.kpi .val.refund{color:var(--green)}
+.kpi .sub{font-size:11px;color:var(--t3);margin-top:3px}
+.bartbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:.5rem}
+.bartbl th,.bartbl td{padding:8px 6px;border-bottom:1px solid var(--bor);text-align:right}
+.bartbl th{color:var(--t3);font-weight:600;font-size:11px;text-align:right}
+.bartbl td:first-child,.bartbl th:first-child{text-align:left}
+.bartbl .num{font-variant-numeric:tabular-nums}
+/* 첨부 */
+.dropzone{border:2px dashed var(--bor);border-radius:var(--r);padding:1.75rem 1rem;text-align:center;cursor:pointer;transition:.15s;color:var(--t3)}
+.dropzone:hover,.dropzone.drag{border-color:var(--green);background:var(--gl);color:var(--gd)}
+.thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:1rem}
+.thumb{position:relative;width:96px}
+.thumb img{width:96px;height:96px;object-fit:cover;border-radius:var(--rs);border:1px solid var(--bor)}
+.thumb .fn{font-size:10px;color:var(--t3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thumb .rm{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;border:2px solid #fff;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center}
+.filechip{display:flex;align-items:center;gap:8px;padding:8px 11px;background:var(--bg);border:1px solid var(--bor);border-radius:var(--rs);font-size:12px;margin-top:8px}
+.filechip .rm2{margin-left:auto;cursor:pointer;color:var(--t3)}
+/* 결과 */
+.loadwrap{text-align:center;padding:3rem 1rem}
+.spinner{width:38px;height:38px;border:3px solid var(--gl);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.res-sec{margin-bottom:1.25rem}
+.res-h{font-size:14px;font-weight:800;margin-bottom:.6rem;display:flex;align-items:center;gap:7px;padding-bottom:6px;border-bottom:2px solid var(--gl)}
+.tax-box{border:1px solid var(--bor);border-left:4px solid var(--green);border-radius:var(--rs);padding:.9rem 1rem;margin-bottom:.7rem;background:var(--sur)}
+.tax-box.vat{border-left-color:var(--blue)}.tax-box.warn{border-left-color:var(--amber)}
+.tax-box .tb-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:5px;flex-wrap:wrap}
+.tax-box .tb-name{font-size:13px;font-weight:800}
+.tax-box .tb-amt{font-size:16px;font-weight:800}
+.tax-box .tb-amt.pay{color:var(--red)}.tax-box .tb-amt.refund{color:var(--green)}
+.tax-box .tb-body{font-size:12px;color:var(--t2);line-height:1.7}
+.tax-box .tb-due{font-size:11px;color:var(--t3);margin-top:5px}
+.doclist,.steplist{list-style:none;padding:0}
+.doclist li,.steplist li{padding:9px 0;border-bottom:1px dashed var(--bor);font-size:12.5px;line-height:1.6;display:flex;gap:9px}
+.doclist li:last-child,.steplist li:last-child{border-bottom:none}
+.doclist .dnum{flex-shrink:0;width:20px;height:20px;border-radius:6px;background:var(--gl);color:var(--gd);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.doclist .dwhere{color:var(--green);font-weight:600}
+.tip{font-size:12.5px;line-height:1.7;padding:9px 0;border-bottom:1px dashed var(--bor);display:flex;gap:8px}
+.tip:last-child{border-bottom:none}
+.tip .ic{flex-shrink:0}
+.notice{background:var(--al);border:1px solid #ecd9a3;color:#7a5c00;border-radius:var(--rs);padding:11px 13px;font-size:11.5px;line-height:1.7;margin-top:1rem}
+.disclaimer{font-size:11px;color:var(--t3);line-height:1.7;text-align:center;padding:1.5rem 1rem 0;max-width:760px;margin:0 auto}
+/* 캘린더/가이드 */
+.cal-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--bor)}
+.cal-item:last-child{border-bottom:none}
+.cal-when{flex-shrink:0;width:84px;font-weight:800;font-size:13px;color:var(--green)}
+.cal-body{font-size:12.5px;line-height:1.6}
+.cal-body b{font-size:13px}
+.guide-q{font-size:13.5px;font-weight:800;margin:1.1rem 0 .4rem;display:flex;gap:7px}
+.guide-a{font-size:12.5px;color:var(--t2);line-height:1.8}
+.adslot{background:repeating-linear-gradient(45deg,#f0f4f2,#f0f4f2 10px,#eaf0ed 10px,#eaf0ed 20px);border:1px dashed var(--bor);border-radius:var(--rs);padding:1rem;text-align:center;font-size:11px;color:var(--t3);margin:1rem 0}
+/* 토스트 */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--txt);color:#fff;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:999;max-width:90vw}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.err{background:var(--red)}#toast.ok{background:var(--green)}
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.9rem}
+.tag-btn{padding:6px 12px;border:1px solid var(--bor);border-radius:20px;background:var(--sur);font-family:inherit;font-size:12px;cursor:pointer;color:var(--t2)}
+.tag-btn:hover{border-color:var(--green);color:var(--green)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🧾 AI 세무사 <span>내 세금 자동 분석</span></div>
+  <div class="hright">
+    <select class="yearsel" id="taxYear" onchange="saveYear()"></select>
+    <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
+  </div>
+</header>
+
+<div class="maintabs" id="maintabs">
+  <div class="maintab on" data-p="dash">📊 종합 현황</div>
+  <div class="maintab" data-p="income">💼 소득 관리</div>
+  <div class="maintab" data-p="attach">📎 자료 첨부</div>
+  <div class="maintab" data-p="analyze">🤖 AI 세무분석</div>
+  <div class="maintab" data-p="calendar">📅 신고 캘린더</div>
+  <div class="maintab" data-p="guide">📚 전략 가이드</div>
+  <div class="maintab" data-p="settings">⚙️ 설정</div>
+</div>
+
+<!-- ░░░░░ 대시보드 ░░░░░ -->
+<div class="panel on" id="p-dash">
+  <div class="card">
+    <div class="ctitle">📊 <span id="dashYearLbl"></span> 종합 현황</div>
+    <div class="csub">소득 관리에 입력한 내역을 바탕으로 한 <b>간편 추정</b>입니다. 정확한 분석은 「AI 세무분석」 탭을 이용하세요.</div>
+    <div class="kpis" id="kpis"></div>
+    <div id="dashBreak"></div>
+    <div class="notice" id="dashNotice"></div>
+  </div>
+  <!-- <div class="adslot">광고 슬롯 (애드센스 승인 후 노출)</div> -->
+</div>
+
+<!-- ░░░░░ 소득 관리 ░░░░░ -->
+<div class="panel" id="p-income">
+  <div class="card">
+    <div class="ctitle">💼 소득원 추가</div>
+    <div class="csub">사업·프리랜서·근로(직장인)·임대·금융 등 소득을 자유롭게 추가/삭제할 수 있어요. 항목을 누르면 바로 추가됩니다.</div>
+    <div class="tag-row" id="quickAdd"></div>
+    <div class="frow">
+      <div class="field" style="margin:0"><label>직접 추가 — 소득 종류</label>
+        <select id="newType"></select>
+      </div>
+      <div class="field" style="margin:0;display:flex;align-items:flex-end"><button class="btn btn-pri btn-block" onclick="addIncome()">+ 소득원 추가</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">🧍 기본 정보 <span class="pill pill-g">절세 계산에 사용</span></div>
+    <div class="frow3">
+      <div class="field"><label>이름(별칭)</label><input id="pf_name" placeholder="홍길동" oninput="saveProfile()"></div>
+      <div class="field"><label>본인 포함 부양가족 수</label><input id="pf_dep" type="number" min="1" value="1" oninput="saveProfile()"><div class="hint">기본공제 1명당 150만원</div></div>
+      <div class="field"><label>경로/장애 등 추가공제(원)</label><input id="pf_extra" type="number" min="0" placeholder="0" oninput="saveProfile()"></div>
+    </div>
+  </div>
+
+  <div id="incList"></div>
+</div>
+
+<!-- ░░░░░ 자료 첨부 ░░░░░ -->
+<div class="panel" id="p-attach">
+  <div class="card">
+    <div class="ctitle">📎 영수증·서류 사진 첨부</div>
+    <div class="csub">세금계산서, 영수증, 원천징수영수증, 통장 내역, 종합소득세 안내문 등을 사진으로 올리면 AI가 읽어서 분석에 반영합니다.</div>
+    <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+      📷 클릭하거나 이미지를 끌어다 놓으세요<br><span style="font-size:11px">JPG·PNG·WebP · 여러 장 가능 (최대 8장)</span>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFiles(this.files)">
+    <div class="thumbs" id="thumbs"></div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">📝 추가 설명 / 텍스트 자료</div>
+    <div class="csub">사진으로 담기 어려운 내용은 직접 적어주세요. (예: "쿠팡 배송 부업 연 수입 1,200만원, 차량 유류비 월 30만원" 등)</div>
+    <div class="field" style="margin:0"><textarea id="attachText" placeholder="예시) 작년에 상가 임대 보증금 5천만원·월세 150만원 받았고, 본업은 회사원 연봉 5,400만원입니다. 카드 소득공제, 의료비 200만원 썼어요." oninput="saveAttach()"></textarea></div>
+  </div>
+  <div style="text-align:center"><button class="btn btn-pri" onclick="go('analyze');startAnalyze()">🤖 이 자료로 AI 세무분석 시작 →</button></div>
+</div>
+
+<!-- ░░░░░ AI 분석 ░░░░░ -->
+<div class="panel" id="p-analyze">
+  <div class="card">
+    <div class="ctitle">🤖 AI 세무 종합분석</div>
+    <div class="csub">소득 내역 + 첨부 자료를 종합해 <b>내야 할 세금·환급액·필요서류·절세 전략</b>을 상세히 알려드립니다.</div>
+    <div class="frow" style="align-items:end">
+      <div class="field" style="margin:0"><label>분석 깊이</label>
+        <select id="depth">
+          <option value="full">전체 종합 (부가세+종소세+전략, 권장)</option>
+          <option value="vat">부가가치세 집중</option>
+          <option value="income">종합소득세 집중</option>
+          <option value="strategy">절세 전략 집중</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0"><button class="btn btn-pri btn-block" id="anBtn" onclick="startAnalyze()">분석 시작</button></div>
+    </div>
+    <div class="hint">현재 첨부: 사진 <b id="anImgN">0</b>장 · 소득원 <b id="anIncN">0</b>개 · API <b id="anApi">미설정</b></div>
+  </div>
+  <div id="anResult"></div>
+</div>
+
+<!-- ░░░░░ 캘린더 ░░░░░ -->
+<div class="panel" id="p-calendar">
+  <div class="card">
+    <div class="ctitle">📅 세금 신고 캘린더</div>
+    <div class="csub">개인사업자·프리랜서·직장인이 챙겨야 할 주요 신고 일정입니다.</div>
+    <div id="calList"></div>
+  </div>
+</div>
+
+<!-- ░░░░░ 가이드 ░░░░░ -->
+<div class="panel" id="p-guide">
+  <div class="card">
+    <div class="ctitle">📚 세금 전략 가이드</div>
+    <div class="csub">소득 유형별 핵심 절세 포인트를 정리했습니다. (참고용 · 2024 귀속 기준)</div>
+    <div id="guideList"></div>
+  </div>
+</div>
+
+<!-- ░░░░░ 설정 ░░░░░ -->
+<div class="panel" id="p-settings">
+  <div class="card">
+    <div class="ctitle">🔑 Claude API 키</div>
+    <div class="csub">사진·소득 데이터 분석에 사용됩니다. 키는 <b>이 브라우저에만</b> 저장되며 외부로 전송되지 않습니다.</div>
+    <div class="apirow">
+      <input id="apiKey" type="password" placeholder="sk-ant-...">
+      <button class="btn btn-pri" onclick="saveKey()">저장</button>
+    </div>
+    <div class="hint"><a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>에서 발급 · 1회 분석 비용 약 30~80원 (사진 수에 따라 변동)</div>
+  </div>
+  <div class="card">
+    <div class="ctitle">🗂️ 데이터 관리</div>
+    <div class="csub">모든 입력 데이터는 브라우저(localStorage)에 저장됩니다. 기기/브라우저를 바꾸면 사라집니다.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-out btn-sm" onclick="exportData()">내보내기(JSON)</button>
+      <button class="btn btn-out btn-sm" onclick="document.getElementById('impFile').click()">불러오기</button>
+      <button class="btn btn-red btn-sm" onclick="resetAll()">전체 초기화</button>
+      <input type="file" id="impFile" accept="application/json" style="display:none" onchange="importData(this.files)">
+    </div>
+  </div>
+  <div class="disclaimer">
+    ⚠️ 본 도구는 AI 기반 <b>참고용 정보</b>를 제공합니다. 실제 세금 신고·납부는 반드시 <a href="https://hometax.go.kr" target="_blank">홈택스</a> 또는 세무대리인(세무사)의 확인을 거치세요. 본 도구의 추정치는 법적 효력이 없으며, 이용에 따른 책임은 이용자 본인에게 있습니다.
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════ 상수 / 세율 ══════════════════════════ */
+var KEY='ak_claude'; // 블로그 도구와 동일 키 공유
+var THIS_YEAR=new Date().getFullYear();
+
+// 종합소득세 누진세율 (2023년 귀속 이후 ~ 2024 귀속 동일)
+var BRACKETS=[
+  [14000000,0.06,0],
+  [50000000,0.15,1260000],
+  [88000000,0.24,5760000],
+  [150000000,0.35,15440000],
+  [300000000,0.38,19940000],
+  [500000000,0.40,25940000],
+  [1000000000,0.42,35940000],
+  [Infinity,0.45,65940000]
+];
+
+// 소득 종류 정의 — 자유롭게 추가/삭제 가능
+var INCOME_TYPES={
+  'business':{label:'사업소득',icon:'🏪',color:'pill-g',hasExp:true,hasBiz:true,vat:true,desc:'음식점·소매·서비스 등 사업자 매출'},
+  'freelance':{label:'프리랜서소득',icon:'💻',color:'pill-b',hasExp:true,hasBiz:false,vat:false,desc:'3.3% 원천징수 인적용역(강의·디자인·배달 등)'},
+  'wage':{label:'근로소득(직장인)',icon:'🧑‍💼',color:'pill-b',hasExp:false,hasBiz:false,vat:false,desc:'회사 급여 — 연말정산 대상'},
+  'rent':{label:'임대사업자소득',icon:'🏠',color:'pill-a',hasExp:true,hasBiz:true,vat:true,desc:'주택·상가 임대료'},
+  'finance':{label:'금융소득',icon:'💰',color:'pill-a',hasExp:false,hasBiz:false,vat:false,desc:'이자·배당 (연 2천만원 초과 시 종합과세)'},
+  'other':{label:'기타소득',icon:'📦',color:'pill-g',hasExp:true,hasBiz:false,vat:false,desc:'일시적 강연료·원고료·상금 등'}
+};
+
+/* ══════════════════════════ 상태 ══════════════════════════ */
+var incomes=[], images=[], profile={dep:1,extra:0,name:''}, attachText='';
+var curYear=THIS_YEAR-1; // 직전연도 귀속분 신고가 기본
+
+/* ══════════════════════════ 저장/로드 ══════════════════════════ */
+function lsGet(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function loadAll(){
+  incomes=lsGet('tax_incomes',[]);
+  profile=lsGet('tax_profile',{dep:1,extra:0,name:''});
+  attachText=localStorage.getItem('tax_attachText')||'';
+  curYear=parseInt(localStorage.getItem('tax_year'))||(THIS_YEAR-1);
+}
+function saveIncomes(){lsSet('tax_incomes',incomes);}
+function saveProfile(){
+  profile={dep:parseInt(document.getElementById('pf_dep').value)||1,extra:parseInt(document.getElementById('pf_extra').value)||0,name:document.getElementById('pf_name').value};
+  lsSet('tax_profile',profile);renderDash();
+}
+function saveAttach(){attachText=document.getElementById('attachText').value;localStorage.setItem('tax_attachText',attachText);}
+function saveYear(){curYear=parseInt(document.getElementById('taxYear').value);localStorage.setItem('tax_year',curYear);renderDash();}
+
+/* ══════════════════════════ 유틸 ══════════════════════════ */
+function won(n){if(n==null||isNaN(n))return'-';return Math.round(n).toLocaleString('ko-KR')+'원';}
+function manwon(n){if(!n)return'0';return Math.round(n/10000).toLocaleString('ko-KR')+'만';}
+function toast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='show '+(type||'');setTimeout(function(){t.className=t.className.replace('show','');},2600);}
+function num(v){return parseFloat(String(v).replace(/[^0-9.-]/g,''))||0;}
+
+/* ══════════════════════════ 탭 전환 ══════════════════════════ */
+function go(p){
+  document.querySelectorAll('.maintab').forEach(function(t){t.classList.toggle('on',t.dataset.p===p);});
+  document.querySelectorAll('.panel').forEach(function(pn){pn.classList.toggle('on',pn.id==='p-'+p);});
+  if(p==='dash')renderDash();
+  if(p==='analyze')refreshAnInfo();
+  window.scrollTo(0,0);
+}
+document.getElementById('maintabs').addEventListener('click',function(e){var t=e.target.closest('.maintab');if(t)go(t.dataset.p);});
+
+/* ══════════════════════════ 소득 관리 ══════════════════════════ */
+function renderTypeSelects(){
+  var opts=Object.keys(INCOME_TYPES).map(function(k){return '<option value="'+k+'">'+INCOME_TYPES[k].icon+' '+INCOME_TYPES[k].label+'</option>';}).join('');
+  document.getElementById('newType').innerHTML=opts;
+  document.getElementById('quickAdd').innerHTML=Object.keys(INCOME_TYPES).map(function(k){
+    return '<button class="tag-btn" onclick="addIncome(\''+k+'\')">'+INCOME_TYPES[k].icon+' '+INCOME_TYPES[k].label+'</button>';
+  }).join('');
+}
+function addIncome(type){
+  type=type||document.getElementById('newType').value;
+  var t=INCOME_TYPES[type];
+  incomes.push({id:Date.now()+Math.random().toString(36).slice(2,6),type:type,label:t.label,income:0,expense:0,prepaid:0,bizType:type==='business'?'general':(type==='rent'?'general':'none'),sep:false,note:''});
+  saveIncomes();renderIncList();toast(t.label+' 추가됨','ok');
+}
+function delIncome(id){incomes=incomes.filter(function(x){return x.id!==id;});saveIncomes();renderIncList();renderDash();}
+function updIncome(id,field,val){var it=incomes.find(function(x){return x.id===id;});if(!it)return;if(['income','expense','prepaid'].indexOf(field)>=0)val=num(val);if(field==='sep')val=!!val;it[field]=val;saveIncomes();}
+function renderIncList(){
+  var el=document.getElementById('incList');
+  if(!incomes.length){el.innerHTML='<div class="card"><div class="empty"><b>아직 소득원이 없어요</b>위에서 소득 종류를 눌러 추가해보세요.<br>여러 개를 자유롭게 추가/삭제할 수 있습니다.</div></div>';return;}
+  el.innerHTML=incomes.map(function(it){
+    var t=INCOME_TYPES[it.type]||INCOME_TYPES.other;
+    var h='<div class="inc-card"><div class="inc-head"><div class="inc-name">'+t.icon+' <span contenteditable onblur="updIncome(\''+it.id+'\',\'label\',this.textContent)">'+esc(it.label)+'</span> <span class="pill '+t.color+'">'+t.label+'</span></div>'+
+      '<button class="inc-del" onclick="delIncome(\''+it.id+'\')">🗑 삭제</button></div>';
+    h+='<div class="frow3">';
+    h+='<div class="field"><label>'+(it.type==='wage'?'연간 총급여(원)':'연간 총수입(원)')+'</label><input type="text" value="'+(it.income||'')+'" oninput="updIncome(\''+it.id+'\',\'income\',this.value);liveDash()" placeholder="0"></div>';
+    if(t.hasExp)h+='<div class="field"><label>필요경비(원)</label><input type="text" value="'+(it.expense||'')+'" oninput="updIncome(\''+it.id+'\',\'expense\',this.value);liveDash()" placeholder="0"><div class="hint">증빙 있는 사업 관련 지출</div></div>';
+    h+='<div class="field"><label>이미 낸 세금(원)</label><input type="text" value="'+(it.prepaid||'')+'" oninput="updIncome(\''+it.id+'\',\'prepaid\',this.value);liveDash()" placeholder="0"><div class="hint">'+(it.type==='wage'?'연말정산 기납부세액':(it.type==='freelance'?'3.3% 원천징수액':'중간예납·원천징수'))+'</div></div>';
+    h+='</div>';
+    if(t.hasBiz)h+='<div class="frow"><div class="field" style="margin:0"><label>부가세 과세유형</label><select onchange="updIncome(\''+it.id+'\',\'bizType\',this.value);liveDash()">'+
+      ['general:일반과세자(부가세 10%)','simple:간이과세자','exempt:면세사업자','none:해당없음'].map(function(o){var v=o.split(':');return '<option value="'+v[0]+'"'+(it.bizType===v[0]?' selected':'')+'>'+v[1]+'</option>';}).join('')+'</select></div></div>';
+    if(it.type==='finance')h+='<div class="field" style="margin:.6rem 0 0"><label style="display:flex;align-items:center;gap:7px;font-weight:500"><input type="checkbox" '+(it.sep?'checked':'')+' onchange="updIncome(\''+it.id+'\',\'sep\',this.checked);liveDash()" style="width:auto">연 2천만원 이하 — 분리과세(종합과세 제외)</label></div>';
+    h+='<div class="field" style="margin:.6rem 0 0"><label>메모</label><input type="text" value="'+esc(it.note||'')+'" oninput="updIncome(\''+it.id+'\',\'note\',this.value)" placeholder="업종, 거래처, 특이사항 등"></div>';
+    h+='</div>';
+    return h;
+  }).join('');
+}
+function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+/* ══════════════════════════ 세금 간편 계산 ══════════════════════════ */
+function wageDeduction(g){ // 근로소득공제
+  var d;
+  if(g<=5000000)d=g*0.7;
+  else if(g<=15000000)d=3500000+(g-5000000)*0.4;
+  else if(g<=45000000)d=7500000+(g-15000000)*0.15;
+  else if(g<=100000000)d=12000000+(g-45000000)*0.05;
+  else d=14750000+(g-100000000)*0.02;
+  return Math.min(d,20000000);
+}
+function progressiveTax(base){
+  if(base<=0)return 0;
+  for(var i=0;i<BRACKETS.length;i++){if(base<=BRACKETS[i][0])return base*BRACKETS[i][1]-BRACKETS[i][2];}
+  return 0;
+}
+function computeTax(){
+  var globalIncome=0, prepaid=0, vatPay=0, rows=[], sepNote=[], finComprehensive=false;
+  incomes.forEach(function(it){
+    var t=INCOME_TYPES[it.type]||INCOME_TYPES.other;
+    var amt=it.income||0, taxableAmt=0, label=it.label;
+    if(it.type==='wage'){
+      taxableAmt=Math.max(amt-wageDeduction(amt),0);
+    } else if(it.type==='finance'){
+      if(it.sep && amt<=20000000){ sepNote.push(label+' 14% 분리과세'); taxableAmt=0; }
+      else { taxableAmt=amt; finComprehensive=true; }
+    } else {
+      taxableAmt=Math.max(amt-(it.expense||0),0);
+    }
+    globalIncome+=taxableAmt;
+    prepaid+=(it.prepaid||0);
+    // 부가세 (간편): 일반과세 매출세액 = 매출*10% (매입세액 미반영)
+    if(t.vat && it.bizType==='general'){ vatPay+=amt*0.1; }
+    else if(t.vat && it.bizType==='simple'){ vatPay+=amt*0.10*0.30; } // 간이 대략 부가율 30% 가정
+    rows.push({label:label,icon:t.icon,income:amt,taxable:taxableAmt,prepaid:it.prepaid||0});
+  });
+  var ded=(profile.dep||1)*1500000+(profile.extra||0); // 인적공제+추가
+  var base=Math.max(globalIncome-ded,0);
+  var calc=progressiveTax(base);
+  var localTax=calc*0.1; // 지방소득세 10%
+  var settle=calc-prepaid; // 종소세 납부(+)/환급(-)
+  return {globalIncome:globalIncome,ded:ded,base:base,calc:calc,localTax:localTax,prepaid:prepaid,settle:settle,vatPay:vatPay,rows:rows,sepNote:sepNote,finComprehensive:finComprehensive};
+}
+
+/* ══════════════════════════ 대시보드 ══════════════════════════ */
+function liveDash(){clearTimeout(window._dt);window._dt=setTimeout(renderDash,400);}
+function renderDash(){
+  document.getElementById('dashYearLbl').textContent=curYear+'년 귀속';
+  var r=computeTax();
+  var payCls=r.settle>=0?'pay':'refund';
+  var k=document.getElementById('kpis');
+  k.innerHTML=
+    kpi('종합소득금액',won(r.globalIncome),'소득별 합산')+
+    kpi('과세표준',won(r.base),'공제 '+won(r.ded)+' 차감')+
+    kpi('종합소득세 산출',won(r.calc),'+지방세 '+won(r.localTax))+
+    kpi(r.settle>=0?'추가 납부 예상':'환급 예상',won(Math.abs(r.settle)),'기납부 '+won(r.prepaid),payCls)+
+    (r.vatPay>0?kpi('부가세 예상',won(r.vatPay),'매입세액 차감 전','pay'):'');
+  if(!incomes.length){
+    document.getElementById('dashBreak').innerHTML='<div class="empty"><b>소득을 먼저 입력하세요</b>「💼 소득 관리」에서 소득원을 추가하면 자동 계산됩니다.</div>';
+    document.getElementById('dashNotice').innerHTML='';return;
+  }
+  var rows=r.rows.map(function(x){return '<tr><td>'+x.icon+' '+esc(x.label)+'</td><td class="num">'+won(x.income)+'</td><td class="num">'+won(x.taxable)+'</td><td class="num">'+won(x.prepaid)+'</td></tr>';}).join('');
+  document.getElementById('dashBreak').innerHTML='<table class="bartbl"><thead><tr><th>소득원</th><th>수입</th><th>과세대상 소득금액</th><th>기납부세액</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  var notes=['이 숫자는 <b>간편 추정</b>입니다 — 세액공제(근로·자녀·연금 등)와 부가세 매입세액은 반영되지 않아 실제와 차이가 큽니다.'];
+  if(r.sepNote.length)notes.push('분리과세 처리: '+r.sepNote.join(', '));
+  if(r.finComprehensive)notes.push('금융소득 2천만원 초과분이 종합과세에 합산되었습니다.');
+  notes.push('정확한 결과·필요서류·절세전략은 「🤖 AI 세무분석」을 이용하세요.');
+  document.getElementById('dashNotice').innerHTML=notes.map(function(n){return '• '+n;}).join('<br>');
+}
+function kpi(lbl,val,sub,cls){return '<div class="kpi"><div class="lbl">'+lbl+'</div><div class="val '+(cls||'')+'">'+val+'</div><div class="sub">'+sub+'</div></div>';}
+
+/* ══════════════════════════ 자료 첨부 ══════════════════════════ */
+function handleFiles(files){
+  var arr=Array.prototype.slice.call(files);
+  arr.forEach(function(f){
+    if(!f.type.startsWith('image/'))return;
+    if(images.length>=8){toast('사진은 최대 8장까지','err');return;}
+    var rd=new FileReader();
+    rd.onload=function(e){
+      var dataUrl=e.target.result;
+      images.push({name:f.name,mediaType:f.type,dataUrl:dataUrl,base64:dataUrl.split(',')[1]});
+      renderThumbs();refreshAnInfo();
+    };
+    rd.readAsDataURL(f);
+  });
+}
+function renderThumbs(){
+  var el=document.getElementById('thumbs');
+  el.innerHTML=images.map(function(im,i){return '<div class="thumb"><span class="rm" onclick="rmImg('+i+')">×</span><img src="'+im.dataUrl+'"><div class="fn">'+esc(im.name)+'</div></div>';}).join('');
+}
+function rmImg(i){images.splice(i,1);renderThumbs();refreshAnInfo();}
+var dz=document.getElementById('dropzone');
+['dragenter','dragover'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add('drag');});});
+['dragleave','drop'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove('drag');});});
+dz.addEventListener('drop',function(e){handleFiles(e.dataTransfer.files);});
+
+/* ══════════════════════════ AI 분석 ══════════════════════════ */
+function refreshAnInfo(){
+  document.getElementById('anImgN').textContent=images.length;
+  document.getElementById('anIncN').textContent=incomes.length;
+  var has=!!getKey();
+  document.getElementById('anApi').textContent=has?'설정됨':'미설정';
+}
+function getKey(){return (sessionStorage.getItem(KEY)||localStorage.getItem(KEY)||'').trim();}
+
+function buildPrompt(depth){
+  var r=computeTax();
+  var sys='당신은 한국의 베테랑 세무사입니다. 부가가치세법·소득세법에 정통하며, 개인사업자·프리랜서·직장인·임대사업자·금융소득자의 세금을 실무적으로 자문합니다. '+
+  '반드시 한국 세법(2024년 귀속, '+(curYear+1)+'년 신고 기준)에 근거해 설명하세요. 모르는 수치는 추정이라고 명시하고, 단정적 확언 대신 근거를 들어 설명합니다. '+
+  '첨부된 사진(영수증·세금계산서·원천징수영수증 등)이 있으면 금액·날짜·항목을 읽어 분석에 반영하세요. '+
+  '반드시 아래 JSON 스키마 하나만 출력하고, 그 외 텍스트·마크다운·코드펜스를 붙이지 마세요.\n'+
+  '{"summary":"전체 한줄 요약(현재 세금 상황)","taxes":[{"name":"세목명(예: 종합소득세)","kind":"income|vat|local|other","amount":숫자(원,납부는양수/환급은음수/모르면null),"label":"납부 예상|환급 예상|해당없음","due":"신고·납부 기한","detail":"계산 근거와 설명 2~4문장"}],'+
+  '"documents":[{"name":"서류명","where":"발급처(예: 홈택스/정부24/거래처)","how":"받는 방법 1문장"}],'+
+  '"strategy":["절세·신고 전략 팁(구체적 행동 위주)"],"warnings":["주의·놓치기 쉬운 점"],"checklist":["신고 전 점검 항목"],"verdict":"종합 조언 2~3문장"}';
+
+  var u='【납세자 상황 - '+curYear+'년 귀속】\n';
+  u+='이름/별칭: '+(profile.name||'(미입력)')+', 본인포함 부양가족 '+(profile.dep||1)+'명, 추가공제 '+won(profile.extra||0)+'\n\n';
+  u+='【소득 내역】\n';
+  if(!incomes.length)u+='(소득원 미입력 — 첨부 자료/설명에서 파악해 주세요)\n';
+  incomes.forEach(function(it,i){
+    var t=INCOME_TYPES[it.type]||INCOME_TYPES.other;
+    u+=(i+1)+'. ['+t.label+'] '+esc(it.label)+' | 연수입 '+won(it.income)+
+      (t.hasExp?' | 필요경비 '+won(it.expense):'')+
+      ' | 기납부세액 '+won(it.prepaid)+
+      (t.hasBiz?' | 과세유형 '+({general:'일반과세',simple:'간이과세',exempt:'면세',none:'해당없음'}[it.bizType]||it.bizType):'')+
+      (it.type==='finance'?' | '+(it.sep?'분리과세':'종합과세'):'')+
+      (it.note?' | 메모: '+it.note:'')+'\n';
+  });
+  u+='\n【간편계산 참고치(검토·교정 바람)】 종합소득금액 약 '+won(r.globalIncome)+', 과세표준 약 '+won(r.base)+', 산출세액 약 '+won(r.calc)+', 기납부 '+won(r.prepaid)+', 정산 약 '+won(r.settle)+(r.vatPay>0?', 부가세(매입전) 약 '+won(r.vatPay):'')+'\n';
+  if(attachText)u+='\n【납세자 추가 설명】\n'+attachText+'\n';
+  if(images.length)u+='\n【첨부 사진 '+images.length+'장 — 내용을 읽어 반영】\n';
+  var focus={full:'부가세·종합소득세·기타 모든 세목을 종합적으로',vat:'부가가치세를 중심으로',income:'종합소득세를 중심으로',strategy:'합법적 절세 전략을 중심으로'}[depth]||'종합적으로';
+  u+='\n위 내용을 바탕으로 '+focus+' 분석하고, 내야 할/돌려받을 세금, 필요 서류와 발급 방법, 전략을 JSON으로 답하세요.';
+  return {sys:sys,user:u};
+}
+
+async function callClaudeTax(apiKey,sys,userText,imgs){
+  var k=apiKey.replace(/[^\x20-\x7E]/g,'').trim();
+  var content=[{type:'text',text:userText}];
+  (imgs||[]).forEach(function(im){content.push({type:'image',source:{type:'base64',media_type:im.mediaType,data:im.base64}});});
+  var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:8000,system:sys,messages:[{role:'user',content:content}]})});
+  var d=await r.json();
+  if(d.error)throw new Error(d.error.message||'API 오류');
+  var txt=d.content&&d.content.find(function(b){return b.type==='text';});
+  return txt?(txt.text||''):'';
+}
+function parseJSON(raw){
+  if(!raw)return null;
+  raw=raw.replace(/```json/gi,'').replace(/```/g,'').trim();
+  try{return JSON.parse(raw);}catch(e){}
+  var s=raw.indexOf('{');if(s<0)return null;
+  var depth=0,e=-1;
+  for(var i=s;i<raw.length;i++){if(raw[i]==='{')depth++;else if(raw[i]==='}'){depth--;if(depth===0){e=i;break;}}}
+  try{return JSON.parse(raw.slice(s,e+1));}catch(e2){return null;}
+}
+
+async function startAnalyze(){
+  var key=getKey();
+  if(!key){toast('먼저 ⚙️설정에서 API 키를 저장하세요','err');go('settings');return;}
+  if(!incomes.length && !images.length && !attachText){toast('소득·사진·설명 중 하나는 입력해주세요','err');return;}
+  go('analyze');refreshAnInfo();
+  var btn=document.getElementById('anBtn');btn.disabled=true;
+  var depth=document.getElementById('depth').value;
+  document.getElementById('anResult').innerHTML='<div class="card"><div class="loadwrap"><div class="spinner"></div><div style="font-weight:700">AI 세무사가 분석 중입니다…</div><div style="font-size:12px;color:var(--t3);margin-top:6px">사진 '+images.length+'장 · 소득 '+incomes.length+'건 검토 중 (10~30초)</div></div></div>';
+  try{
+    var p=buildPrompt(depth);
+    var raw=await callClaudeTax(key,p.sys,p.user,images);
+    var data=parseJSON(raw);
+    if(!data||!data.taxes){throw new Error('응답 파싱 실패 — 다시 시도해 주세요');}
+    renderAnalysis(data);
+  }catch(err){
+    document.getElementById('anResult').innerHTML='<div class="card"><div class="empty"><b>분석 실패</b>'+esc(err.message)+'<br><br><button class="btn btn-pri btn-sm" onclick="startAnalyze()">다시 시도</button></div></div>';
+    toast('오류: '+err.message,'err');
+  }finally{btn.disabled=false;}
+}
+
+function renderAnalysis(d){
+  var h='<div class="card">';
+  if(d.summary)h+='<div class="tax-box" style="border-left-color:var(--blue);background:var(--bl)"><div class="tb-body" style="font-size:13px;font-weight:600;color:var(--txt)">📌 '+esc(d.summary)+'</div></div>';
+  // 세목별
+  h+='<div class="res-sec"><div class="res-h">💸 내야 할 / 돌려받을 세금</div>';
+  (d.taxes||[]).forEach(function(t){
+    var cls=t.kind==='vat'?'vat':(t.kind==='other'?'warn':'');
+    var amtCls=t.amount==null?'':(t.amount<0?'refund':(t.amount>0?'pay':''));
+    var amtTxt=t.amount==null?'AI 확인필요':(won(Math.abs(t.amount)));
+    h+='<div class="tax-box '+cls+'"><div class="tb-top"><span class="tb-name">'+esc(t.name)+'</span><span class="tb-amt '+amtCls+'">'+amtTxt+(t.label?' <span style="font-size:11px;font-weight:600;color:var(--t3)">'+esc(t.label)+'</span>':'')+'</span></div>'+
+      '<div class="tb-body">'+esc(t.detail||'')+'</div>'+(t.due?'<div class="tb-due">🗓 기한: '+esc(t.due)+'</div>':'')+'</div>';
+  });
+  h+='</div>';
+  // 서류
+  if(d.documents&&d.documents.length){
+    h+='<div class="res-sec"><div class="res-h">📂 필요 서류 & 발급 방법</div><ul class="doclist">';
+    d.documents.forEach(function(doc,i){h+='<li><span class="dnum">'+(i+1)+'</span><span><b>'+esc(doc.name)+'</b> — <span class="dwhere">'+esc(doc.where||'')+'</span><br>'+esc(doc.how||'')+'</span></li>';});
+    h+='</ul></div>';
+  }
+  // 전략
+  if(d.strategy&&d.strategy.length){
+    h+='<div class="res-sec"><div class="res-h">🎯 절세 · 신고 전략</div>';
+    d.strategy.forEach(function(s){h+='<div class="tip"><span class="ic">✅</span><span>'+esc(s)+'</span></div>';});
+    h+='</div>';
+  }
+  // 주의
+  if(d.warnings&&d.warnings.length){
+    h+='<div class="res-sec"><div class="res-h">⚠️ 주의사항</div>';
+    d.warnings.forEach(function(w){h+='<div class="tip"><span class="ic">⚠️</span><span>'+esc(w)+'</span></div>';});
+    h+='</div>';
+  }
+  // 체크리스트
+  if(d.checklist&&d.checklist.length){
+    h+='<div class="res-sec"><div class="res-h">📋 신고 전 체크리스트</div><ul class="steplist">';
+    d.checklist.forEach(function(c){h+='<li>☐ '+esc(c)+'</li>';});
+    h+='</ul></div>';
+  }
+  if(d.verdict)h+='<div class="notice" style="background:var(--gl);border-color:#bfe3d4;color:var(--gd)">💡 <b>종합 조언</b><br>'+esc(d.verdict)+'</div>';
+  h+='<div class="notice">⚠️ AI 분석은 참고용입니다. 실제 신고 전 <a href="https://hometax.go.kr" target="_blank">홈택스</a> 또는 세무사 확인을 권장합니다.</div>';
+  h+='<div style="text-align:center;margin-top:1rem"><button class="btn btn-out btn-sm" onclick="startAnalyze()">🔄 다시 분석</button></div>';
+  h+='</div>';
+  document.getElementById('anResult').innerHTML=h;
+}
+
+/* ══════════════════════════ 설정 / 데이터 ══════════════════════════ */
+function saveKey(){
+  var v=document.getElementById('apiKey').value.trim();
+  if(!v){toast('키를 입력하세요','err');return;}
+  localStorage.setItem(KEY,v);updateApiStat();toast('API 키 저장됨','ok');
+}
+function updateApiStat(){
+  var has=!!getKey();
+  document.getElementById('apiDot').className='dot'+(has?' ok':'');
+  document.getElementById('apiStat').textContent=has?'API 연결됨':'API 미설정';
+  refreshAnInfo();
+}
+function exportData(){
+  var blob=new Blob([JSON.stringify({incomes:incomes,profile:profile,attachText:attachText,year:curYear},null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ai세무사_'+curYear+'.json';a.click();
+}
+function importData(files){
+  if(!files[0])return;var rd=new FileReader();
+  rd.onload=function(e){try{var d=JSON.parse(e.target.result);incomes=d.incomes||[];profile=d.profile||profile;attachText=d.attachText||'';curYear=d.year||curYear;saveIncomes();lsSet('tax_profile',profile);localStorage.setItem('tax_attachText',attachText);localStorage.setItem('tax_year',curYear);initUI();toast('불러오기 완료','ok');}catch(err){toast('파일 형식 오류','err');}};
+  rd.readAsText(files[0]);
+}
+function resetAll(){
+  if(!confirm('소득·프로필·설명 데이터를 모두 지웁니다. (API 키는 유지) 계속할까요?'))return;
+  ['tax_incomes','tax_profile','tax_attachText','tax_year'].forEach(function(k){localStorage.removeItem(k);});
+  incomes=[];profile={dep:1,extra:0,name:''};attachText='';curYear=THIS_YEAR-1;images=[];initUI();toast('초기화 완료','ok');
+}
+
+/* ══════════════════════════ 캘린더 / 가이드 데이터 ══════════════════════════ */
+var CALENDAR=[
+  {when:'1월 25일',title:'부가가치세 확정신고 (2기)',body:'개인 일반과세자: 전년 7~12월분 부가세 신고·납부. 간이과세자는 1년분(1.1~12.31)을 이때 확정신고.'},
+  {when:'2월 말',title:'면세사업자 사업장현황신고',body:'면세사업자(병의원·학원·농수산 등)는 전년 수입금액을 신고. 종합소득세 신고의 기초자료.'},
+  {when:'3월 10일',title:'근로소득 연말정산 신고',body:'직장인: 회사가 전년도 급여에 대한 연말정산 결과를 신고. 환급/추가납부 확정.'},
+  {when:'5월 1~31일',title:'종합소득세 확정신고 ★',body:'사업·프리랜서·임대·금융(2천만 초과)·기타소득 등 모든 종합과세 소득을 합산 신고. 가장 중요한 일정.'},
+  {when:'6월 30일',title:'성실신고확인대상자 종소세 신고',body:'수입금액이 큰 사업자는 6월 말까지 연장 신고(성실신고확인서 첨부).'},
+  {when:'7월 25일',title:'부가가치세 확정신고 (1기)',body:'일반과세자: 1~6월분 부가세 신고·납부.'},
+  {when:'8월 31일',title:'법인 외 — 종소세 중간예납 통지',body:'11월 종소세 중간예납 대비. 전년 납부세액의 1/2 고지.'},
+  {when:'11월 30일',title:'종합소득세 중간예납',body:'전년도에 종소세를 낸 개인사업자는 올해분의 절반을 미리 납부.'}
+];
+function renderCalendar(){
+  document.getElementById('calList').innerHTML=CALENDAR.map(function(c){
+    return '<div class="cal-item"><div class="cal-when">'+c.when+'</div><div class="cal-body"><b>'+c.title+'</b><br>'+c.body+'</div></div>';
+  }).join('');
+}
+var GUIDE=[
+  {q:'🏪 사업소득 (개인사업자)',a:'• <b>부가세:</b> 일반과세자는 매출세액(매출×10%)에서 매입세액을 뺀 금액 납부 → <b>적격증빙(세금계산서·카드·현금영수증)으로 매입을 챙길수록 절세</b>. 연 매출 1억400만원 미만이면 간이과세 검토.<br>• <b>종소세:</b> 장부(복식/간편)를 작성하면 실제 경비를 인정받아 추계신고보다 유리한 경우가 많음. 노란우산공제·기부금·청년창업 감면 등 활용.'},
+  {q:'💻 프리랜서소득',a:'• 대금 받을 때 <b>3.3% 원천징수</b>된 것이 "미리 낸 세금". 5월 종소세 때 정산해 <b>대부분 환급</b>받는 경우가 많음.<br>• 수입 7,500만원 미만이면 단순경비율 추계신고 가능하나, <b>실제 경비(장비·통신·교통·교육)가 많으면 장부 작성이 유리</b>. 사업용 카드를 따로 쓰면 경비 정리가 쉬움.'},
+  {q:'🧑‍💼 근로소득 (직장인)',a:'• 회사가 매달 떼고 2월 <b>연말정산</b>으로 정산. 신용카드/체크카드·현금영수증, 의료비, 교육비, 월세, 연금저축·IRP, 기부금 공제를 빠짐없이 챙기면 환급 증가.<br>• <b>연금저축+IRP 합산 900만원</b> 세액공제(13.2~16.5%)는 직장인 최고의 절세. 다른 소득(사업·임대 등)이 있으면 5월 종소세 때 합산신고 필요.'},
+  {q:'🏠 임대사업자소득',a:'• <b>주택임대:</b> 연 임대수입 2천만원 이하는 14% 분리과세 선택 가능(등록임대사업자는 필요경비·공제 우대). 2천만원 초과는 종합과세.<br>• <b>상가임대:</b> 부가세 과세대상(월세×10%) + 종소세 대상. 간주임대료(보증금×이자율) 주의. 건물 감가상각·이자비용·재산세를 경비 처리.'},
+  {q:'💰 금융소득 (이자·배당)',a:'• 연간 이자+배당이 <b>2천만원 이하면 15.4% 분리과세로 종결</b>(별도 신고 불필요).<br>• <b>2천만원 초과 시 전액 다른 소득과 합산해 종합과세</b> → 누진세율 적용으로 세부담 급증. ISA·비과세 상품 활용, 만기 분산, 부부 명의 분산으로 2천만원 기준 관리.'},
+  {q:'🎯 공통 절세 핵심',a:'• <b>적격증빙을 모아라:</b> 세금계산서·신용카드·현금영수증이 곧 경비·세액공제. 사업용 계좌·카드를 분리.<br>• <b>장부 작성:</b> 무기장가산세(20%)를 피하고 실제 경비 인정.<br>• <b>소득 분산·시기 조절:</b> 금융소득 2천만원, 임대 2천만원 등 구간 경계 관리.<br>• <b>공제·감면 챙기기:</b> 노란우산공제, 연금계좌, 기부금, 중소기업·창업 감면.'}
+];
+function renderGuide(){
+  document.getElementById('guideList').innerHTML=GUIDE.map(function(g){
+    return '<div class="guide-q">'+g.q+'</div><div class="guide-a">'+g.a+'</div>';
+  }).join('');
+}
+
+/* ══════════════════════════ 초기화 ══════════════════════════ */
+function initYearSel(){
+  var sel=document.getElementById('taxYear');var h='';
+  for(var y=THIS_YEAR;y>=THIS_YEAR-5;y--){h+='<option value="'+y+'"'+(y===curYear?' selected':'')+'>'+y+'년 귀속</option>';}
+  sel.innerHTML=h;
+}
+function initUI(){
+  initYearSel();renderTypeSelects();renderIncList();renderCalendar();renderGuide();updateApiStat();
+  document.getElementById('pf_name').value=profile.name||'';
+  document.getElementById('pf_dep').value=profile.dep||1;
+  document.getElementById('pf_extra').value=profile.extra||0;
+  document.getElementById('attachText').value=attachText;
+  renderThumbs();renderDash();refreshAnInfo();
+}
+loadAll();initUI();
+</script>
+</body>
+</html>
