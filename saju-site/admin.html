@@ -324,10 +324,9 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
     <div class="hint"><a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> 에서 발급(<b>sk-ant-…</b> 형식). <b>한 번 저장하면 이 브라우저에 보관되어 매번 다시 입력할 필요가 없습니다.</b> 키는 외부로 전송되지 않으며 분석 시 Anthropic 서버로만 전송됩니다. <b>「테스트」</b>로 키가 정상인지 먼저 확인하세요.</div>
     <div class="field" style="margin-top:1rem"><label>분석 모델</label>
       <select id="modelSel">
-        <option value="claude-sonnet-4-20250514">Claude Sonnet 4 — 빠르고 우수 (권장)</option>
-        <option value="claude-opus-4-1-20250805">Claude Opus 4.1 — 최고 품질·깊이 (비용 ↑)</option>
-        <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet — 균형형</option>
-        <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku — 가장 저렴·빠름</option>
+        <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — 빠르고 우수 (권장)</option>
+        <option value="claude-opus-4-8">Claude Opus 4.8 — 최고 품질·깊이 (비용 ↑)</option>
+        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — 가장 저렴·빠름</option>
       </select>
     </div>
   </div>
@@ -480,8 +479,8 @@ function toast(m,t){let e=$('toast');e.textContent=m;e.className='show '+(t||'')
 function getKey(){return (sessionStorage.getItem(KEY)||localStorage.getItem(KEY)||'').trim();}
 function saveKey(){let v=$('apiKey').value.trim();if(!v){toast('키를 입력하세요','err');return;}localStorage.setItem(KEY,v);updateApiStat();toast('API 키 저장됨','ok');}
 function updateApiStat(){let has=!!getKey();$('apiDot').className='dot'+(has?' ok':'');$('apiStat').textContent=has?'API 연결됨':'API 미설정';if(has&&!$('apiKey').value)$('apiKey').value=getKey();}
-const VALID_MODELS=['claude-opus-4-1-20250805','claude-sonnet-4-20250514','claude-3-7-sonnet-20250219','claude-3-5-haiku-20241022'];
-function getModel(){let m=localStorage.getItem('saju_model');return VALID_MODELS.includes(m)?m:'claude-sonnet-4-20250514';}
+const VALID_MODELS=['claude-opus-4-8','claude-sonnet-4-6','claude-haiku-4-5-20251001'];
+function getModel(){let m=localStorage.getItem('saju_model');return VALID_MODELS.includes(m)?m:'claude-sonnet-4-6';}
 function getLen(){return localStorage.getItem('saju_len')||'상세';}
 
 // 탭
