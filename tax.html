@@ -149,6 +149,7 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.25re
   <div class="maintab" data-p="attach">📎 자료 첨부</div>
   <div class="maintab" data-p="analyze">🤖 AI 세무분석</div>
   <div class="maintab" data-p="chat">💬 세무 상담</div>
+  <div class="maintab" data-p="filing">📝 직접 신고</div>
   <div class="maintab" data-p="calendar">📅 신고 캘린더</div>
   <div class="maintab" data-p="guide">📚 전략 가이드</div>
   <div class="maintab" data-p="settings">⚙️ 설정</div>
@@ -258,8 +259,11 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.25re
     </div>
     <div id="chatBox" style="flex:1;overflow-y:auto;padding:1.1rem"></div>
     <div id="chatChips" class="tag-row" style="padding:0 1.1rem;margin:0 0 .4rem;flex-wrap:wrap"></div>
+    <div id="chatStaged" style="display:none;padding:0 1.1rem;margin:0 0 .4rem"></div>
     <div style="display:flex;gap:8px;padding:.75rem 1.1rem;border-top:1px solid var(--bor);background:var(--sur)">
-      <textarea id="chatInput" rows="1" placeholder="예) 종합소득세 줄이려면 5월 전에 뭘 해야 해?" style="flex:1;min-height:44px;max-height:120px;padding:11px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;resize:none" onkeydown="chatKey(event)" oninput="chatGrow(this)"></textarea>
+      <button class="btn btn-out" onclick="document.getElementById('chatFileInput').click()" title="사진·PDF·엑셀 첨부" style="align-self:stretch;padding:0 12px;font-size:17px">📎</button>
+      <input type="file" id="chatFileInput" accept="image/*,application/pdf,.pdf,.xlsx,.xls,.csv,text/csv" multiple style="display:none" onchange="chatPick(this.files)">
+      <textarea id="chatInput" rows="1" placeholder="예) 이 영수증들 좀 봐줘 / 종합소득세 줄이려면 뭘 해야 해?" style="flex:1;min-height:44px;max-height:120px;padding:11px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;resize:none" onkeydown="chatKey(event)" oninput="chatGrow(this)"></textarea>
       <button class="btn btn-pri" id="chatSend" onclick="sendChat()" style="align-self:stretch">전송</button>
     </div>
   </div>
@@ -267,6 +271,27 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.25re
     <span class="hint" style="margin:0">💡 절세(합법)만 안내합니다. 허위·가공경비 등 탈세는 권하지 않아요.</span>
     <button class="btn btn-out btn-sm" onclick="clearChat()">대화 비우기</button>
   </div>
+</div>
+
+<!-- ░░░░░ 직접 신고 ░░░░░ -->
+<div class="panel" id="p-filing">
+  <div class="card" style="border-left:4px solid var(--green)">
+    <div class="ctitle">📝 나 혼자 세금 신고하기 <span class="pill pill-g">초보자용</span></div>
+    <div class="csub">떨지 마세요. 입력하신 소득·현황을 바탕으로, <b>가장 유리한(세금이 최소가 되는) 방향</b>으로 <b>어느 메뉴를 누르고 어떤 칸에 얼마를 적는지</b> 순서대로 알려드립니다.</div>
+    <div class="frow" style="align-items:end">
+      <div class="field" style="margin:0"><label>어떤 신고를 도와드릴까요?</label>
+        <select id="filingKind">
+          <option value="auto">내 상황에 맞는 것 자동 판단 (권장)</option>
+          <option value="income">종합소득세 (5월)</option>
+          <option value="vat">부가가치세 (1월·7월)</option>
+          <option value="yearend">근로소득 연말정산</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0"><button class="btn btn-pri btn-block" id="filingBtn" onclick="genFiling()">신고 방법 만들기</button></div>
+    </div>
+    <div class="hint">⚠️ 안내는 참고용입니다. 실제 신고 전 <a href="https://hometax.go.kr" target="_blank">홈택스</a>에서 자동 채워진 자료와 한 번 더 대조하세요.</div>
+  </div>
+  <div id="filingResult"></div>
 </div>
 
 <!-- ░░░░░ 캘린더 ░░░░░ -->
@@ -493,32 +518,32 @@ function kpi(lbl,val,sub,cls){return '<div class="kpi"><div class="lbl">'+lbl+'<
 /* ══════════════════════════ 자료 첨부 ══════════════════════════ */
 var MAX_FILES=40; // 안전 상한 (브라우저 성능). 사진+PDF+엑셀 합산
 function totalAttach(){return images.length+docs.length+sheets.length;}
+// 파일 1개를 종류 판별 후 파싱 → cb(kind, obj). 실패 시 cb(null)
+function parseFile(f,cb){
+  var type=f.type||'', low=(f.name||'').toLowerCase();
+  if(type.indexOf('image/')===0){
+    readAs(f,'dataurl',function(u){cb('img',{name:f.name,mediaType:type,dataUrl:u,base64:u.split(',')[1]});});
+  } else if(type==='application/pdf'||low.endsWith('.pdf')){
+    readAs(f,'dataurl',function(u){cb('doc',{name:f.name,base64:u.split(',')[1]});});
+  } else if(low.endsWith('.csv')||type==='text/csv'){
+    readAs(f,'text',function(txt){cb('sheet',{name:f.name,text:String(txt).slice(0,20000)});});
+  } else if(low.endsWith('.xlsx')||low.endsWith('.xls')||type.indexOf('sheet')>=0||type.indexOf('excel')>=0){
+    if(typeof XLSX==='undefined'){toast('엑셀 모듈 로딩 실패 — 인터넷 확인 후 새로고침하거나 CSV로 올려주세요','err');cb(null);return;}
+    readAs(f,'arraybuffer',function(buf){
+      try{
+        var wb=XLSX.read(new Uint8Array(buf),{type:'array'});var txt='';
+        wb.SheetNames.forEach(function(sn){txt+='[시트: '+sn+']\n'+XLSX.utils.sheet_to_csv(wb.Sheets[sn])+'\n\n';});
+        cb('sheet',{name:f.name,text:txt.slice(0,20000)});
+      }catch(err){toast('엑셀 읽기 실패: '+f.name,'err');cb(null);}
+    });
+  } else { toast('지원하지 않는 형식: '+f.name+' (사진·PDF·엑셀·CSV만)','err');cb(null); }
+}
 function handleFiles(files){
-  var arr=Array.prototype.slice.call(files);
-  arr.forEach(function(f){
+  Array.prototype.slice.call(files).forEach(function(f){
     if(totalAttach()>=MAX_FILES){toast('첨부 최대치('+MAX_FILES+'개)에 도달했어요','err');return;}
-    var type=f.type||'', low=(f.name||'').toLowerCase();
-    if(type.indexOf('image/')===0){ // 사진
-      readAs(f,'dataurl',function(u){images.push({name:f.name,mediaType:type,dataUrl:u,base64:u.split(',')[1]});done();});
-    } else if(type==='application/pdf'||low.endsWith('.pdf')){ // PDF
-      readAs(f,'dataurl',function(u){docs.push({name:f.name,base64:u.split(',')[1]});done();});
-    } else if(low.endsWith('.csv')||type==='text/csv'){ // CSV
-      readAs(f,'text',function(txt){sheets.push({name:f.name,text:String(txt).slice(0,20000)});done();});
-    } else if(low.endsWith('.xlsx')||low.endsWith('.xls')||type.indexOf('sheet')>=0||type.indexOf('excel')>=0){ // 엑셀
-      if(typeof XLSX==='undefined'){toast('엑셀 모듈 로딩 실패 — 인터넷 확인 후 새로고침하거나 CSV로 올려주세요','err');return;}
-      readAs(f,'arraybuffer',function(buf){
-        try{
-          var wb=XLSX.read(new Uint8Array(buf),{type:'array'});var txt='';
-          wb.SheetNames.forEach(function(sn){txt+='[시트: '+sn+']\n'+XLSX.utils.sheet_to_csv(wb.Sheets[sn])+'\n\n';});
-          sheets.push({name:f.name,text:txt.slice(0,20000)});done();
-        }catch(err){toast('엑셀 읽기 실패: '+f.name,'err');}
-      });
-    } else {
-      toast('지원하지 않는 형식: '+f.name+' (사진·PDF·엑셀·CSV만)','err');
-    }
+    parseFile(f,function(kind,obj){if(!kind)return;if(kind==='img')images.push(obj);else if(kind==='doc')docs.push(obj);else sheets.push(obj);renderAttachments();refreshAnInfo();});
   });
   var fi=document.getElementById('fileInput');if(fi)fi.value=''; // 같은 파일 재선택 허용
-  function done(){renderAttachments();refreshAnInfo();}
 }
 function readAs(f,how,cb){var rd=new FileReader();rd.onload=function(e){cb(e.target.result);};if(how==='dataurl')rd.readAsDataURL(f);else if(how==='text')rd.readAsText(f);else rd.readAsArrayBuffer(f);}
 function renderAttachments(){
@@ -670,7 +695,9 @@ var CHAT_SYS='당신은 철저히 의뢰인 편에 서는 대한민국 최고의
 '적용 가능한 모든 소득공제·세액공제·감면·비용(필요경비) 처리·소득 분산·과세방식 선택(분리과세/종합과세, 간이/일반, 단순경비율/장부 등)·공제 한도·신고 시기 조절을 적극적으로 찾아 먼저 제안하세요. '+
 '반드시 합법적인 절세만 안내합니다. 매출 누락, 가공·허위 경비, 명의 위장, 거짓 신고 등 탈세는 절대 권하지 말고, 의뢰인이 그런 방향을 물으면 위험(가산세·세무조사·형사처벌)을 분명히 경고한 뒤 합법적 대안을 제시하세요. '+
 '한국 세법(2024년 귀속 기준)에 근거해 설명하고, 항상 "언제까지 무엇을 하라"는 구체적 행동과 대략적인 절감/환급 예상효과를 함께 제시하세요. '+
-'답변은 한국어로, 핵심부터 간결하게. 단계가 있으면 번호로. 강조는 **별표**로 감싸세요. 의뢰인 상황 정보가 부족하면 한두 가지만 되물어 맞춤 조언을 하세요. 수치가 불확실하면 추정임을 밝히고, 큰 의사결정은 홈택스 확인·세무사 상담을 권합니다.';
+'답변은 한국어로, 핵심부터 간결하게. 단계가 있으면 번호로. 강조는 **별표**로 감싸세요. 의뢰인 상황 정보가 부족하면 한두 가지만 되물어 맞춤 조언을 하세요. 수치가 불확실하면 추정임을 밝히고, 큰 의사결정은 홈택스 확인·세무사 상담을 권합니다. '+
+'★중요★ 의뢰인이 첨부한 파일(영수증·원천징수영수증·거래내역 등)이나 설명에서 「소득 관리」에 기록할 만한 구체적인 소득/수입·필요경비·기납부세액 숫자를 확인했다면, 답변 맨 끝에 아래 형식의 블록을 정확히 한 번만 덧붙이세요(평소 답변 본문에는 절대 중괄호 JSON을 쓰지 말 것). '+
+'형식: <<APPLY>>{"incomes":[{"type":"freelance","label":"항목명","income":12000000,"expense":0,"prepaid":396000}]}<<END>> . type은 business(사업)·freelance(프리랜서)·wage(근로/직장인)·rent(임대)·finance(금융)·other(기타) 중 하나, 금액은 원 단위 정수(모르면 0). 추측이 과한 경우엔 넣지 말고, 기록할 게 없으면 이 블록을 생략하세요. 블록 앞에는 "아래 내용을 소득 관리에 넣어드릴까요?" 같은 한 문장을 두세요.';
 
 function chatContext(){
   var r=computeTax();
@@ -686,13 +713,67 @@ function fmtBub(s){
   return esc(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
 }
 var CHAT_CHIPS=['지금 내 상황에서 당장 할 절세 액션은?','종합소득세 줄이는 합법적인 방법','프리랜서 3.3% 환급 많이 받으려면?','직장인 연말정산 더 돌려받는 법','부가세 줄이는 방법','내년 세금까지 미리 줄이는 전략'];
+// ── 챗봇 첨부(임시 보관) ──
+var chatStaged={images:[],docs:[],sheets:[]};
+function chatStagedCount(){return chatStaged.images.length+chatStaged.docs.length+chatStaged.sheets.length;}
+function chatPick(files){
+  Array.prototype.slice.call(files).forEach(function(f){
+    if(chatStagedCount()>=12){toast('한 번에 최대 12개까지','err');return;}
+    parseFile(f,function(kind,obj){if(!kind)return;if(kind==='img')chatStaged.images.push(obj);else if(kind==='doc')chatStaged.docs.push(obj);else chatStaged.sheets.push(obj);renderChatStaged();});
+  });
+  var ci=document.getElementById('chatFileInput');if(ci)ci.value='';
+}
+function renderChatStaged(){
+  var el=document.getElementById('chatStaged');if(!el)return;
+  var all=[];
+  chatStaged.images.forEach(function(o,i){all.push(['img',i,'🖼 '+o.name]);});
+  chatStaged.docs.forEach(function(o,i){all.push(['doc',i,'📄 '+o.name]);});
+  chatStaged.sheets.forEach(function(o,i){all.push(['sheet',i,'📊 '+o.name]);});
+  el.innerHTML='<span style="font-size:11px;color:var(--t3)">첨부: </span>'+all.map(function(a){return '<span class="filechip" style="display:inline-flex;width:auto;margin:2px 4px 2px 0">'+esc(a[2])+'<span class="rm2" onclick="rmChatStaged(\''+a[0]+'\','+a[1]+')">✕</span></span>';}).join('');
+  el.style.display=all.length?'block':'none';
+}
+function rmChatStaged(k,i){(k==='img'?chatStaged.images:k==='doc'?chatStaged.docs:chatStaged.sheets).splice(i,1);renderChatStaged();}
+// ── APPLY 블록 파싱 ──
+function parseApply(text){
+  var m=text.match(/<<APPLY>>([\s\S]*?)<<END>>/);
+  if(!m)return {clean:text,apply:null};
+  var clean=text.replace(m[0],'').trim();
+  var apply=null;
+  try{var obj=JSON.parse(m[1].trim());if(obj&&obj.incomes&&obj.incomes.length)apply=obj;}catch(e){}
+  return {clean:clean,apply:apply};
+}
+function applyProposal(i){
+  var m=chatMsgs[i];if(!m||!m.apply)return;
+  var n=0;
+  m.apply.incomes.forEach(function(x){
+    var type=INCOME_TYPES[x.type]?x.type:'other';
+    incomes.push({id:Date.now()+Math.random().toString(36).slice(2,6),type:type,label:x.label||INCOME_TYPES[type].label,income:num(x.income),expense:num(x.expense),prepaid:num(x.prepaid),bizType:(type==='business'||type==='rent')?'general':'none',sep:false,note:'AI 상담에서 자동 추가'});n++;
+  });
+  saveIncomes();renderIncList();renderDash();
+  m.applied=true;saveChat();renderChat();
+  toast(n+'개 소득을 「소득 관리」에 추가했어요','ok');
+}
+function dismissProposal(i){if(chatMsgs[i]){chatMsgs[i].applied='skip';saveChat();renderChat();}}
 function renderChat(){
   var box=document.getElementById('chatBox');if(!box)return;
   var h='';
   if(!chatMsgs.length){
-    h+='<div class="bub a">안녕하세요! 저는 철저히 <b>당신 편에 선 절세 전문 AI 세무사</b>예요. 💚\n합법적인 범위에서 세금을 <b>최대한 줄이고·없애고·돌려받게</b> 도와드릴게요.\n아래 버튼을 누르거나, 궁금한 걸 자유롭게 물어보세요. (「💼 소득 관리」에 정보를 넣어두면 더 정확히 맞춤 답변해드려요)</div>';
+    h+='<div class="bub a">안녕하세요! 저는 철저히 <b>당신 편에 선 절세 전문 AI 세무사</b>예요. 💚\n합법적인 범위에서 세금을 <b>최대한 줄이고·없애고·돌려받게</b> 도와드릴게요.\n📎 버튼으로 <b>영수증·원천징수영수증·거래내역(사진·PDF·엑셀)</b>을 첨부하면 제가 읽고, 필요하면 「소득 관리」에 바로 넣어드릴게요. 무엇이든 물어보세요!</div>';
   }
-  chatMsgs.forEach(function(m){h+='<div class="bub '+(m.role==='user'?'u':'a')+'">'+fmtBub(m.content)+'</div>';});
+  chatMsgs.forEach(function(m,idx){
+    var note=m.fileNote||(m.files?(m.files.images.length+m.files.docs.length+m.files.sheets.length):0);
+    h+='<div class="bub '+(m.role==='user'?'u':'a')+'">'+fmtBub(m.content)+(note?'<div style="font-size:11px;opacity:.8;margin-top:5px">📎 첨부 '+note+'개</div>':'')+'</div>';
+    if(m.role==='assistant'&&m.apply){
+      if(!m.applied){
+        h+='<div class="bub a" style="background:#fff8e8;border:1px solid #ecd9a3;max-width:100%;float:none;clear:both">'+
+          '<b>📥 이 내용을 「소득 관리」에 적용할까요?</b><br>'+
+          m.apply.incomes.map(function(x){var t=INCOME_TYPES[x.type]||INCOME_TYPES.other;return '• '+t.icon+' '+esc(t.label)+' '+esc(x.label||'')+' — 수입 '+won(num(x.income))+(num(x.expense)?', 경비 '+won(num(x.expense)):'')+(num(x.prepaid)?', 기납부 '+won(num(x.prepaid)):'');}).join('<br>')+
+          '<div style="margin-top:9px;display:flex;gap:8px"><button class="btn btn-pri btn-sm" onclick="applyProposal('+idx+')">✅ 적용하기</button><button class="btn btn-out btn-sm" onclick="dismissProposal('+idx+')">건너뛰기</button></div></div>';
+      } else if(m.applied===true){
+        h+='<div class="bub a" style="background:var(--gl);float:none;clear:both;max-width:100%">✅ 「소득 관리」에 적용했어요. 📊 종합 현황에서 세금이 다시 계산됩니다.</div>';
+      }
+    }
+  });
   if(chatPending)h+='<div class="bub a">생각 중… ⏳</div>';
   box.innerHTML=h;box.scrollTop=box.scrollHeight;
   var chips=document.getElementById('chatChips');
@@ -701,29 +782,114 @@ function renderChat(){
 function askChip(btn){document.getElementById('chatInput').value=btn.textContent;sendChat();}
 function chatGrow(t){t.style.height='auto';t.style.height=Math.min(t.scrollHeight,120)+'px';}
 function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
-function saveChat(){lsSet('tax_chat',chatMsgs.slice(-40));}
+// 저장 시 base64는 제외(용량) — 첨부 개수만 메모로 보관
+function saveChat(){lsSet('tax_chat',chatMsgs.slice(-40).map(function(m){var o={role:m.role,content:m.content};if(m.apply)o.apply=m.apply;if(m.applied)o.applied=m.applied;var fc=m.fileNote||(m.files?(m.files.images.length+m.files.docs.length+m.files.sheets.length):0);if(fc)o.fileNote=fc;return o;}));}
 function clearChat(){if(!chatMsgs.length||confirm('대화를 모두 지울까요?')){chatMsgs=[];saveChat();renderChat();}}
+// 메시지 → API content (마지막 사용자 메시지에만 파일 블록 포함)
+function chatApiContent(m,withFiles){
+  if(!m.files||!withFiles){
+    var note=m.fileNote||(m.files?(m.files.images.length+m.files.docs.length+m.files.sheets.length):0);
+    return m.content+(note&&m.role==='user'?' (파일 '+note+'개 첨부됨)':'');
+  }
+  var extra='';
+  m.files.sheets.forEach(function(s){extra+='\n\n[첨부 표: '+s.name+']\n'+s.text;});
+  var arr=[{type:'text',text:m.content+extra}];
+  m.files.images.forEach(function(im){arr.push({type:'image',source:{type:'base64',media_type:im.mediaType,data:im.base64}});});
+  m.files.docs.forEach(function(d){arr.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:d.base64}});});
+  return arr;
+}
 async function sendChat(){
   var key=getKey();
   if(!key){toast('먼저 ⚙️설정에서 API 키를 저장하세요','err');go('settings');return;}
   var inp=document.getElementById('chatInput');var text=(inp.value||'').trim();
-  if(!text||chatPending)return;
-  chatMsgs.push({role:'user',content:text});inp.value='';chatGrow(inp);
+  if(chatPending)return;
+  var staged=chatStaged;var hasFiles=chatStagedCount()>0;
+  if(!text&&!hasFiles)return;
+  if(!text&&hasFiles)text='첨부한 자료를 읽고, 세금을 줄일 방법과 「소득 관리」에 기록할 내용을 알려줘.';
+  var umsg={role:'user',content:text};
+  if(hasFiles){umsg.files=staged;chatStaged={images:[],docs:[],sheets:[]};renderChatStaged();}
+  chatMsgs.push(umsg);inp.value='';chatGrow(inp);
   chatPending=true;renderChat();saveChat();
   document.getElementById('chatSend').disabled=true;
   try{
-    var msgs=chatMsgs.filter(function(m){return m.role==='user'||m.role==='assistant';}).slice(-16).map(function(m){return {role:m.role,content:m.content};});
+    var hist=chatMsgs.filter(function(m){return m.role==='user'||m.role==='assistant';}).slice(-16);
+    var msgs=hist.map(function(m,idx){return {role:m.role,content:chatApiContent(m,idx===hist.length-1)};});
     var k=key.replace(/[^\x20-\x7E]/g,'').trim();
-    var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:CHAT_SYS+'\n\n'+chatContext(),messages:msgs})});
+    var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2200,system:CHAT_SYS+'\n\n'+chatContext(),messages:msgs})});
     var d=await r.json();
     if(d.error)throw new Error(d.error.message||'API 오류');
     var txt=d.content&&d.content.find(function(b){return b.type==='text';});
-    chatMsgs.push({role:'assistant',content:(txt&&txt.text)||'(응답이 비어 있어요. 다시 물어봐 주세요)'});
+    var pr=parseApply((txt&&txt.text)||'(응답이 비어 있어요. 다시 물어봐 주세요)');
+    chatMsgs.push({role:'assistant',content:pr.clean,apply:pr.apply,applied:false});
   }catch(err){
     chatMsgs.push({role:'assistant',content:'⚠️ 오류가 났어요: '+err.message+'\nAPI 키와 인터넷 연결을 확인해 주세요.'});
   }finally{
     chatPending=false;document.getElementById('chatSend').disabled=false;saveChat();renderChat();
   }
+}
+
+/* ══════════════════════════ 직접 신고 가이드 ══════════════════════════ */
+var FILING_SYS='당신은 세무서 민원실 직원처럼 친절하고 침착한 대한민국 세무사입니다. 세금 신고를 한 번도 해본 적 없어 잔뜩 겁먹은 초보자가 "혼자서" 홈택스(PC) 또는 손택스(모바일 앱)로 직접 신고를 끝낼 수 있도록, 떨지 않게 아주 쉬운 말로 단계별로 안내합니다. '+
+'의뢰인에게 가장 유리한(합법 범위 안에서 세금이 최소가 되도록) 선택을 기본값으로 잡아 안내하세요(예: 유리한 경비처리 방식, 분리과세/종합과세 선택, 공제 최대 활용). 각 단계에서 어떤 메뉴를 누르고, 어떤 입력칸에 정확히 "얼마"를 적어야 하는지 숫자까지 제시하세요. '+
+'한국 세법 2024년 귀속 기준. 제공된 간편계산 수치는 참고용이며, 더 정확하면 교정하세요. 반드시 합법적인 신고만 안내합니다. '+
+'반드시 아래 JSON 스키마 하나만 출력하고 그 외 텍스트·마크다운·코드펜스는 쓰지 마세요.\n'+
+'{"intro":"안심시키는 한두 문장 + 지금 무슨 신고를 하는지","filings":[{"taxName":"세목명","platform":"홈택스(PC)/손택스(앱) 추천","period":"신고기간","steps":[{"no":1,"title":"단계 제목","do":"누를 메뉴·할 행동","enter":"이 칸에 입력할 값/금액(없으면 빈칸)","tip":"도움말(없으면 빈칸)"}],"amounts":[{"field":"입력칸 이름","value":"적을 금액·내용","why":"근거"}],"expected":"예상 결과(예: 약 32만원 환급 / 약 50만원 납부)"}],"favorable":["의뢰인에게 유리하게 잡은 선택과 그 이유"],"mistakes":["초보자가 자주 틀리는 점"],"after":"신고 후 할 일(납부 방법·기한·환급 시기 등)","encourage":"마지막 격려 한마디"}';
+
+async function genFiling(){
+  var key=getKey();
+  if(!key){toast('먼저 ⚙️설정에서 API 키를 저장하세요','err');go('settings');return;}
+  if(!incomes.length){toast('먼저 「💼 소득 관리」에 소득을 입력하면 정확해요','');}
+  var kind=document.getElementById('filingKind').value;
+  var btn=document.getElementById('filingBtn');btn.disabled=true;
+  document.getElementById('filingResult').innerHTML='<div class="card"><div class="loadwrap"><div class="spinner"></div><div style="font-weight:700">나만의 신고 방법을 만들고 있어요…</div><div style="font-size:12px;color:var(--t3);margin-top:6px">소득·현황을 분석해 단계별 안내를 작성 중 (10~30초)</div></div></div>';
+  try{
+    var r=computeTax();
+    var focus={auto:'내 상황에 맞는 신고를 자동 판단해서',income:'종합소득세 신고를',vat:'부가가치세 신고를',yearend:'근로소득 연말정산을'}[kind]||'';
+    var u='【의뢰인 - '+curYear+'년 귀속】 본인포함 부양가족 '+(profile.dep||1)+'명, 추가공제 '+won(profile.extra||0)+'\n【소득】\n';
+    if(!incomes.length)u+='(미입력)\n';
+    incomes.forEach(function(it,i){var t=INCOME_TYPES[it.type]||INCOME_TYPES.other;u+=(i+1)+'. ['+t.label+'] '+esc(it.label)+' 연수입 '+won(it.income)+(t.hasExp?', 필요경비 '+won(it.expense):'')+', 기납부 '+won(it.prepaid)+(t.hasBiz?', 과세유형 '+({general:'일반과세',simple:'간이과세',exempt:'면세',none:'없음'}[it.bizType]||''):'')+(it.type==='finance'?', '+(it.sep?'분리과세':'종합과세'):'')+'\n';});
+    u+='【간편계산 참고】 종합소득금액 '+won(r.globalIncome)+', 과세표준 '+won(r.base)+', 산출세액 '+won(r.calc)+', 기납부 '+won(r.prepaid)+', 정산 '+won(r.settle)+(r.vatPay>0?', 부가세(매입전) '+won(r.vatPay):'')+'\n';
+    if(attachText)u+='【추가 설명】 '+attachText.slice(0,800)+'\n';
+    u+='\n위 사람이 '+focus+' 혼자 직접 신고할 수 있도록, 가장 유리한 방향으로 단계별·칸별 입력값까지 JSON으로 작성하세요.';
+    var raw=await callClaudeTax(key,FILING_SYS,u,[],[]);
+    var data=parseJSON(raw);
+    if(!data||!data.filings){throw new Error('생성 실패 — 다시 시도해 주세요');}
+    renderFiling(data);
+  }catch(err){
+    document.getElementById('filingResult').innerHTML='<div class="card"><div class="empty"><b>생성 실패</b>'+esc(err.message)+'<br><br><button class="btn btn-pri btn-sm" onclick="genFiling()">다시 시도</button></div></div>';
+    toast('오류: '+err.message,'err');
+  }finally{btn.disabled=false;}
+}
+function renderFiling(d){
+  var h='<div class="card">';
+  if(d.intro)h+='<div class="tax-box" style="border-left-color:var(--blue);background:var(--bl)"><div class="tb-body" style="font-size:13px;color:var(--txt)">😊 '+esc(d.intro)+'</div></div>';
+  (d.filings||[]).forEach(function(f){
+    h+='<div class="res-sec"><div class="res-h">🧾 '+esc(f.taxName||'신고')+'</div>';
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.7rem">'+(f.platform?'<span class="pill pill-b">'+esc(f.platform)+'</span>':'')+(f.period?'<span class="pill pill-a">🗓 '+esc(f.period)+'</span>':'')+(f.expected?'<span class="pill pill-g">예상: '+esc(f.expected)+'</span>':'')+'</div>';
+    // 단계
+    (f.steps||[]).forEach(function(s){
+      h+='<div class="tax-box"><div class="tb-top"><span class="tb-name"><span class="dnum" style="display:inline-flex">'+(s.no||'')+'</span> '+esc(s.title||'')+'</span></div><div class="tb-body">👉 '+esc(s.do||'');
+      if(s.enter)h+='<br>⌨️ <b style="color:var(--green)">입력:</b> '+esc(s.enter);
+      if(s.tip)h+='<br>💡 '+esc(s.tip);
+      h+='</div></div>';
+    });
+    // 칸별 입력 금액 표
+    if(f.amounts&&f.amounts.length){
+      h+='<div style="margin-top:.6rem"><div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px">📋 이 칸에 이 금액을 적으세요</div><table class="bartbl"><thead><tr><th>입력 칸</th><th style="text-align:left">적을 값</th><th style="text-align:left">근거</th></tr></thead><tbody>';
+      f.amounts.forEach(function(a){h+='<tr><td>'+esc(a.field||'')+'</td><td style="text-align:left;font-weight:700;color:var(--green)">'+esc(a.value||'')+'</td><td style="text-align:left;color:var(--t3);font-size:11px">'+esc(a.why||'')+'</td></tr>';});
+      h+='</tbody></table></div>';
+    }
+    if(f.expected)h+='<div class="notice" style="background:var(--gl);border-color:#bfe3d4;color:var(--gd);margin-top:.7rem">🎯 <b>예상 결과:</b> '+esc(f.expected)+'</div>';
+    h+='</div>';
+  });
+  if(d.favorable&&d.favorable.length){h+='<div class="res-sec"><div class="res-h">⭐ 당신에게 유리하게 잡은 부분</div>';d.favorable.forEach(function(x){h+='<div class="tip"><span class="ic">⭐</span><span>'+esc(x)+'</span></div>';});h+='</div>';}
+  if(d.mistakes&&d.mistakes.length){h+='<div class="res-sec"><div class="res-h">⚠️ 초보자가 자주 틀리는 점</div>';d.mistakes.forEach(function(x){h+='<div class="tip"><span class="ic">⚠️</span><span>'+esc(x)+'</span></div>';});h+='</div>';}
+  if(d.after)h+='<div class="res-sec"><div class="res-h">📮 신고 끝난 뒤</div><div style="font-size:12.5px;line-height:1.8">'+esc(d.after)+'</div></div>';
+  if(d.encourage)h+='<div class="notice" style="background:var(--bl);border-color:#bcdcf2;color:var(--blue);font-size:13px">💙 '+esc(d.encourage)+'</div>';
+  h+='<div class="notice">⚠️ 참고용 안내입니다. 홈택스에 자동으로 채워진 자료(신고도움 서비스)와 대조하고, 헷갈리면 국세청 상담 ☎126으로 무료 문의하세요.</div>';
+  h+='<div style="text-align:center;margin-top:1rem"><button class="btn btn-out btn-sm" onclick="genFiling()">🔄 다시 만들기</button></div>';
+  h+='</div>';
+  document.getElementById('filingResult').innerHTML=h;
 }
 
 /* ══════════════════════════ 설정 / 데이터 ══════════════════════════ */
@@ -825,7 +991,7 @@ function initUI(){
   document.getElementById('pf_dep').value=profile.dep||1;
   document.getElementById('pf_extra').value=profile.extra||0;
   document.getElementById('attachText').value=attachText;
-  renderAttachments();renderDash();refreshAnInfo();renderChat();
+  renderAttachments();renderDash();refreshAnInfo();renderChat();renderChatStaged();
 }
 loadAll();initUI();
 </script>
