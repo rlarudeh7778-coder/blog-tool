@@ -566,19 +566,53 @@ f.addEventListener('submit',async(e)=>{
   const btn=f.querySelector('button[type=submit]');
   btn.disabled=true;const orig=btn.textContent;btn.textContent='접수 중…';
   const fd=new FormData(f);
-  const email=fd.get('이메일');
+  const g=k=>(fd.get(k)||'').toString().trim();
+  const email=g('이메일');
+  const isG=document.getElementById('pkgSel').value==='궁합';
+  // 관리자 메일에 보기 좋게 정리된 본문 구성
+  const time=g('시각모름')==='예'?'모름(시주 제외)':((g('출생시')||'-')+'시 '+(g('출생분')||'0')+'분');
+  let lines=[
+    '────────────────────',
+    '[ 사주 분석 신청 ]',
+    '────────────────────',
+    '· 패키지   : '+g('패키지'),
+    '',
+    '〈 신청자 〉',
+    '· 성함     : '+g('성함'),
+    '· 성별     : '+g('성별'),
+    '· 달력     : '+g('달력'),
+    '· 생년월일 : '+g('출생연도')+'년 '+g('출생월')+'월 '+g('출생일')+'일',
+    '· 태어난시 : '+time
+  ];
+  if(isG){
+    const time2=g('상대방_시각모름')==='예'?'모름(시주 제외)':((g('상대방_출생시')||'-')+'시 '+(g('상대방_출생분')||'0')+'분');
+    lines.push('',
+      '〈 상대방 (궁합) 〉',
+      '· 성함     : '+g('상대방_성함'),
+      '· 성별     : '+g('상대방_성별'),
+      '· 달력     : '+g('상대방_달력'),
+      '· 생년월일 : '+g('상대방_출생연도')+'년 '+g('상대방_출생월')+'월 '+g('상대방_출생일')+'일',
+      '· 태어난시 : '+time2);
+  }
+  lines.push('',
+    '〈 연락처 〉',
+    '· 이메일   : '+email,
+    '· 연락처   : '+g('연락처'),
+    '',
+    '〈 추가 질문 〉',
+    g('궁금한점')||'(없음)',
+    '────────────────────');
+  const message=lines.join('\n');
+  const subject='[사주신청·'+g('패키지')+'] '+g('성함')+' 님';
   try{
     if(WEB3FORMS_KEY && WEB3FORMS_KEY.indexOf('YOUR_')!==0){
-      fd.append('access_key',WEB3FORMS_KEY);
-      fd.append('subject','[사주 신청] '+(fd.get('성함')||''));
-      fd.append('from_name','사주명리 신청 폼');
-      const res=await fetch('https://api.web3forms.com/submit',{method:'POST',body:fd});
+      // JSON 전송(한글 필드명 깨짐 방지) — 정리된 message 한 덩어리로 발송
+      const payload={access_key:WEB3FORMS_KEY,subject,from_name:'사주명리 신청',replyto:email,message};
+      const res=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload)});
       const j=await res.json();
       if(!j.success)throw new Error(j.message||'전송에 실패했습니다');
     }else{
-      // Access Key 미설정 → 운영자 이메일로 mailto 폴백
-      let lines=[];fd.forEach((v,k)=>{if(k!=='botcheck')lines.push(k+': '+v);});
-      window.location.href='mailto:'+FALLBACK_EMAIL+'?subject='+encodeURIComponent('[사주 신청] '+(fd.get('성함')||''))+'&body='+encodeURIComponent(lines.join('\n'));
+      window.location.href='mailto:'+FALLBACK_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(message);
     }
     alert('신청이 정상적으로 접수되었습니다.\n24시간 내에 적어주신 이메일로 발송됩니다.');
     document.getElementById('formCard').style.display='none';
