@@ -123,6 +123,13 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.25re
 .tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.9rem}
 .tag-btn{padding:6px 12px;border:1px solid var(--bor);border-radius:20px;background:var(--sur);font-family:inherit;font-size:12px;cursor:pointer;color:var(--t2)}
 .tag-btn:hover{border-color:var(--green);color:var(--green)}
+/* 챗봇 */
+.bub{max-width:86%;padding:10px 13px;border-radius:15px;font-size:13px;line-height:1.75;margin-bottom:11px;white-space:pre-wrap;word-break:break-word;clear:both}
+.bub.u{background:var(--green);color:#fff;border-bottom-right-radius:4px;float:right}
+.bub.a{background:#f0f4f2;color:var(--txt);border-bottom-left-radius:4px;float:left}
+.bub.a b{color:var(--gd)}
+.bub a{color:inherit;text-decoration:underline}
+#chatBox::after{content:"";display:table;clear:both}
 </style>
 <!-- 엑셀(xlsx/xls) 파싱용 -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -141,6 +148,7 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.25re
   <div class="maintab" data-p="income">💼 소득 관리</div>
   <div class="maintab" data-p="attach">📎 자료 첨부</div>
   <div class="maintab" data-p="analyze">🤖 AI 세무분석</div>
+  <div class="maintab" data-p="chat">💬 세무 상담</div>
   <div class="maintab" data-p="calendar">📅 신고 캘린더</div>
   <div class="maintab" data-p="guide">📚 전략 가이드</div>
   <div class="maintab" data-p="settings">⚙️ 설정</div>
@@ -241,6 +249,26 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.25re
   <div id="anResult"></div>
 </div>
 
+<!-- ░░░░░ 세무 상담 봇 ░░░░░ -->
+<div class="panel" id="p-chat">
+  <div class="card" style="padding:0;display:flex;flex-direction:column;height:72vh;min-height:480px;overflow:hidden">
+    <div style="padding:.9rem 1.1rem;border-bottom:1px solid var(--bor);background:linear-gradient(135deg,#1B8F5E,#136b46)">
+      <div style="font-size:14px;font-weight:800;color:#fff">💬 AI 세무사에게 직접 물어보기</div>
+      <div style="font-size:11.5px;color:rgba(255,255,255,.85);margin-top:2px">철저히 내 편에서 — <b>합법적으로</b> 세금을 줄이고·없애고·돌려받는 길을 끝까지 찾습니다. 입력한 내 소득 정보를 보고 답해요.</div>
+    </div>
+    <div id="chatBox" style="flex:1;overflow-y:auto;padding:1.1rem"></div>
+    <div id="chatChips" class="tag-row" style="padding:0 1.1rem;margin:0 0 .4rem;flex-wrap:wrap"></div>
+    <div style="display:flex;gap:8px;padding:.75rem 1.1rem;border-top:1px solid var(--bor);background:var(--sur)">
+      <textarea id="chatInput" rows="1" placeholder="예) 종합소득세 줄이려면 5월 전에 뭘 해야 해?" style="flex:1;min-height:44px;max-height:120px;padding:11px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;resize:none" onkeydown="chatKey(event)" oninput="chatGrow(this)"></textarea>
+      <button class="btn btn-pri" id="chatSend" onclick="sendChat()" style="align-self:stretch">전송</button>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.6rem">
+    <span class="hint" style="margin:0">💡 절세(합법)만 안내합니다. 허위·가공경비 등 탈세는 권하지 않아요.</span>
+    <button class="btn btn-out btn-sm" onclick="clearChat()">대화 비우기</button>
+  </div>
+</div>
+
 <!-- ░░░░░ 캘린더 ░░░░░ -->
 <div class="panel" id="p-calendar">
   <div class="card">
@@ -316,6 +344,7 @@ var INCOME_TYPES={
 
 /* ══════════════════════════ 상태 ══════════════════════════ */
 var incomes=[], images=[], docs=[], sheets=[], profile={dep:1,extra:0,name:''}, attachText='';
+var chatMsgs=[], chatPending=false;
 var curYear=THIS_YEAR-1; // 직전연도 귀속분 신고가 기본
 
 /* ══════════════════════════ 저장/로드 ══════════════════════════ */
@@ -325,6 +354,7 @@ function loadAll(){
   incomes=lsGet('tax_incomes',[]);
   profile=lsGet('tax_profile',{dep:1,extra:0,name:''});
   attachText=localStorage.getItem('tax_attachText')||'';
+  chatMsgs=lsGet('tax_chat',[]);
   curYear=parseInt(localStorage.getItem('tax_year'))||(THIS_YEAR-1);
 }
 function saveIncomes(){lsSet('tax_incomes',incomes);}
@@ -347,6 +377,7 @@ function go(p){
   document.querySelectorAll('.panel').forEach(function(pn){pn.classList.toggle('on',pn.id==='p-'+p);});
   if(p==='dash')renderDash();
   if(p==='analyze')refreshAnInfo();
+  if(p==='chat')renderChat();
   window.scrollTo(0,0);
 }
 document.getElementById('maintabs').addEventListener('click',function(e){var t=e.target.closest('.maintab');if(t)go(t.dataset.p);});
@@ -633,6 +664,68 @@ function renderAnalysis(d){
   document.getElementById('anResult').innerHTML=h;
 }
 
+/* ══════════════════════════ 세무 상담 봇 ══════════════════════════ */
+var CHAT_SYS='당신은 철저히 의뢰인 편에 서는 대한민국 최고의 "절세 전문" 베테랑 세무사입니다. '+
+'당신의 임무는 의뢰인이 합법적인 범위 안에서 정부에 내는 세금을 최대한 없애고, 줄이고, 환급을 극대화하도록 돕는 것입니다. '+
+'적용 가능한 모든 소득공제·세액공제·감면·비용(필요경비) 처리·소득 분산·과세방식 선택(분리과세/종합과세, 간이/일반, 단순경비율/장부 등)·공제 한도·신고 시기 조절을 적극적으로 찾아 먼저 제안하세요. '+
+'반드시 합법적인 절세만 안내합니다. 매출 누락, 가공·허위 경비, 명의 위장, 거짓 신고 등 탈세는 절대 권하지 말고, 의뢰인이 그런 방향을 물으면 위험(가산세·세무조사·형사처벌)을 분명히 경고한 뒤 합법적 대안을 제시하세요. '+
+'한국 세법(2024년 귀속 기준)에 근거해 설명하고, 항상 "언제까지 무엇을 하라"는 구체적 행동과 대략적인 절감/환급 예상효과를 함께 제시하세요. '+
+'답변은 한국어로, 핵심부터 간결하게. 단계가 있으면 번호로. 강조는 **별표**로 감싸세요. 의뢰인 상황 정보가 부족하면 한두 가지만 되물어 맞춤 조언을 하세요. 수치가 불확실하면 추정임을 밝히고, 큰 의사결정은 홈택스 확인·세무사 상담을 권합니다.';
+
+function chatContext(){
+  var r=computeTax();
+  var c='[의뢰인 정보 — '+curYear+'년 귀속] 본인포함 부양가족 '+(profile.dep||1)+'명. ';
+  if(incomes.length){
+    c+='소득: '+incomes.map(function(it){var t=INCOME_TYPES[it.type]||INCOME_TYPES.other;return t.label+' '+won(it.income)+(it.expense?'(경비 '+won(it.expense)+')':'')+(it.prepaid?'(기납부 '+won(it.prepaid)+')':'')+(t.hasBiz?'['+({general:'일반과세',simple:'간이과세',exempt:'면세',none:''}[it.bizType]||'')+']':'');}).join(', ')+'. ';
+    c+='간편추정: 종합소득금액 '+won(r.globalIncome)+', 산출세액 '+won(r.calc)+', 정산 '+won(r.settle)+(r.vatPay>0?', 부가세(매입전) '+won(r.vatPay):'')+'. ';
+  } else { c+='소득 정보 미입력(필요하면 되물어 파악). '; }
+  if(attachText) c+='추가설명: '+attachText.slice(0,600);
+  return c;
+}
+function fmtBub(s){
+  return esc(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
+}
+var CHAT_CHIPS=['지금 내 상황에서 당장 할 절세 액션은?','종합소득세 줄이는 합법적인 방법','프리랜서 3.3% 환급 많이 받으려면?','직장인 연말정산 더 돌려받는 법','부가세 줄이는 방법','내년 세금까지 미리 줄이는 전략'];
+function renderChat(){
+  var box=document.getElementById('chatBox');if(!box)return;
+  var h='';
+  if(!chatMsgs.length){
+    h+='<div class="bub a">안녕하세요! 저는 철저히 <b>당신 편에 선 절세 전문 AI 세무사</b>예요. 💚\n합법적인 범위에서 세금을 <b>최대한 줄이고·없애고·돌려받게</b> 도와드릴게요.\n아래 버튼을 누르거나, 궁금한 걸 자유롭게 물어보세요. (「💼 소득 관리」에 정보를 넣어두면 더 정확히 맞춤 답변해드려요)</div>';
+  }
+  chatMsgs.forEach(function(m){h+='<div class="bub '+(m.role==='user'?'u':'a')+'">'+fmtBub(m.content)+'</div>';});
+  if(chatPending)h+='<div class="bub a">생각 중… ⏳</div>';
+  box.innerHTML=h;box.scrollTop=box.scrollHeight;
+  var chips=document.getElementById('chatChips');
+  if(chips)chips.innerHTML=chatMsgs.length?'':CHAT_CHIPS.map(function(q){return '<button class="tag-btn" onclick="askChip(this)">'+esc(q)+'</button>';}).join('');
+}
+function askChip(btn){document.getElementById('chatInput').value=btn.textContent;sendChat();}
+function chatGrow(t){t.style.height='auto';t.style.height=Math.min(t.scrollHeight,120)+'px';}
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+function saveChat(){lsSet('tax_chat',chatMsgs.slice(-40));}
+function clearChat(){if(!chatMsgs.length||confirm('대화를 모두 지울까요?')){chatMsgs=[];saveChat();renderChat();}}
+async function sendChat(){
+  var key=getKey();
+  if(!key){toast('먼저 ⚙️설정에서 API 키를 저장하세요','err');go('settings');return;}
+  var inp=document.getElementById('chatInput');var text=(inp.value||'').trim();
+  if(!text||chatPending)return;
+  chatMsgs.push({role:'user',content:text});inp.value='';chatGrow(inp);
+  chatPending=true;renderChat();saveChat();
+  document.getElementById('chatSend').disabled=true;
+  try{
+    var msgs=chatMsgs.filter(function(m){return m.role==='user'||m.role==='assistant';}).slice(-16).map(function(m){return {role:m.role,content:m.content};});
+    var k=key.replace(/[^\x20-\x7E]/g,'').trim();
+    var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:CHAT_SYS+'\n\n'+chatContext(),messages:msgs})});
+    var d=await r.json();
+    if(d.error)throw new Error(d.error.message||'API 오류');
+    var txt=d.content&&d.content.find(function(b){return b.type==='text';});
+    chatMsgs.push({role:'assistant',content:(txt&&txt.text)||'(응답이 비어 있어요. 다시 물어봐 주세요)'});
+  }catch(err){
+    chatMsgs.push({role:'assistant',content:'⚠️ 오류가 났어요: '+err.message+'\nAPI 키와 인터넷 연결을 확인해 주세요.'});
+  }finally{
+    chatPending=false;document.getElementById('chatSend').disabled=false;saveChat();renderChat();
+  }
+}
+
 /* ══════════════════════════ 설정 / 데이터 ══════════════════════════ */
 function saveKey(){
   var v=document.getElementById('apiKey').value.trim();
@@ -656,8 +749,8 @@ function importData(files){
 }
 function resetAll(){
   if(!confirm('소득·프로필·설명 데이터를 모두 지웁니다. (API 키는 유지) 계속할까요?'))return;
-  ['tax_incomes','tax_profile','tax_attachText','tax_year'].forEach(function(k){localStorage.removeItem(k);});
-  incomes=[];profile={dep:1,extra:0,name:''};attachText='';curYear=THIS_YEAR-1;images=[];docs=[];sheets=[];initUI();toast('초기화 완료','ok');
+  ['tax_incomes','tax_profile','tax_attachText','tax_year','tax_chat'].forEach(function(k){localStorage.removeItem(k);});
+  incomes=[];profile={dep:1,extra:0,name:''};attachText='';curYear=THIS_YEAR-1;images=[];docs=[];sheets=[];chatMsgs=[];initUI();toast('초기화 완료','ok');
 }
 
 /* ══════════════════════════ 캘린더 / 가이드 데이터 ══════════════════════════ */
@@ -732,7 +825,7 @@ function initUI(){
   document.getElementById('pf_dep').value=profile.dep||1;
   document.getElementById('pf_extra').value=profile.extra||0;
   document.getElementById('attachText').value=attachText;
-  renderAttachments();renderDash();refreshAnInfo();
+  renderAttachments();renderDash();refreshAnInfo();renderChat();
 }
 loadAll();initUI();
 </script>
