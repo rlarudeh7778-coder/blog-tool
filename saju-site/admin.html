@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Nanum+Myeongjo:wght@700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{--navy:#0e1530;--navy2:#162149;--gold:#e8c97a;--gold2:#c9a44f;--bg:#0c1228;--sur:#fff;--bor:#2a3766;--txt:#1a2230;--t2:#4a5570;--t3:#8a93ad;--r:14px;--rs:9px}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -82,7 +83,7 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 .part{background:var(--sur);border-radius:var(--r);padding:1.5rem 1.5rem;margin-bottom:1rem;box-shadow:0 2px 16px rgba(0,0,0,.18)}
 .part-h{font-family:'Nanum Myeongjo',serif;font-size:19px;font-weight:800;color:var(--navy);padding-bottom:.7rem;margin-bottom:1rem;border-bottom:2px solid var(--gold);display:flex;align-items:baseline;gap:9px}
 .part-h .num{font-size:12px;font-weight:800;color:#fff;background:var(--gold2);padding:3px 9px;border-radius:6px;flex-shrink:0}
-.part-body{font-size:14px;color:#2a3344;line-height:1.85}
+.part-body{font-size:15.5px;color:#2a3344;line-height:1.95}
 .part-body h2{font-size:15px;color:var(--navy);margin:1.2rem 0 .5rem;font-weight:800}
 .part-body h3{font-size:14px;color:var(--gold2);margin:1rem 0 .4rem;font-weight:700}
 .part-body p{margin:.55rem 0}
@@ -105,15 +106,54 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 .disc{font-size:11px;color:#8a93ad;text-align:center;margin-top:1.5rem;line-height:1.7;padding:0 1rem}
 .steps{background:#fbf7ec;border:1px solid #ecd9a8;border-radius:10px;padding:11px 13px;margin-bottom:1rem;font-size:12px;color:#6a5a2a;line-height:1.7}
 .steps b{color:#8a6a00}
+.histrow{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fbfcff;border:1px solid #e3e7f0;border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.histrow .hi-main b{color:var(--navy);font-size:14px}
+.histrow .hi-pkg{display:inline-block;background:var(--navy);color:var(--gold);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px}
+.histrow .hi-sub{font-size:11px;color:var(--t3);margin-top:3px}
+.histrow .hi-act{display:flex;gap:6px;flex-shrink:0}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a2230;color:#fff;padding:12px 22px;border-radius:24px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:999;max-width:90vw}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.err{background:#d8504e}#toast.ok{background:#1f9d6a}
+/* ── 리포트(PDF) 표지·목차·안내·용어 ── */
+.pdf-cover{background:linear-gradient(160deg,#0e1530,#27306a);border:1px solid var(--bor);border-radius:var(--r);padding:3.4rem 1.6rem;text-align:center;color:#fff;margin-bottom:1.1rem}
+.pdf-cover .blogo{font-family:'Nanum Myeongjo',serif;font-size:30px;font-weight:800;color:var(--gold);letter-spacing:.05em}
+.pdf-cover .bsub{font-size:12px;color:#9aa6c8;letter-spacing:.25em;margin:.4rem 0 2rem}
+.pdf-cover .moon{font-size:54px;margin:.4rem 0 1.4rem}
+.pdf-cover h1{font-family:'Nanum Myeongjo',serif;font-size:30px;font-weight:800;color:#fff;line-height:1.4;margin-bottom:.3rem}
+.pdf-cover h1 b{color:var(--gold)}
+.pdf-cover .ptype{display:inline-block;border:1px solid var(--gold);color:var(--gold);font-size:12px;font-weight:700;padding:5px 16px;border-radius:20px;letter-spacing:.12em;margin:1.2rem 0 .6rem}
+.pdf-cover .pdate{font-size:12px;color:#9aa6c8;margin-top:1.6rem}
+.rsec{background:var(--sur);border-radius:var(--r);padding:1.6rem 1.5rem;margin-bottom:1.1rem;box-shadow:0 2px 16px rgba(0,0,0,.18)}
+.rsec h2{font-family:'Nanum Myeongjo',serif;font-size:20px;font-weight:800;color:var(--navy);border-bottom:2px solid var(--gold);padding-bottom:.6rem;margin-bottom:1rem}
+.toc-list{counter-reset:toc;font-size:15px;color:#2a3344;line-height:1.4}
+.toc-list .toc-i{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px dashed #e3e7f0}
+.toc-list .toc-i b{color:var(--gold2);font-weight:800;min-width:30px}
+.guide-p{font-size:15px;color:#2a3344;line-height:1.9;margin-bottom:.7rem}
+.gloss{display:grid;gap:.7rem}
+.gloss-i{background:#f7f9ff;border:1px solid #e3e7f0;border-left:3px solid var(--gold);border-radius:8px;padding:11px 14px}
+.gloss-i .gt{font-weight:800;color:var(--navy);font-size:15px}
+.gloss-i .gd{font-size:14px;color:#3a4458;margin-top:3px;line-height:1.7}
+.easy{background:#eef6ff;border:1px solid #cfe2fb;border-radius:10px;padding:.9rem 1.1rem;margin:.9rem 0}
+.easy .et{font-weight:800;color:#1f5fb0;font-size:14px;margin-bottom:.3rem}
+.act{background:#fff7ea;border:1px solid #f0dcae;border-radius:10px;padding:.9rem 1.1rem;margin:.9rem 0}
+.act .et{font-weight:800;color:#9a6a00;font-size:14px;margin-bottom:.3rem}
+.part-body table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:14px}
+.part-body th,.part-body td{border:1px solid #d9deea;padding:8px 10px;text-align:center}
+.part-body th{background:#0e1530;color:var(--gold);font-weight:700}
+.part-body tr:nth-child(even) td{background:#f7f9ff}
 @media print{
-  body{background:#fff}
+  @page{size:A4;margin:14mm}
+  body{background:#fff;font-size:12pt}
   header,.tabs,.toolbar,.disc,#toast{display:none!important}
   .panel{display:none!important}.panel#p-result{display:block!important;max-width:none;padding:0}
-  .part,.cover{box-shadow:none;break-inside:avoid;page-break-inside:avoid}
-  .cover{border:none}
+  .pdf-cover,.rsec,.part,.cover,.sajupan{box-shadow:none}
+  .pdf-cover{page-break-after:always}
+  .rsec,.sajupan,.part{page-break-inside:avoid}
+  .part{page-break-before:always}
+  .part-body{font-size:13.5pt;line-height:2}
+  .part-h{font-size:21pt}
+  .rsec h2{font-size:19pt}
+  .gloss-i .gt,.toc-list{font-size:13pt}
 }
 </style>
 </head>
@@ -127,7 +167,8 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 <div class="tabs">
   <div class="tab on" data-p="input">📝 고객정보 입력</div>
   <div class="tab" data-p="saju">🀄 사주판(만세력)</div>
-  <div class="tab" data-p="result">📜 프리미엄 분석</div>
+  <div class="tab" data-p="result">📜 분석 결과</div>
+  <div class="tab" data-p="history">📂 기록</div>
   <div class="tab" data-p="settings">⚙️ 설정</div>
 </div>
 
@@ -247,15 +288,26 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 <!-- 결과 -->
 <div class="panel" id="p-result">
   <div class="toolbar" id="resultBar" style="display:none">
-    <button class="tbtn gold" onclick="savePDF()">📄 PDF로 저장</button>
-    <button class="tbtn" onclick="emailToCustomer()">📧 고객 이메일로 발송</button>
-    <button class="tbtn" onclick="savePNG()">🖼 이미지(PNG) 저장</button>
+    <button class="tbtn gold" onclick="downloadPDF()">📄 PDF 다운로드(전체)</button>
+    <button class="tbtn" onclick="emailPDF()">📧 고객에게 PDF 메일발송</button>
+    <button class="tbtn" onclick="savePDF()">🖨 인쇄</button>
     <button class="tbtn" onclick="copyText()">📋 텍스트 복사</button>
     <button class="tbtn" onclick="regenerate()">↻ 다시 생성</button>
   </div>
   <div id="resultView"><div class="empty"><div class="ic">📜</div>사주판 계산 후 <b>「분석 생성」</b>을 누르면 만세력과 함께 선택한 패키지의 PART가 순서대로 작성됩니다.</div></div>
   <div class="disc" id="discBox" style="display:none">
     본 분석은 명리학(사주팔자) 이론에 기반한 <b>상담·참고용 콘텐츠</b>이며, 의료·법률·투자 등의 전문적 판단을 대체하지 않습니다.<br>운명은 정해진 것이 아니라 노력으로 만들어 가는 것입니다. © AI 사주명리 분석
+  </div>
+</div>
+
+<!-- 기록 -->
+<div class="panel" id="p-history">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="card">
+      <div class="ctitle">📂 생성 기록 <span class="csub" id="histCount"></span></div>
+      <div class="hint" style="margin-bottom:1rem">분석을 생성하면 이 브라우저에 자동 저장됩니다. 항목을 눌러 다시 열어 PDF 저장·이메일 발송을 할 수 있습니다. (최근 50건 보관)</div>
+      <div id="histList"></div>
+    </div>
   </div>
 </div>
 
@@ -272,8 +324,10 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
     <div class="hint"><a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> 에서 발급(<b>sk-ant-…</b> 형식). <b>한 번 저장하면 이 브라우저에 보관되어 매번 다시 입력할 필요가 없습니다.</b> 키는 외부로 전송되지 않으며 분석 시 Anthropic 서버로만 전송됩니다. <b>「테스트」</b>로 키가 정상인지 먼저 확인하세요.</div>
     <div class="field" style="margin-top:1rem"><label>분석 모델</label>
       <select id="modelSel">
-        <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — 빠르고 저렴 (권장, 1건 수백 원)</option>
-        <option value="claude-opus-4-8">Claude Opus 4.8 — 최고 품질·깊이 (비용 ↑)</option>
+        <option value="claude-sonnet-4-20250514">Claude Sonnet 4 — 빠르고 우수 (권장)</option>
+        <option value="claude-opus-4-1-20250805">Claude Opus 4.1 — 최고 품질·깊이 (비용 ↑)</option>
+        <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet — 균형형</option>
+        <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku — 가장 저렴·빠름</option>
       </select>
     </div>
   </div>
@@ -283,7 +337,7 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
     <div class="field"><label>Service ID</label><input id="ejsService" placeholder="service_xxxxxxx"></div>
     <div class="field"><label>Template ID</label><input id="ejsTemplate" placeholder="template_xxxxxxx"></div>
     <button class="savebtn" onclick="saveEmailCfg()">이메일 설정 저장</button>
-    <div class="hint"><a href="https://emailjs.com" target="_blank">emailjs.com</a> 무료 가입 → 이메일 서비스 연결 → 템플릿 생성. 템플릿 변수에 <b>{{to_email}} {{to_name}} {{subject}} {{message_html}}</b> 를 넣고, 받는사람(To)을 <b>{{to_email}}</b> 로 설정하세요. 미설정 시에는 PDF/이미지로 수동 전달하면 됩니다.</div>
+    <div class="hint"><a href="https://emailjs.com" target="_blank">emailjs.com</a> 가입 → <b>rlarudeh7778@gmail.com</b> Gmail 서비스 연결(발신자=이 주소) → 템플릿 생성. 받는사람(To)=<b>{{to_email}}</b>, 제목=<b>{{subject}}</b>, 본문에 <b>{{message_html}}</b> 삽입. <b>PDF 첨부</b>: 템플릿 Attachments → Variable Attachment 추가 → Content=<b>{{content}}</b>, File name=<b>{{attachment_name}}</b>. (첨부 기능은 EmailJS 유료 플랜) 미설정·실패 시 「PDF 다운로드」 후 수동 첨부하세요.</div>
   </div>
   <div class="card">
     <div class="ctitle">🎚 분석 분량</div>
@@ -399,6 +453,25 @@ function partsFor(p){return p==='프리미엄'?PREMIUM_PARTS:(p==='궁합'?GUNGH
 let activePkg='기본';
 let PARTS=BASIC_PARTS; // 활성 패키지의 파트(패키지 선택/계산 시 갱신)
 
+/* ═══════════ 사주 용어 설명(쉬운 풀이) ═══════════ */
+const GLOSSARY=[
+ ['사주팔자(四柱八字)','태어난 연·월·일·시를 각각 두 글자(천간+지지)로 나타낸 여덟 글자. 한 사람이 타고난 기운의 설계도예요.'],
+ ['천간(天干)','하늘의 기운 10가지(갑·을·병·정·무·기·경·신·임·계). 겉으로 드러나는 성향을 봅니다.'],
+ ['지지(地支)','땅의 기운 12가지(자·축·인…해), 띠로도 쓰여요. 속마음과 환경을 나타냅니다.'],
+ ['오행(五行)','목(나무)·화(불)·토(흙)·금(쇠)·수(물) 다섯 기운. 이 다섯이 얼마나 많고 적은지가 성격과 운을 좌우합니다.'],
+ ['일간(日干)','태어난 날의 천간으로, 사주에서 「나 자신」을 뜻하는 가장 중요한 글자예요.'],
+ ['십성(十星)','일간(나)과 다른 글자의 관계를 10가지로 본 것. 재물·일·관계·공부운 등을 읽습니다.'],
+ ['비견·겁재','나와 같은 기운 — 자존심·경쟁심·동료·형제를 뜻해요.'],
+ ['식신·상관','내가 밖으로 내보내는 기운 — 표현력·창의성·말재주·끼를 뜻합니다.'],
+ ['정재·편재','내가 다스리는 기운 — 재물·돈·현실 감각을 뜻해요.'],
+ ['정관·편관','나를 다스리는 기운 — 책임·규율·직장·명예를 뜻합니다.'],
+ ['정인·편인','나를 돕는 기운 — 공부·자격·귀인·어머니를 뜻해요.'],
+ ['신강·신약','나(일간)의 힘이 센지 약한지. 강하면 주도적, 약하면 주변의 도움이 중요합니다.'],
+ ['용신(用神)','사주의 균형을 위해 가장 필요한 오행 — 「나에게 약이 되는 기운」이에요.'],
+ ['대운(大運)','10년 단위로 바뀌는 인생의 큰 흐름. 언제 운이 열리고 조심해야 하는지 봅니다.'],
+ ['세운(歲運)','그 해 한 해의 운세입니다.']
+];
+
 /* ═══════════ 상태/공통 ═══════════ */
 const KEY='saju_ak';
 let cust=null, results=[], generating=false;
@@ -407,12 +480,13 @@ function toast(m,t){let e=$('toast');e.textContent=m;e.className='show '+(t||'')
 function getKey(){return (sessionStorage.getItem(KEY)||localStorage.getItem(KEY)||'').trim();}
 function saveKey(){let v=$('apiKey').value.trim();if(!v){toast('키를 입력하세요','err');return;}localStorage.setItem(KEY,v);updateApiStat();toast('API 키 저장됨','ok');}
 function updateApiStat(){let has=!!getKey();$('apiDot').className='dot'+(has?' ok':'');$('apiStat').textContent=has?'API 연결됨':'API 미설정';if(has&&!$('apiKey').value)$('apiKey').value=getKey();}
-function getModel(){return localStorage.getItem('saju_model')||'claude-sonnet-4-6';}
+const VALID_MODELS=['claude-opus-4-1-20250805','claude-sonnet-4-20250514','claude-3-7-sonnet-20250219','claude-3-5-haiku-20241022'];
+function getModel(){let m=localStorage.getItem('saju_model');return VALID_MODELS.includes(m)?m:'claude-sonnet-4-20250514';}
 function getLen(){return localStorage.getItem('saju_len')||'상세';}
 
 // 탭
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>go(t.dataset.p));
-function go(p){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.p===p));document.querySelectorAll('.panel').forEach(pn=>pn.classList.toggle('on',pn.id==='p-'+p));window.scrollTo(0,0);}
+function go(p){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.p===p));document.querySelectorAll('.panel').forEach(pn=>pn.classList.toggle('on',pn.id==='p-'+p));if(p==='history')renderHistory();window.scrollTo(0,0);}
 // 세그먼트
 document.querySelectorAll('.seg').forEach(seg=>seg.querySelectorAll('.segbtn').forEach(b=>b.onclick=()=>{seg.querySelectorAll('.segbtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');}));
 function segVal(id){let on=$(id).querySelector('.segbtn.on');return on?on.dataset.v:null;}
@@ -522,16 +596,16 @@ function sajuDataText(){
   return '■ 고객\n'+personData(cust)+(cust.ask?'\n\n■ 고객이 특히 궁금해하는 점: '+cust.ask:'');
 }
 function sysPrompt(){
-  return '당신은 30년 경력의 정통 명리학자이자 따뜻한 사주 상담가입니다. 사주팔자(천간·지지), 오행의 생극제화, 십성(비겁·식상·재성·관성·인성), 신강신약, 용신, 대운·세운을 근거로 깊이 있고 구체적으로 풀이합니다.\n\n[작성 원칙]\n- 반드시 제공된 사주 데이터(팔자·오행·십성·대운)를 근거로 들어 설명하세요. "당신의 일간 OO은…", "월지 OO가 …이므로" 처럼 구체적 명리 근거를 자연스럽게 녹입니다.\n- 따뜻하고 품격 있는 존댓말. 단정적 공포 조성 금지, 희망과 실천 방향을 함께 제시.\n- 한국어. 마크다운 사용(## 소제목, **강조**, 목록, > 인용으로 핵심 조언 강조).\n- 두루뭉술한 일반론 금지. 이 사람만의 사주에 맞춘 개인화된 내용으로.\n- 의료·법률·투자의 단정적 보장은 피하고 경향성으로 서술.\n- 요청된 PART의 내용만 작성하고, 다른 PART와 중복하지 마세요. 인사말·맺음말·"안녕하세요" 같은 군더더기 없이 본문만.';
+  return '당신은 30년 경력의 정통 명리학자이자, 따뜻하고 친절한 사주 상담가입니다. 사주팔자(천간·지지), 오행의 생극제화, 십성(비겁·식상·재성·관성·인성), 신강신약, 용신, 대운·세운을 근거로 깊이 있게 풀이합니다.\n\n[작성 원칙]\n- 반드시 제공된 사주 데이터(팔자·오행·십성·대운)를 구체적 근거로 들어 설명하세요. "일간 OO은…", "월지 OO가 …이므로"처럼.\n- 한자 전문용어(상관·비견·식신·정인·편관·용신 등)가 나오면 반드시 괄호로 쉬운 뜻을 붙이세요. 예: 상관(傷官, 자유롭고 표현력이 강한 기운).\n- 분량은 넉넉하고 풍부하게. 두루뭉술한 일반론 금지, 이 사람만의 사주에 맞춰 개인화.\n- 따뜻하고 품격 있는 존댓말. 공포 조성 금지, 희망과 실천 방향을 함께.\n- 마크다운 사용: ## 소제목, **강조**, 표(| 머리 | … |), 목록(-), > 인용.\n\n[★각 PART는 아래 세 부분을 반드시 모두 포함하세요★]\n1) (본문 해석) 명리학 근거를 들어 전문적으로, 풍부하게 풀이.\n2) "## 💡 쉽게 풀어보면" — 바로 위 내용을 한자·전문용어 없이 중학생도 이해할 수 있게, 일상적인 비유를 들어 다시 설명(4~6문장).\n3) "## ✅ 이렇게 해보세요" — 이 영역에서 운을 더 좋게 만드는 구체적인 행동·말·습관·태도를 당장 실천 가능한 형태로 4~6가지 목록으로.\n\n- 인사말·맺음말·군더더기 없이 본문만. 다른 PART와 중복 금지. 요청된 PART 내용만 작성.';
 }
-function lenGuide(){return {표준:'4~6개 문단 분량으로 충실히',상세:'6~9개 문단 분량으로 풍부하고 구체적으로, 소제목 2~3개를 두어',최대:'8~12개 문단 분량으로 매우 상세하고 깊이 있게, 소제목 3~4개를 두어'}[getLen()];}
+function lenGuide(){return {표준:'각 부분을 충실히(본문 5~7문단)',상세:'각 부분을 풍부하고 구체적으로(본문 7~10문단)',최대:'각 부분을 매우 상세하고 깊이 있게(본문 10~14문단, 소제목 활용)'}[getLen()];}
 
 async function callClaude(sys,user){
   const k=getKey().replace(/[^\x20-\x7E]/g,'').trim();
   if(!k)throw new Error('API 키가 없습니다 — ⚙️설정에서 키를 저장하세요.');
   let r;
   try{
-    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:getModel(),max_tokens:4000,system:sys,messages:[{role:'user',content:user}]})});
+    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:getModel(),max_tokens:8000,system:sys,messages:[{role:'user',content:user}]})});
   }catch(netErr){throw new Error('네트워크 오류 — 인터넷 연결을 확인하세요');}
   let d={}; try{d=await r.json();}catch(_){}
   if(r.status===401||(d.error&&/x-api-key|authentication|invalid.*key/i.test(d.error.message||''))){
@@ -583,6 +657,7 @@ async function generate(){
   generating=false;
   renderResults();   // 최종 정리 — 남은 진행 스피너 제거
   $('resultBar').style.display='flex'; $('discBox').style.display='block';
+  saveHistory();     // 관리자 기록 저장
   toast(cust.pkg+' 분석이 완료되었습니다!','ok');
 }
 function regenerate(){if(generating)return;generate();}
@@ -593,17 +668,39 @@ function coverWho(m){
   return esc(m.name)+' · '+calTxt+' '+born+' · '+m.gender+'성 · 일간 <b>'+GAN[m.a.ilG]+'('+GAN_HJA[m.a.ilG]+')</b>';
 }
 function renderCover(){
-  const badge=cust.pkg==='기본'?'B · 기본 사주분석':(cust.pkg==='궁합'?'C · 궁합 분석':'A · 고급 프리미엄 사주분석');
+  const label=cust.pkg==='기본'?'기본 사주분석':(cust.pkg==='궁합'?'궁합 분석':'고급 프리미엄 사주분석');
   const title=cust.pkg==='궁합'?'궁합 운명 리포트':'사주명리 운명 리포트';
   const names=esc(cust.name)+(cust.pkg==='궁합'&&cust.p2?(' &amp; '+esc(cust.p2.name)):'');
-  let cover='<div class="cover" id="cover"><div class="badge">'+badge+'</div>'
-    +'<h1>'+names+' 님의<br>'+title+'</h1>'
-    +'<div class="who">'+coverWho(cust)+(cust.pkg==='궁합'&&cust.p2?('<br>'+coverWho(cust.p2)):'')+'</div></div>';
-  // 만세력은 패키지와 무관하게 항상 결과 최상단에
-  let manse='<div style="font-family:\'Nanum Myeongjo\',serif;font-size:16px;font-weight:800;color:#e8c97a;margin:.2rem 0 .7rem">🀄 만세력 (사주팔자 · 오행 · 대운)</div>'
+  const now=new Date(), dateStr=now.getFullYear()+'.'+pad(now.getMonth()+1)+'.'+pad(now.getDate());
+  // ① 표지(브랜드 로고)
+  let cover='<div class="pdf-cover">'
+    +'<div class="blogo">🌙 운명을 읽다</div>'
+    +'<div class="bsub">A I  ·  사 주 명 리  ·  리 포 트</div>'
+    +'<div class="moon">☾</div>'
+    +'<div class="ptype">'+label+'</div>'
+    +'<h1><b>'+names+'</b> 님의<br>'+title+'</h1>'
+    +'<div class="pdate">발행일 '+dateStr+'</div></div>';
+  // ② 목차
+  let toc='<div class="rsec"><h2>목차</h2><div class="toc-list">'
+    +'<div class="toc-i"><b>🀄</b><span>만세력 — 나의 사주판 (사주팔자·오행·대운)</span></div>'
+    +'<div class="toc-i"><b>📖</b><span>이 리포트 보는 법 &amp; 사주 용어 설명</span></div>'
+    +PARTS.map((p,i)=>'<div class="toc-i"><b>'+(i+1)+'</b><span>'+esc(p.t)+'</span></div>').join('')
+    +'</div></div>';
+  // ③ 안내 + 용어 설명
+  let guide='<div class="rsec"><h2>이 리포트 보는 법</h2>'
+    +'<p class="guide-p">이 리포트는 <b>'+names+'</b> 님의 사주를 천문 계산으로 정밀하게 산출하여, 타고난 기질부터 재물·인연·직업·건강·시기별 운까지 깊이 있게 풀어낸 분석서입니다.</p>'
+    +'<p class="guide-p">각 장(章)은 ① <b>전문 해석</b>, ② <b>💡 쉽게 풀어보면</b>(어려운 용어 없이 다시 설명), ③ <b>✅ 이렇게 해보세요</b>(도움이 되는 구체적 실천법) 순서로 구성됩니다. 어려운 한자 용어는 아래 「용어 설명」을 참고하세요.</p>'
+    +'<p class="guide-p" style="color:#8a6a00">※ 본 리포트는 명리학 이론에 기반한 상담·참고용 콘텐츠이며, 운명은 정해진 것이 아니라 노력으로 만들어 가는 것입니다.</p>'
+    +'<h2 style="margin-top:1.5rem">사주 용어 설명</h2><div class="gloss">'
+    +GLOSSARY.map(g=>'<div class="gloss-i"><div class="gt">'+g[0]+'</div><div class="gd">'+g[1]+'</div></div>').join('')
+    +'</div></div>';
+  // ④ 만세력 (항상 표시, 궁합은 2인)
+  let manse='<div class="rsec"><h2>🀄 만세력 — 나의 사주판</h2>'
+    +'<p class="guide-p" style="margin-bottom:1rem">아래는 '+names+' 님의 사주팔자(여덟 글자)와 오행 분포, 대운(10년 단위 흐름)입니다.</p>'
     +sajuPanelHTML(cust,cust.a);
-  if(cust.pkg==='궁합'&&cust.p2) manse+='<div style="height:.9rem"></div>'+sajuPanelHTML(cust.p2,cust.p2.a);
-  $('resultView').innerHTML=cover+'<div style="margin-bottom:1.2rem">'+manse+'</div><div class="parts" id="partsBox"></div>';
+  if(cust.pkg==='궁합'&&cust.p2) manse+='<div style="height:1rem"></div>'+sajuPanelHTML(cust.p2,cust.p2.a);
+  manse+='</div>';
+  $('resultView').innerHTML=cover+toc+guide+manse+'<div class="parts" id="partsBox"></div>';
 }
 function renderProgress(i){
   let box=$('partsBox'); if(!box)return;
@@ -629,8 +726,21 @@ function md(t){
   t=esc(t);
   let lines=t.split('\n'),out=[],inUl=false,inOl=false;
   function closeLists(){if(inUl){out.push('</ul>');inUl=false;}if(inOl){out.push('</ol>');inOl=false;}}
-  for(let raw of lines){
-    let l=raw.trimEnd();
+  const isSep=l=>l&&l.includes('|')&&/^[\s|:\-]+$/.test(l)&&l.includes('-');
+  const cells=r=>r.replace(/^\s*\|/,'').replace(/\|\s*$/,'').split('|').map(c=>c.trim());
+  for(let i=0;i<lines.length;i++){
+    let l=lines[i].trimEnd();
+    // 표
+    if(l.includes('|')&&isSep((lines[i+1]||'').trim())){
+      closeLists();
+      let header=l, rows=[]; i+=2;
+      while(i<lines.length&&lines[i].includes('|')&&lines[i].trim()!==''){rows.push(lines[i]);i++;}
+      i--;
+      let th=cells(header).map(c=>'<th>'+inline(c)+'</th>').join('');
+      let trs=rows.map(r=>'<tr>'+cells(r).map(c=>'<td>'+inline(c)+'</td>').join('')+'</tr>').join('');
+      out.push('<table><thead><tr>'+th+'</tr></thead><tbody>'+trs+'</tbody></table>');
+      continue;
+    }
     if(/^\s*#{2,3}\s+/.test(l)){closeLists();let lv=l.match(/^\s*(#{2,3})/)[1].length;out.push('<h'+(lv)+'>'+inline(l.replace(/^\s*#{2,3}\s+/,''))+'</h'+lv+'>');continue;}
     if(/^\s*>\s?/.test(l)){closeLists();out.push('<blockquote>'+inline(l.replace(/^\s*>\s?/,''))+'</blockquote>');continue;}
     if(/^\s*[-*]\s+/.test(l)){if(!inUl){closeLists();out.push('<ul>');inUl=true;}out.push('<li>'+inline(l.replace(/^\s*[-*]\s+/,''))+'</li>');continue;}
@@ -644,6 +754,70 @@ function inline(s){return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').re
 
 /* ═══════════ 저장 ═══════════ */
 function savePDF(){toast('인쇄 창에서 「PDF로 저장」을 선택하세요','');setTimeout(()=>window.print(),400);}
+function pdfFilename(){return (cust?cust.name:'saju')+'_'+(cust?cust.pkg:'')+'_사주리포트.pdf';}
+function pdfOpts(q){return {margin:[8,7,10,7],filename:pdfFilename(),image:{type:'jpeg',quality:q||0.95},html2canvas:{scale:2,useCORS:true,backgroundColor:'#0c1228'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}};}
+function downloadPDF(){
+  if(!results.length||results.some(x=>!x)){toast('먼저 분석을 완료하세요','err');return;}
+  if(typeof html2pdf==='undefined'){toast('PDF 모듈 로드 실패 — 「인쇄」로 저장하세요','err');return;}
+  toast('PDF 생성 중… 잠시만 기다려 주세요','');
+  html2pdf().set(pdfOpts(0.96)).from($('resultView')).save()
+    .then(()=>toast('PDF가 저장되었습니다','ok'))
+    .catch(e=>toast('PDF 생성 실패 — 「인쇄」로 저장하세요: '+(e&&e.message||e),'err'));
+}
+async function emailPDF(){
+  if(!results.length||results.some(x=>!x)){toast('먼저 분석을 완료하세요','err');return;}
+  if(!cust||!cust.email){toast('고객 이메일이 없습니다 — 「고객정보 입력」에 이메일을 넣어주세요','err');go('input');return;}
+  const cfg=getEmailCfg();
+  if(!cfg.pub||!cfg.service||!cfg.template){toast('⚙️설정에서 EmailJS 정보를 먼저 입력하세요','err');go('settings');return;}
+  if(typeof emailjs==='undefined'){toast('이메일 모듈 로드 실패 — 네트워크 확인','err');return;}
+  if(typeof html2pdf==='undefined'){toast('PDF 모듈 로드 실패','err');return;}
+  if(!confirm(cust.email+' 으로 PDF 리포트를 발송할까요?'))return;
+  toast('PDF 생성 중…','');
+  try{
+    const blob=await html2pdf().set(pdfOpts(0.7)).from($('resultView')).outputPdf('blob');
+    const b64=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=rej;fr.readAsDataURL(blob);});
+    toast('이메일 발송 중…','');
+    emailjs.init({publicKey:cfg.pub});
+    await emailjs.send(cfg.service,cfg.template,{
+      to_email:cust.email,
+      to_name:cust.name,
+      subject:reportNames()+' 님 '+reportTitle(),
+      message:reportNames()+' 님, 요청하신 '+reportTitle()+'를 PDF 파일로 보내드립니다. 첨부파일을 확인해 주세요. 감사합니다.',
+      message_html:reportHTML(),
+      content:b64,
+      attachment_name:pdfFilename()
+    });
+    toast('✅ '+cust.email+' 으로 PDF가 발송되었습니다','ok');
+  }catch(e){toast('발송 실패: '+(e&&(e.text||e.message)||e)+' — PDF 다운로드 후 수동 첨부도 가능합니다','err');}
+}
+
+/* ═══════════ 생성 기록 (관리자) ═══════════ */
+function getHist(){try{return JSON.parse(localStorage.getItem('saju_hist')||'[]');}catch(_){return [];}}
+function saveHistory(){
+  try{
+    let h=getHist();
+    h.unshift({id:Date.now(),name:cust.name,pkg:cust.pkg,email:cust.email||'',phone:cust.phone||'',date:new Date().toLocaleString('ko-KR'),cust:JSON.parse(JSON.stringify(cust)),results:results.slice()});
+    localStorage.setItem('saju_hist',JSON.stringify(h.slice(0,50)));
+  }catch(_){/* 용량 초과 등은 무시 */}
+}
+function renderHistory(){
+  let h=getHist();
+  $('histCount').textContent=h.length+'건';
+  if(!h.length){$('histList').innerHTML='<div class="empty"><div class="ic">📂</div>아직 생성된 기록이 없습니다.</div>';return;}
+  $('histList').innerHTML=h.map(x=>'<div class="histrow"><div class="hi-main"><b>'+esc(x.name)+'</b><span class="hi-pkg">'+esc(x.pkg)+'</span><div class="hi-sub">'+esc(x.date)+(x.email?' · '+esc(x.email):'')+(x.phone?' · '+esc(x.phone):'')+'</div></div><div class="hi-act"><button class="tbtn" onclick="loadHistory('+x.id+')">열기</button><button class="tbtn" onclick="delHistory('+x.id+')">삭제</button></div></div>').join('');
+}
+function loadHistory(id){
+  let x=getHist().find(r=>r.id===id); if(!x)return;
+  cust=x.cust; results=x.results.slice(); activePkg=cust.pkg; PARTS=partsFor(cust.pkg);
+  renderCover(); renderResults();
+  $('resultBar').style.display='flex'; $('discBox').style.display='block';
+  go('result'); toast('기록을 불러왔습니다','ok');
+}
+function delHistory(id){
+  if(!confirm('이 기록을 삭제할까요?'))return;
+  localStorage.setItem('saju_hist',JSON.stringify(getHist().filter(r=>r.id!==id)));
+  renderHistory(); toast('삭제되었습니다','');
+}
 function reportNames(){return cust.name+(cust.pkg==='궁합'&&cust.p2?(' & '+cust.p2.name):'');}
 function reportTitle(){return cust.pkg==='궁합'?'궁합 운명 리포트':'사주명리 운명 리포트';}
 function manseSummary(m){
