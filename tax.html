@@ -184,14 +184,29 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.25re
 
 <!-- ░░░░░ 자료 첨부 ░░░░░ -->
 <div class="panel" id="p-attach">
+  <div class="card" style="border-left:4px solid var(--green)">
+    <div class="ctitle">🔰 세무가 처음이세요? 계산은 AI가 합니다</div>
+    <div class="csub">직접 세금을 계산할 필요 <b>없습니다.</b> 아래 자료를 <b>사진 찍거나 PDF를 캡처해서 올리기만</b> 하면, AI가 숫자를 읽어 자동으로 계산해줍니다. 무엇부터 받아야 할지 아래를 보세요.</div>
+    <div id="srcGuide"></div>
+    <div class="notice" style="background:var(--gl);border-color:#bfe3d4;color:var(--gd)">
+      💡 <b>딱 이것만 있어도 시작 가능</b><br>
+      ① (직장인) 근로소득 원천징수영수증 &nbsp; ② (사업·프리랜서) 홈택스 「종합소득세 신고도움 자료」 &nbsp; ③ 카드·통장 1년 사용내역<br>
+      나머지는 분석 결과를 보고 AI가 "이 서류가 더 필요해요"라고 알려줍니다.
+    </div>
+  </div>
+
   <div class="card">
     <div class="ctitle">📎 영수증·서류 사진 첨부</div>
     <div class="csub">세금계산서, 영수증, 원천징수영수증, 통장 내역, 종합소득세 안내문 등을 사진으로 올리면 AI가 읽어서 분석에 반영합니다.</div>
     <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
-      📷 클릭하거나 이미지를 끌어다 놓으세요<br><span style="font-size:11px">JPG·PNG·WebP · 여러 장 가능 (최대 8장)</span>
+      📷 클릭하거나 이미지를 끌어다 놓으세요<br><span style="font-size:11px">JPG·PNG·WebP · 여러 장 가능 (필요한 만큼 계속 추가)</span>
     </div>
     <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFiles(this.files)">
     <div class="thumbs" id="thumbs"></div>
+    <div id="addMoreWrap" style="display:none;margin-top:.9rem">
+      <button class="btn btn-out btn-block" onclick="document.getElementById('fileInput').click()">📷 사진 더 추가하기</button>
+      <div class="hint" style="text-align:center">현재 <b id="imgCount">0</b>장 첨부됨 · 사진이 많을수록 분석 정확도는 올라가고 비용은 조금 늘어납니다.</div>
+    </div>
   </div>
 
   <div class="card">
@@ -442,11 +457,12 @@ function renderDash(){
 function kpi(lbl,val,sub,cls){return '<div class="kpi"><div class="lbl">'+lbl+'</div><div class="val '+(cls||'')+'">'+val+'</div><div class="sub">'+sub+'</div></div>';}
 
 /* ══════════════════════════ 자료 첨부 ══════════════════════════ */
+var MAX_IMG=40; // 안전 상한 (브라우저 성능). 필요시 계속 추가 가능
 function handleFiles(files){
   var arr=Array.prototype.slice.call(files);
   arr.forEach(function(f){
     if(!f.type.startsWith('image/'))return;
-    if(images.length>=8){toast('사진은 최대 8장까지','err');return;}
+    if(images.length>=MAX_IMG){toast('한 번에 분석 가능한 최대치('+MAX_IMG+'장)에 도달했어요','err');return;}
     var rd=new FileReader();
     rd.onload=function(e){
       var dataUrl=e.target.result;
@@ -455,10 +471,15 @@ function handleFiles(files){
     };
     rd.readAsDataURL(f);
   });
+  // 같은 파일 다시 선택 가능하도록 input 초기화
+  var fi=document.getElementById('fileInput');if(fi)fi.value='';
 }
 function renderThumbs(){
   var el=document.getElementById('thumbs');
   el.innerHTML=images.map(function(im,i){return '<div class="thumb"><span class="rm" onclick="rmImg('+i+')">×</span><img src="'+im.dataUrl+'"><div class="fn">'+esc(im.name)+'</div></div>';}).join('');
+  var wrap=document.getElementById('addMoreWrap');
+  if(wrap)wrap.style.display=images.length?'block':'none';
+  var ic=document.getElementById('imgCount');if(ic)ic.textContent=images.length;
 }
 function rmImg(i){images.splice(i,1);renderThumbs();refreshAnInfo();}
 var dz=document.getElementById('dropzone');
@@ -633,13 +654,43 @@ function renderCalendar(){
     return '<div class="cal-item"><div class="cal-when">'+c.when+'</div><div class="cal-body"><b>'+c.title+'</b><br>'+c.body+'</div></div>';
   }).join('');
 }
+// 자료를 어디서 받는지 안내
+var SRC_GUIDE=[
+  {ic:'🏛️',where:'홈택스 (hometax.go.kr) · 손택스 앱',color:'pill-g',who:'모두 (특히 사업자·프리랜서)',
+   items:['<b>종합소득세 신고도움 서비스</b> — 내 소득·수입금액이 거의 자동 집계 (5월 조회 가능)','매출·매입 <b>세금계산서·계산서 합계표</b> (사업자)','<b>현금영수증·신용카드 매입</b> 내역 (경비 증빙)','부가가치세 신고내역','지급명세서 / 사업소득·기타소득 원천징수 내역'],
+   how:'공동인증서/간편인증 로그인 → 「My홈택스」 또는 「세금신고 → 신고도움 자료조회」에서 화면 캡처 또는 PDF 저장'},
+  {ic:'🧑‍💼',where:'회사 (직장인)',color:'pill-b',who:'근로소득자',
+   items:['<b>근로소득 원천징수영수증</b> (가장 중요)','연말정산 결과지'],
+   how:'회사 인사·총무팀에 요청하거나, 홈택스 「지급명세서 조회」에서 직접 발급'},
+  {ic:'💳',where:'카드사 · 은행 앱/홈페이지',color:'pill-b',who:'모두',
+   items:['카드 1년 사용내역 (경비·소득공제용)','예적금 <b>이자·배당 내역서</b> (금융소득)','임대료·월세 입금내역 (임대사업자)'],
+   how:'각 카드사·은행 앱 → 「연말정산용 증빙」 또는 「거래내역 조회」에서 기간 1년으로 PDF 다운'},
+  {ic:'📄',where:'정부24 (gov.kr)',color:'pill-a',who:'사업자·공제 대상',
+   items:['사업자등록증명','주민등록등본 (부양가족 확인)','소득금액증명원'],
+   how:'정부24 로그인 → 서류명 검색 → 발급 → 화면 캡처'},
+  {ic:'📦',where:'거래처 · 플랫폼 정산서',color:'pill-g',who:'프리랜서·N잡·배달',
+   items:['쿠팡·배민·당근·N잡 등 <b>플랫폼 정산 내역서</b>','임대차계약서','용역 계약서·세금계산서'],
+   how:'각 플랫폼 「정산/수익 내역」 화면 캡처, 계약서는 사진 촬영'},
+  {ic:'🧾',where:'종이 영수증 · 직접 촬영',color:'pill-a',who:'사업자',
+   items:['사업 관련 지출 영수증 (재료비·임차료·통신비 등)','간이영수증'],
+   how:'스마트폰으로 또렷하게 촬영해서 그대로 업로드'}
+];
+function renderSrcGuide(){
+  var el=document.getElementById('srcGuide');if(!el)return;
+  el.innerHTML=SRC_GUIDE.map(function(s){
+    return '<div class="tax-box" style="border-left-color:var(--green)"><div class="tb-top"><span class="tb-name">'+s.ic+' '+s.where+'</span><span class="pill '+s.color+'">'+s.who+'</span></div>'+
+      '<div class="tb-body"><b>받을 자료:</b> '+s.items.join(' · ')+'<br><b style="color:var(--green)">받는 법:</b> '+s.how+'</div></div>';
+  }).join('');
+}
 var GUIDE=[
   {q:'🏪 사업소득 (개인사업자)',a:'• <b>부가세:</b> 일반과세자는 매출세액(매출×10%)에서 매입세액을 뺀 금액 납부 → <b>적격증빙(세금계산서·카드·현금영수증)으로 매입을 챙길수록 절세</b>. 연 매출 1억400만원 미만이면 간이과세 검토.<br>• <b>종소세:</b> 장부(복식/간편)를 작성하면 실제 경비를 인정받아 추계신고보다 유리한 경우가 많음. 노란우산공제·기부금·청년창업 감면 등 활용.'},
   {q:'💻 프리랜서소득',a:'• 대금 받을 때 <b>3.3% 원천징수</b>된 것이 "미리 낸 세금". 5월 종소세 때 정산해 <b>대부분 환급</b>받는 경우가 많음.<br>• 수입 7,500만원 미만이면 단순경비율 추계신고 가능하나, <b>실제 경비(장비·통신·교통·교육)가 많으면 장부 작성이 유리</b>. 사업용 카드를 따로 쓰면 경비 정리가 쉬움.'},
   {q:'🧑‍💼 근로소득 (직장인)',a:'• 회사가 매달 떼고 2월 <b>연말정산</b>으로 정산. 신용카드/체크카드·현금영수증, 의료비, 교육비, 월세, 연금저축·IRP, 기부금 공제를 빠짐없이 챙기면 환급 증가.<br>• <b>연금저축+IRP 합산 900만원</b> 세액공제(13.2~16.5%)는 직장인 최고의 절세. 다른 소득(사업·임대 등)이 있으면 5월 종소세 때 합산신고 필요.'},
   {q:'🏠 임대사업자소득',a:'• <b>주택임대:</b> 연 임대수입 2천만원 이하는 14% 분리과세 선택 가능(등록임대사업자는 필요경비·공제 우대). 2천만원 초과는 종합과세.<br>• <b>상가임대:</b> 부가세 과세대상(월세×10%) + 종소세 대상. 간주임대료(보증금×이자율) 주의. 건물 감가상각·이자비용·재산세를 경비 처리.'},
   {q:'💰 금융소득 (이자·배당)',a:'• 연간 이자+배당이 <b>2천만원 이하면 15.4% 분리과세로 종결</b>(별도 신고 불필요).<br>• <b>2천만원 초과 시 전액 다른 소득과 합산해 종합과세</b> → 누진세율 적용으로 세부담 급증. ISA·비과세 상품 활용, 만기 분산, 부부 명의 분산으로 2천만원 기준 관리.'},
-  {q:'🎯 공통 절세 핵심',a:'• <b>적격증빙을 모아라:</b> 세금계산서·신용카드·현금영수증이 곧 경비·세액공제. 사업용 계좌·카드를 분리.<br>• <b>장부 작성:</b> 무기장가산세(20%)를 피하고 실제 경비 인정.<br>• <b>소득 분산·시기 조절:</b> 금융소득 2천만원, 임대 2천만원 등 구간 경계 관리.<br>• <b>공제·감면 챙기기:</b> 노란우산공제, 연금계좌, 기부금, 중소기업·창업 감면.'}
+  {q:'🎯 공통 절세 핵심',a:'• <b>적격증빙을 모아라:</b> 세금계산서·신용카드·현금영수증이 곧 경비·세액공제. 사업용 계좌·카드를 분리.<br>• <b>장부 작성:</b> 무기장가산세(20%)를 피하고 실제 경비 인정.<br>• <b>소득 분산·시기 조절:</b> 금융소득 2천만원, 임대 2천만원 등 구간 경계 관리.<br>• <b>공제·감면 챙기기:</b> 노란우산공제, 연금계좌, 기부금, 중소기업·창업 감면.'},
+  {q:'👥 직원 고용 — 절세 효과',a:'• <b>인건비는 100% 필요경비:</b> 급여·상여·퇴직금·4대보험 회사부담분이 모두 경비로 인정돼 <b>과세표준이 줄어듭니다.</b> 소득이 높아 누진세율 구간(24~45%)에 있을수록 절세 폭이 큽니다.<br>• <b>고용 세액공제(통합고용세액공제):</b> 상시근로자를 늘리면 1인당 일정액을 <b>세금에서 직접 차감</b>(중소기업·청년·지방일수록 우대, 다년간 공제). 산출세액에서 빼주므로 효과가 큽니다.<br>• <b>두루누리 사회보험 지원:</b> 소규모 사업장의 신규 저임금 근로자는 4대보험료 일부를 정부가 지원.<br>• <b>가족 고용도 가능:</b> 실제로 일한다면 배우자·자녀에게 급여 지급 → 경비 처리 + 소득 분산. 단, <b>실제 근무·합리적 급여·실제 지급(계좌이체)·원천세 신고</b>가 반드시 뒷받침돼야 하며, 가공인건비는 세무조사 1순위이니 금물.<br>• ⚠️ 주의: 직원 고용은 4대보험·퇴직금·인건비 실부담이 생기므로, "세금 줄이려고" 채용하기보다 <b>실제 필요 + 절세는 덤</b>으로 접근하세요.'},
+  {q:'🏢 법인 설립 — 절세 전략',a:'• <b>세율 차이:</b> 개인사업자 종합소득세는 최고 45%까지 누진. 반면 법인세는 과세표준 2억 이하 <b>9%</b>, 2억~200억 19% 등으로 <b>이익이 클수록 법인이 유리</b>해집니다. 통상 <b>과세소득 약 1.5억~2억 이상</b>이면 법인 전환을 검토합니다.<br>• <b>소득의 분리:</b> 법인 돈과 내 돈이 분리돼, 번 돈을 전부 내 소득으로 잡지 않고 <b>대표 급여·상여로 적정 수준만 가져오고</b> 나머지는 법인에 유보 → 개인 누진세율을 낮춤.<br>• <b>비용 인정 범위 확대:</b> 대표이사 급여·퇴직금, 차량·복리후생·접대비 등을 법인 경비로 처리. 가지급금·가수금 관리 주의.<br>• <b>가족 주주 설계:</b> 설립 시 배우자·자녀를 주주로 두면 배당으로 소득 분산, 향후 가업승계·증여 측면에서도 유리.<br>• ⚠️ <b>단점도 큼:</b> 설립·기장·외부감사 등 유지비용, 4대보험, 법인 돈을 마음대로 못 씀(인출 시 급여·배당으로 과세), 가지급금·과점주주 취득세 등 리스크. <b>반드시 세무사·법무사와 손익을 따져 결정</b>하세요.<br>• <b>전환 방법:</b> ① 신규 법인 설립 후 사업 이관 ② 개인사업 현물출자/사업양수도 방식 법인 전환(요건 충족 시 양도세 이월과세 등 혜택). 실행 전 전문가 상담 필수.'}
 ];
 function renderGuide(){
   document.getElementById('guideList').innerHTML=GUIDE.map(function(g){
@@ -654,7 +705,7 @@ function initYearSel(){
   sel.innerHTML=h;
 }
 function initUI(){
-  initYearSel();renderTypeSelects();renderIncList();renderCalendar();renderGuide();updateApiStat();
+  initYearSel();renderTypeSelects();renderIncList();renderCalendar();renderGuide();renderSrcGuide();updateApiStat();
   document.getElementById('pf_name').value=profile.name||'';
   document.getElementById('pf_dep').value=profile.dep||1;
   document.getElementById('pf_extra').value=profile.extra||0;
