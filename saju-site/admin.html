@@ -113,6 +113,20 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 .histrow .hi-pkg{display:inline-block;background:var(--navy);color:var(--gold);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px}
 .histrow .hi-sub{font-size:11px;color:var(--t3);margin-top:3px}
 .histrow .hi-act{display:flex;gap:6px;flex-shrink:0}
+/* 섹션별 편집 도구 */
+.part-tools{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.ptbtn{padding:5px 11px;border-radius:14px;border:1px solid var(--bor);background:#f3f5fb;color:var(--navy);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ptbtn:hover{border-color:var(--gold2);color:var(--gold2)}
+.ptbtn:disabled{opacity:.45;cursor:not-allowed}
+.part-h{flex-wrap:wrap}
+.editbox{margin-top:.8rem;border:1px dashed var(--gold2);border-radius:10px;padding:.9rem;background:#fffdf6}
+.editbox textarea{width:100%;min-height:180px;border:1px solid #d9deea;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;line-height:1.7;color:var(--txt);background:#fff;resize:vertical}
+.editbox .ehint{font-size:11px;color:var(--t3);margin:.3rem 0 .6rem}
+.editbox .erow{display:flex;gap:7px;flex-wrap:wrap;margin-top:.6rem}
+.regenbox{margin-top:.8rem;border:1px dashed #6fb8ff;border-radius:10px;padding:.9rem;background:#f4f9ff}
+.regenbox input{width:100%;border:1px solid #cfe2fb;border-radius:8px;padding:9px 11px;font-family:inherit;font-size:13px;color:var(--txt);background:#fff}
+.regenbox .erow{display:flex;gap:7px;flex-wrap:wrap;margin-top:.6rem}
+.part-loading{opacity:.5;pointer-events:none}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a2230;color:#fff;padding:12px 22px;border-radius:24px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:999;max-width:90vw}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.err{background:#d8504e}#toast.ok{background:#1f9d6a}
@@ -146,7 +160,7 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 @media print{
   @page{size:A4;margin:14mm}
   body{background:#fff;font-size:12pt}
-  header,.tabs,.toolbar,.disc,#toast{display:none!important}
+  header,.tabs,.toolbar,.disc,#toast,.no-print,.part-tools,.editbox,.regenbox{display:none!important}
   .panel{display:none!important}.panel#p-result{display:block!important;max-width:none;padding:0}
   .pdf-cover,.rsec,.part,.cover,.sajupan{box-shadow:none}
   .pdf-cover{page-break-after:always}
@@ -644,10 +658,8 @@ async function generate(){
     : (cust.pkg==='기본' ? '[기본 분석] 핵심을 명료하게, 군더더기 없이 작성하세요.' : '[프리미엄 심층 분석] 풍부하고 깊이 있게, 구체적 근거와 함께 작성하세요.');
   for(let i=0;i<PARTS.length;i++){
     renderProgress(i);
-    let user=ctx+'\n\n[전체 보고서 목차] '+allTitles+'\n\n[사주 데이터]\n'+data
-      +'\n\n위 데이터를 근거로 아래 PART를 '+lenGuide()+' 작성하세요.\n\n■ PART '+(i+1)+': '+PARTS[i].t+'\n▶ 다뤄야 할 내용: '+PARTS[i].g;
     try{
-      results[i]=await callClaude(sysPrompt(),user);
+      results[i]=await callClaude(sysPrompt(),partPrompt(i));
     }catch(e){
       results[i]='⚠️ 생성 오류: '+e.message;
       generating=false; renderResults();           // 먼저 종료 → 다음 PART 스피너가 남지 않음
@@ -661,7 +673,43 @@ async function generate(){
   saveHistory();     // 관리자 기록 저장
   toast(cust.pkg+' 분석이 완료되었습니다!','ok');
 }
+// PART별 프롬프트 빌더(전체 생성·단일 재생성 공용). extra=추가 지시
+function partPrompt(i,extra){
+  const data=sajuDataText();
+  const allTitles=PARTS.map((p,k)=>'PART '+(k+1)+': '+p.t).join(' / ');
+  const ctx=cust.pkg==='궁합'
+    ? '[궁합 분석] 아래에는 본인과 상대방, 두 사람의 사주 데이터가 함께 주어집니다. 반드시 두 사람의 사주를 비교·교차하여 "관계" 관점에서 풀이하세요.'
+    : (cust.pkg==='기본' ? '[기본 분석] 핵심을 명료하게, 군더더기 없이 작성하세요.' : '[프리미엄 심층 분석] 풍부하고 깊이 있게, 구체적 근거와 함께 작성하세요.');
+  let u=ctx+'\n\n[전체 보고서 목차] '+allTitles+'\n\n[사주 데이터]\n'+data
+    +'\n\n위 데이터를 근거로 아래 PART를 '+lenGuide()+' 작성하세요.\n\n■ PART '+(i+1)+': '+PARTS[i].t+'\n▶ 다뤄야 할 내용: '+PARTS[i].g;
+  if(extra&&extra.trim()) u+='\n\n[★운영자 추가 지시 — 반드시 반영★]\n'+extra.trim();
+  return u;
+}
 function regenerate(){if(generating)return;generate();}
+
+/* ═══════════ 섹션별 재생성 / 수정 ═══════════ */
+let editing=-1, regenOpen=-1;
+async function regenPart(i,extra){
+  if(generating)return;
+  if(!getKey()){toast('먼저 ⚙️설정에서 API 키를 저장하세요','err');go('settings');return;}
+  generating=true; regenOpen=-1; editing=-1;
+  let card=document.querySelector('.part[data-i="'+i+'"]');
+  if(card){card.classList.add('part-loading');card.querySelector('.part-body').innerHTML='<div class="loadwrap"><div class="spinner"></div><div style="font-weight:700;color:var(--navy)">PART '+(i+1)+' 다시 작성 중…</div></div>';}
+  try{
+    results[i]=await callClaude(sysPrompt(),partPrompt(i,extra));
+    toast('PART '+(i+1)+' 재생성 완료','ok');
+  }catch(e){toast('재생성 실패: '+e.message,'err');}
+  generating=false; renderResults(); saveHistory();
+}
+function toggleRegen(i){ regenOpen=(regenOpen===i?-1:i); editing=-1; renderResults();
+  if(regenOpen===i){let el=document.getElementById('regenInput-'+i);el&&el.focus();}
+}
+function doRegen(i){ regenPart(i, (document.getElementById('regenInput-'+i)||{}).value||''); }
+function toggleEdit(i){ editing=(editing===i?-1:i); regenOpen=-1; renderResults();
+  if(editing===i){let el=document.getElementById('editArea-'+i);if(el){el.focus();el.value=results[i]||'';}}
+}
+function saveEdit(i){ let el=document.getElementById('editArea-'+i); if(!el)return; results[i]=el.value; editing=-1; renderResults(); saveHistory(); toast('PART '+(i+1)+' 수정 저장됨','ok'); }
+function delPart(i){ if(!confirm('PART '+(i+1)+' ('+PARTS[i].t+') 내용을 비울까요? (섹션은 남고 내용만 지워집니다)'))return; results[i]=''; editing=-1; renderResults(); saveHistory(); toast('PART '+(i+1)+' 내용을 비웠습니다',''); }
 
 function coverWho(m){
   const calTxt=m.cal==='양'?'양력':(m.cal==='윤'?'음력 윤달':'음력');
@@ -716,11 +764,25 @@ function renderProgress(i){
 }
 function renderResults(){
   let box=$('partsBox'); if(!box)return;
-  box.innerHTML=results.map((txt,i)=>txt?(
-    '<div class="part"><div class="part-h"><span class="num">PART '+(i+1)+'</span>'+PARTS[i].t+'</div>'
-    +'<div class="part-body">'+md(txt)+'</div></div>'):'').join('');
+  // 생성 중에는 완료된 PART만, 생성 완료 후에는 모든 정의된 PART(빈 것 포함)를 표시해 편집 가능
+  box.innerHTML=PARTS.map((_,i)=>{
+    let txt=results[i]||'';
+    if(generating&&!txt&&editing!==i)return '';
+    let tools=generating?'':'<div class="part-tools no-print">'
+      +'<button class="ptbtn" onclick="toggleRegen('+i+')">🔄 다시 생성</button>'
+      +'<button class="ptbtn" onclick="toggleEdit('+i+')">✏️ 수정</button>'
+      +'<button class="ptbtn" onclick="delPart('+i+')">🗑 비우기</button></div>';
+    let regen=(regenOpen===i)?'<div class="regenbox no-print"><input id="regenInput-'+i+'" placeholder="추가/수정 지시 (선택) — 예: 재물운을 더 자세히, 결혼 시기를 구체적으로, 더 짧고 쉽게 등">'
+      +'<div class="ehint">비워두면 같은 조건으로 다시 생성합니다. 적으면 그 지시를 반영해 이 섹션만 다시 씁니다.</div>'
+      +'<div class="erow"><button class="tbtn gold" onclick="doRegen('+i+')">이 섹션 다시 생성</button><button class="tbtn" onclick="toggleRegen('+i+')">취소</button></div></div>':'';
+    let edit=(editing===i)?'<div class="editbox no-print"><textarea id="editArea-'+i+'">'+esc(results[i]||'')+'</textarea>'
+      +'<div class="ehint">마크다운으로 직접 수정하세요. (## 소제목, **굵게**, - 목록, 표 | … |)</div>'
+      +'<div class="erow"><button class="tbtn gold" onclick="saveEdit('+i+')">저장</button><button class="tbtn" onclick="toggleEdit('+i+')">취소</button></div></div>':'';
+    return '<div class="part" data-i="'+i+'"><div class="part-h"><span class="num">PART '+(i+1)+'</span>'+PARTS[i].t+tools+'</div>'
+      +'<div class="part-body">'+(txt?md(txt):'<p style="color:#b04">(내용이 비어 있습니다 — 「다시 생성」으로 채우세요)</p>')+'</div>'+regen+edit+'</div>';
+  }).join('');
   // 아직 진행 중이면 진행 표시 추가
-  if(generating){let next=results.length;renderProgress(Math.min(next,PARTS.length-1));}
+  if(generating){let next=results.filter(x=>x).length;renderProgress(Math.min(next,PARTS.length-1));}
 }
 
 /* 간이 마크다운 → HTML */
@@ -758,13 +820,16 @@ function inline(s){return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').re
 function savePDF(){toast('인쇄 창에서 「PDF로 저장」을 선택하세요','');setTimeout(()=>window.print(),400);}
 function pdfFilename(){return (cust?cust.name:'saju')+'_'+(cust?cust.pkg:'')+'_사주리포트.pdf';}
 function pdfOpts(q){return {margin:[8,7,10,7],filename:pdfFilename(),image:{type:'jpeg',quality:q||0.95},html2canvas:{scale:2,useCORS:true,backgroundColor:'#0c1228'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}};}
+function hideNoPrint(){let els=$('resultView').querySelectorAll('.no-print');els.forEach(e=>e.dataset._d=e.style.display,e.style.display='none');return ()=>els.forEach(e=>e.style.display=e.dataset._d||'');}
 function downloadPDF(){
-  if(!results.length||results.some(x=>!x)){toast('먼저 분석을 완료하세요','err');return;}
+  if(!results.length||results.some(x=>!x)){toast('빈 섹션이 있습니다 — 모든 PART를 채운 뒤 저장하세요','err');return;}
   if(typeof html2pdf==='undefined'){toast('PDF 모듈 로드 실패 — 「인쇄」로 저장하세요','err');return;}
+  if(editing>=0||regenOpen>=0){editing=-1;regenOpen=-1;renderResults();}
   toast('PDF 생성 중… 잠시만 기다려 주세요','');
+  const restore=hideNoPrint();
   html2pdf().set(pdfOpts(0.96)).from($('resultView')).save()
-    .then(()=>toast('PDF가 저장되었습니다','ok'))
-    .catch(e=>toast('PDF 생성 실패 — 「인쇄」로 저장하세요: '+(e&&e.message||e),'err'));
+    .then(()=>{restore();toast('PDF가 저장되었습니다','ok');})
+    .catch(e=>{restore();toast('PDF 생성 실패 — 「인쇄」로 저장하세요: '+(e&&e.message||e),'err');});
 }
 async function emailPDF(){
   if(!results.length||results.some(x=>!x)){toast('먼저 분석을 완료하세요','err');return;}
@@ -774,9 +839,12 @@ async function emailPDF(){
   if(typeof emailjs==='undefined'){toast('이메일 모듈 로드 실패 — 네트워크 확인','err');return;}
   if(typeof html2pdf==='undefined'){toast('PDF 모듈 로드 실패','err');return;}
   if(!confirm(cust.email+' 으로 PDF 리포트를 발송할까요?'))return;
+  if(editing>=0||regenOpen>=0){editing=-1;regenOpen=-1;renderResults();}
   toast('PDF 생성 중…','');
+  const restore=hideNoPrint();
   try{
     const blob=await html2pdf().set(pdfOpts(0.7)).from($('resultView')).outputPdf('blob');
+    restore();
     const b64=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=rej;fr.readAsDataURL(blob);});
     toast('이메일 발송 중…','');
     emailjs.init({publicKey:cfg.pub});
@@ -790,7 +858,7 @@ async function emailPDF(){
       attachment_name:pdfFilename()
     });
     toast('✅ '+cust.email+' 으로 PDF가 발송되었습니다','ok');
-  }catch(e){toast('발송 실패: '+(e&&(e.text||e.message)||e)+' — PDF 다운로드 후 수동 첨부도 가능합니다','err');}
+  }catch(e){restore();toast('발송 실패: '+(e&&(e.text||e.message)||e)+' — PDF 다운로드 후 수동 첨부도 가능합니다','err');}
 }
 
 /* ═══════════ 생성 기록 (관리자) ═══════════ */
