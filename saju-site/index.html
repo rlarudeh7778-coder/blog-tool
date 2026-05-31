@@ -166,6 +166,14 @@
   .agree input{width:auto;margin-top:3px;flex-shrink:0}
   .hp{position:absolute!important;left:-9999px}
 
+  /* 계좌이체 복사 버튼 */
+  .acct{display:flex;flex-direction:column;gap:5px;width:100%;cursor:pointer;text-align:center;font-family:var(--sans);background:rgba(18,12,38,.55);border:1px dashed rgba(236,206,134,.55);border-radius:13px;padding:18px 16px;color:var(--tx);transition:border-color .18s,box-shadow .18s,transform .12s}
+  .acct:hover{border-color:var(--gold);box-shadow:0 0 26px rgba(236,206,134,.28)}
+  .acct:active{transform:scale(.99)}
+  .acct .acct-bank{font-family:var(--serif);font-size:clamp(18px,4.4vw,22px);font-weight:800;color:var(--gold);letter-spacing:.5px}
+  .acct .acct-owner{font-size:13px;color:var(--mist);font-weight:300}
+  .acct .acct-copy{font-size:12px;color:var(--lav);margin-top:4px}
+
   /* ── 등장 애니메이션 ── */
   .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
   .reveal.in{opacity:1;transform:none}
@@ -380,9 +388,13 @@
     <p style="color:var(--mist);font-weight:300">입력하신 이메일 <b class="gold" id="successEmail"></b> 로 리포트를 보내드립니다.</p>
     <div class="notice" style="text-align:left;margin:22px 0">⚠️ 이메일·연락처가 <b>잘못 입력된 경우 발송이 불가</b>합니다. 오기입하셨다면 안내된 연락처로 바로 알려주세요.</div>
     <div class="band" style="margin:0">
-      <h2 style="font-size:22px">결제 완료 후 24시간 이내 발송</h2>
-      <p>아래 버튼으로 결제를 완료해 주세요.<br><b class="gold">결제가 확인되면 24시간 이내</b>에 프리미엄 사주 리포트를 이메일로 보내드립니다.</p>
-      <a href="#" id="payBtn" class="btn">결제하기</a>
+      <h2 style="font-size:22px">입금 확인 후 24시간 이내 발송</h2>
+      <p>아직 결제 시스템이 구축되지 않은 관계로 <b class="gold">계좌이체</b>만 받고 있습니다.<br>아래 계좌로 입금해 주시면, 확인 후 <b class="gold">24시간 이내</b>에 적어주신 이메일로 리포트를 보내드립니다.</p>
+      <button type="button" class="acct" id="acctBtn" onclick="copyAccount()" aria-label="계좌번호 복사">
+        <span class="acct-bank">국민은행 816901-04-308126</span>
+        <span class="acct-owner">예금주 : 김경도</span>
+        <span class="acct-copy" id="acctCopy">📋 한 번 클릭하면 복사됩니다</span>
+      </button>
     </div>
   </div>
 </div></section>
@@ -436,18 +448,29 @@ document.getElementById('yr').textContent=new Date().getFullYear();
   els.forEach(e=>io.observe(e));
 })();
 
-/* ▼▼ 운영자 설정: 아래 3개 값을 교체하세요 ▼▼ */
-const WEB3FORMS_KEY="YOUR_WEB3FORMS_ACCESS_KEY"; // web3forms.com 무료 Access Key → 신청 내역을 운영자 이메일로 받음
-const PAY_LINK="#";                              // 토스/카카오페이 등 결제 링크
-const FALLBACK_EMAIL="rlarudeh7778@gmail.com";   // Access Key 미설정 시 신청을 받을 운영자 이메일
-/* ▲▲ 교체 끝 ▲▲ */
+/* ▼▼ 운영자 설정 ▼▼ */
+const WEB3FORMS_KEY="ef0e3efd-8d61-4ddc-a211-6c9e29435f52"; // web3forms.com Access Key → 신청 내역을 운영자 이메일로 받음
+const FALLBACK_EMAIL="rlarudeh7778@gmail.com";              // Access Key 미설정 시 신청을 받을 운영자 이메일
+/* ▲▲ 끝 ▲▲ */
+
+/* 클립보드 복사 (https/file 모두 동작) */
+function copyToClipboard(str){
+  if(navigator.clipboard&&window.isSecureContext){return navigator.clipboard.writeText(str);}
+  return new Promise((res,rej)=>{try{const ta=document.createElement('textarea');ta.value=str;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');document.body.removeChild(ta);res();}catch(e){rej(e);}});
+}
+function copyAccount(){
+  const c=document.getElementById('acctCopy');
+  copyToClipboard('국민은행 816901-04-308126 김경도').then(()=>{
+    c.textContent='✓ 계좌번호가 복사되었습니다';
+    setTimeout(()=>{c.textContent='📋 한 번 클릭하면 복사됩니다';},2000);
+  }).catch(()=>{c.textContent='복사 실패 — 길게 눌러 복사해 주세요';});
+}
 
 const f=document.getElementById('sajuForm');
 const noTime=document.getElementById('noTime');
 noTime.addEventListener('change',()=>{
   ['bH','bMin'].forEach(id=>{const el=document.getElementById(id);el.disabled=noTime.checked;if(noTime.checked)el.value='';});
 });
-document.getElementById('payBtn').setAttribute('href',PAY_LINK);
 
 f.addEventListener('submit',async(e)=>{
   e.preventDefault();
@@ -469,6 +492,7 @@ f.addEventListener('submit',async(e)=>{
       let lines=[];fd.forEach((v,k)=>{if(k!=='botcheck')lines.push(k+': '+v);});
       window.location.href='mailto:'+FALLBACK_EMAIL+'?subject='+encodeURIComponent('[사주 신청] '+(fd.get('성함')||''))+'&body='+encodeURIComponent(lines.join('\n'));
     }
+    alert('신청이 정상적으로 접수되었습니다.\n24시간 내에 적어주신 이메일로 발송됩니다.');
     document.getElementById('formCard').style.display='none';
     const s=document.getElementById('successCard');
     document.getElementById('successEmail').textContent=email||'입력하신 이메일';
