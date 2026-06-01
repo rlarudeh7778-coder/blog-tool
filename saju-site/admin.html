@@ -304,8 +304,9 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 <!-- 결과 -->
 <div class="panel" id="p-result">
   <div class="toolbar" id="resultBar" style="display:none">
-    <button class="tbtn gold" onclick="downloadPDF()">📄 PDF 다운로드(전체)</button>
-    <button class="tbtn" onclick="emailPDF()">📧 고객에게 PDF 메일발송</button>
+    <button class="tbtn gold" onclick="sharePDF()">📤 PDF 공유 (카톡·문자)</button>
+    <button class="tbtn" onclick="downloadPDF()">📄 PDF 다운로드</button>
+    <button class="tbtn" onclick="emailPDF()">📧 고객 이메일 발송</button>
     <button class="tbtn" onclick="savePDF()">🖨 인쇄</button>
     <button class="tbtn" onclick="copyText()">📋 텍스트 복사</button>
     <button class="tbtn" onclick="regenerate()">↻ 다시 생성</button>
@@ -817,22 +818,83 @@ function md(t){
 function inline(s){return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/(?<!\*)\*([^*]+)\*(?!\*)/g,'<em>$1</em>');}
 
 /* ═══════════ 저장 ═══════════ */
-function savePDF(){toast('인쇄 창에서 「PDF로 저장」을 선택하세요','');setTimeout(()=>window.print(),400);}
+var IS_MOBILE=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+var IS_INAPP=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line|DaumApps/i.test(navigator.userAgent);
+function savePDF(){
+  if(IS_INAPP){toast('카톡/인앱 브라우저는 인쇄가 막혀 있어요 — 우측 메뉴에서 「다른 브라우저로 열기」 후 이용하세요','err');return;}
+  toast('인쇄 창에서 「PDF로 저장」을 선택하세요','');setTimeout(()=>{try{window.print();}catch(e){toast('인쇄를 열 수 없어요 — 「PDF 다운로드」를 이용하세요','err');}},400);
+}
 function pdfFilename(){return (cust?cust.name:'saju')+'_'+(cust?cust.pkg:'')+'_사주리포트.pdf';}
-// 다운로드용: 화면 그대로(다크) 고품질
-function pdfOpts(q){return {margin:[8,7,10,7],filename:pdfFilename(),image:{type:'jpeg',quality:q||0.95},html2canvas:{scale:2,useCORS:true,backgroundColor:'#0c1228'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy']}};}
+// 다운로드용: 데스크탑 고품질 / 모바일은 메모리 절약 위해 해상도 낮춤
+function pdfOpts(q){var sc=IS_MOBILE?1.4:2;return {margin:[8,7,10,7],filename:pdfFilename(),image:{type:'jpeg',quality:(q||0.95)},html2canvas:{scale:sc,useCORS:true,backgroundColor:'#0c1228'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy']}};}
 // 메일 첨부용: 흰 배경 + 압축으로 용량 최소화(첨부 한도 대응)
 function pdfOptsMail(){return {margin:[8,7,10,7],filename:pdfFilename(),image:{type:'jpeg',quality:0.55},html2canvas:{scale:1.3,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy']}};}
 function hideNoPrint(){let els=$('resultView').querySelectorAll('.no-print');els.forEach(e=>{e.dataset._d=e.style.display;e.style.display='none';});return ()=>els.forEach(e=>{e.style.display=e.dataset._d||'';});}
-function downloadPDF(){
+function dlBlob(blob,name){
+  // 모바일/데스크탑 공통 다운로드(+ 실패 시 새 탭 열기 폴백)
+  try{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=name;a.rel='noopener';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+    return true;
+  }catch(e){
+    try{const url=URL.createObjectURL(blob);window.open(url,'_blank');return true;}catch(_){return false;}
+  }
+}
+async function downloadPDF(){
   if(!results.length||results.some(x=>!x)){toast('빈 섹션이 있습니다 — 모든 PART를 채운 뒤 저장하세요','err');return;}
-  if(typeof html2pdf==='undefined'){toast('PDF 모듈 로드 실패 — 「인쇄」로 저장하세요','err');return;}
+  if(typeof html2pdf==='undefined'){toast('PDF 모듈 로드 실패 — 새로고침 후 다시 시도하세요','err');return;}
   if(editing>=0||regenOpen>=0){editing=-1;regenOpen=-1;renderResults();}
-  toast('PDF 생성 중… 잠시만 기다려 주세요','');
+  if(IS_INAPP){
+    if(!confirm('카카오톡/인앱 브라우저에서는 다운로드가 제한될 수 있어요.\n그래도 시도할까요? (안 되면 우측 ⋮ 메뉴 → 「다른 브라우저로 열기」 후 이용하세요)'))return;
+  }
+  const dlBtn=document.querySelector('[onclick="downloadPDF()"]'); if(dlBtn){dlBtn.disabled=true;dlBtn.textContent='📄 PDF 생성 중…';}
+  toast(IS_MOBILE?'PDF 생성 중… 모바일은 30초~1분 걸릴 수 있어요':'PDF 생성 중… 잠시만 기다려 주세요','');
   const restore=hideNoPrint();
-  html2pdf().set(pdfOpts(0.96)).from($('resultView')).save()
-    .then(()=>{restore();toast('PDF가 저장되었습니다','ok');})
-    .catch(e=>{restore();toast('PDF 생성 실패 — 「인쇄」로 저장하세요: '+(e&&e.message||e),'err');});
+  try{
+    const blob=await html2pdf().set(pdfOpts(IS_MOBILE?0.8:0.96)).from($('resultView')).outputPdf('blob');
+    restore();
+    const ok=dlBlob(blob, pdfFilename());
+    toast(ok?'✅ PDF가 저장되었습니다 (다운로드 폴더 확인)':'다운로드 실패 — 「인쇄」 또는 다른 브라우저로 시도하세요', ok?'ok':'err');
+  }catch(e){
+    restore();
+    toast('PDF 생성 실패: '+(e&&e.message||e)+' — 다른 브라우저(크롬/사파리)로 열어보세요','err');
+  }finally{
+    if(dlBtn){dlBtn.disabled=false;dlBtn.textContent='📄 PDF 다운로드';}
+  }
+}
+// 모바일: PDF 파일을 카톡·문자·메일 등으로 바로 공유(가장 확실한 방법)
+async function sharePDF(){
+  if(!results.length||results.some(x=>!x)){toast('빈 섹션이 있습니다 — 모든 PART를 채운 뒤 공유하세요','err');return;}
+  if(typeof html2pdf==='undefined'){toast('PDF 모듈 로드 실패 — 새로고침 후 다시 시도하세요','err');return;}
+  if(editing>=0||regenOpen>=0){editing=-1;regenOpen=-1;renderResults();}
+  const btn=document.querySelector('[onclick="sharePDF()"]'); if(btn){btn.disabled=true;btn.textContent='📤 PDF 만드는 중…';}
+  const reset=()=>{if(btn){btn.disabled=false;btn.textContent='📤 PDF 공유 (카톡·문자)';}};
+  toast('PDF 만드는 중… 잠시만요','');
+  const restore=hideNoPrint();
+  try{
+    const blob=await html2pdf().set(pdfOpts(IS_MOBILE?0.8:0.92)).from($('resultView')).outputPdf('blob');
+    restore();
+    const file=new File([blob], pdfFilename(), {type:'application/pdf'});
+    // 1순위: 파일 공유 지원(모바일 크롬/사파리) → 카톡·문자·메일 선택 시트
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file], title:reportNames()+' 님 '+reportTitle(), text:reportNames()+' 님 사주 리포트입니다.'});
+        toast('✅ 공유 완료 — 카톡 등에서 전송하세요','ok'); reset(); return;
+      }catch(err){ if(err&&err.name==='AbortError'){toast('공유를 취소했습니다',''); reset(); return;} /* 그 외엔 폴백 */ }
+    }
+    // 2순위: 인앱이면 안내, 아니면 다운로드 폴백
+    if(IS_INAPP){
+      toast('이 브라우저는 파일 공유를 막아요 — 우측 ⋮ → 「다른 브라우저로 열기」 후 다시 「PDF 공유」를 눌러주세요','err');
+    }else{
+      const ok=dlBlob(blob, pdfFilename());
+      toast(ok?'이 기기는 직접 공유가 안 돼 다운로드했어요 — 카톡에 첨부해 보내세요':'실패 — 다른 브라우저로 시도하세요', ok?'ok':'err');
+    }
+  }catch(e){
+    restore();
+    toast('PDF 생성 실패: '+(e&&e.message||e)+' — 다른 브라우저(크롬/사파리)로 열어보세요','err');
+  }finally{ reset(); }
 }
 async function emailPDF(){
   if(!results.length||results.some(x=>!x)){toast('먼저 분석을 완료하세요','err');return;}
