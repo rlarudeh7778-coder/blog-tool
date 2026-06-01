@@ -157,6 +157,9 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 .part-body th,.part-body td{border:1px solid #d9deea;padding:8px 10px;text-align:center}
 .part-body th{background:#0e1530;color:var(--gold);font-weight:700}
 .part-body tr:nth-child(even) td{background:#f7f9ff}
+.ask-part{border:2px solid var(--gold2)}
+.ask-part .part-h{border-bottom-color:var(--gold2)}
+.ask-part .num{background:#7a5cc0}
 /* html2pdf 페이지 잘림 방지(@media print는 html2pdf에 적용 안 되므로 일반 규칙으로) */
 .html2pdf__page-break{height:0;display:block;page-break-before:always;break-before:page}
 .pdf-block{break-inside:avoid;page-break-inside:avoid}
@@ -276,7 +279,7 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
       </div>
     </div>
 
-    <div class="field"><label>특히 궁금한 점 / 추가 질문 (선택) <span class="csub">프리미엄 추가질문 1회 반영</span></label><textarea id="iAsk" placeholder="예: 올해 이직운, 결혼 시기, 두 사람 결혼해도 될지 등 — 적으면 분석에 비중 있게 반영됩니다."></textarea></div>
+    <div class="field"><label>특히 궁금한 점 / 추가 질문 (선택) <span class="csub">프리미엄·궁합: 전용 답변 섹션 추가</span></label><textarea id="iAsk" placeholder="예: 올해 이직운, 결혼 시기, 두 사람 결혼해도 될지 등 — 프리미엄·궁합은 이 질문에 답하는 「추가 질문 답변」 섹션이 리포트 맨 뒤에 추가됩니다."></textarea></div>
     <div class="field"><label>📧 고객 이메일 <span class="csub">결과 자동 발송용</span></label><input id="iEmail" type="email" placeholder="고객이 신청 시 입력한 이메일">
       <div class="hint">입력해 두면 분석 완료 후 「고객 이메일로 발송」 버튼으로 바로 보낼 수 있습니다(⚙️설정에서 이메일 발송 1회 설정 필요).</div>
     </div>
@@ -546,15 +549,26 @@ function readPerson(suf){
   let placeEl=$('iPlace'+suf);
   return {name:$('iName'+suf).value.trim()||(suf?'상대방':'고객'), gender, cal, inY:y,inM:m,inD:d, solY,solM,solD, h,mi,noTime, place:placeEl?placeEl.value.trim():'', a};
 }
+function buildParts(pkg, ask){
+  let base=partsFor(pkg).slice();
+  // 프리미엄·궁합에서 추가 질문이 있으면 전용 섹션을 마지막에 추가
+  if(ask && ask.trim() && pkg!=='기본'){
+    base.push({t:'고객님의 추가 질문 답변', ask:true,
+      g:'고객이 직접 남긴 질문에 대해, 위 사주(궁합이면 두 사람의 사주)를 근거로 정성껏 답하는 섹션입니다. 질문에 정면으로 답하되 사주적 근거(일간·오행·십성·대운/세운)를 들어 설명하고, 단정 대신 경향·가능성으로 서술하세요. 질문: 「'+ask.trim()+'」'});
+  }
+  return base;
+}
 function calcAndShow(){
-  const pkg=segVal('iPkg'); activePkg=pkg; PARTS=partsFor(pkg);
+  const pkg=segVal('iPkg'); activePkg=pkg;
   let p1=readPerson(''); if(p1.err){toast(p1.err,'err');return;}
   let p2=null;
   if(pkg==='궁합'){ p2=readPerson('2'); if(p2.err){toast(p2.err,'err');return;} }
-  cust=Object.assign({}, p1, {pkg, ask:$('iAsk').value.trim(), email:$('iEmail').value.trim(), phone:$('iPhone').value.trim(), p2});
+  const ask=$('iAsk').value.trim();
+  PARTS=buildParts(pkg, ask);
+  cust=Object.assign({}, p1, {pkg, ask, email:$('iEmail').value.trim(), phone:$('iPhone').value.trim(), p2});
   renderSaju();
   go('saju');
-  toast('사주판이 계산되었습니다','ok');
+  toast(ask&&pkg!=='기본'?'사주판 계산 완료 — 추가 질문 답변 섹션이 포함됩니다':'사주판이 계산되었습니다','ok');
 }
 function hanja(gz){let i=gz.indexOf('(');return i<0?gz:gz.slice(i+1,i+3);}
 function kor(gz){return gz.slice(0,2);}
@@ -742,6 +756,7 @@ function partPrompt(i,extra){
     : (cust.pkg==='기본' ? '[기본 분석] 핵심을 명료하게, 군더더기 없이 작성하세요.' : '[프리미엄 심층 분석] 풍부하고 깊이 있게, 구체적 근거와 함께 작성하세요.');
   let u=ctx+'\n\n[전체 보고서 목차] '+allTitles+'\n\n[사주 데이터]\n'+data
     +'\n\n위 데이터를 근거로 아래 PART를 '+lenGuide()+' 작성하세요.\n\n■ PART '+(i+1)+': '+PARTS[i].t+'\n▶ 다뤄야 할 내용: '+PARTS[i].g;
+  if(PARTS[i].ask && cust.ask) u+='\n\n[★이 섹션은 고객이 직접 남긴 질문에 답하는 전용 섹션입니다★]\n고객 질문 원문: 「'+cust.ask+'」\n→ 이 질문에 정면으로, 구체적으로 답하세요. 질문에서 묻는 핵심(시기·여부·방법 등)을 명확히 짚고, 사주적 근거를 들어 설명하세요.';
   if(extra&&extra.trim()) u+='\n\n[★운영자 추가 지시 — 반드시 반영★]\n'+extra.trim();
   return u;
 }
@@ -793,7 +808,7 @@ function renderCover(){
   let toc='<div class="rsec pdf-block"><h2>목차</h2><div class="toc-list">'
     +'<div class="toc-i"><b>🀄</b><span>만세력 — 나의 사주판 (사주팔자·오행·대운)</span></div>'
     +'<div class="toc-i"><b>📖</b><span>이 리포트 보는 법 &amp; 사주 용어 설명</span></div>'
-    +PARTS.map((p,i)=>'<div class="toc-i"><b>'+(i+1)+'</b><span>'+esc(p.t)+'</span></div>').join('')
+    +PARTS.map((p,i)=>'<div class="toc-i"><b>'+(p.ask?'💬':(i+1))+'</b><span>'+esc(p.t)+'</span></div>').join('')
     +'</div></div>';
   // ③ 안내 + 용어 설명
   let guide='<div class="rsec"><h2>이 리포트 보는 법</h2>'
@@ -838,8 +853,10 @@ function renderResults(){
     let edit=(editing===i)?'<div class="editbox no-print"><textarea id="editArea-'+i+'">'+esc(results[i]||'')+'</textarea>'
       +'<div class="ehint">마크다운으로 직접 수정하세요. (## 소제목, **굵게**, - 목록, 표 | … |)</div>'
       +'<div class="erow"><button class="tbtn gold" onclick="saveEdit('+i+')">저장</button><button class="tbtn" onclick="toggleEdit('+i+')">취소</button></div></div>':'';
-    return '<div class="part pdf-block" data-i="'+i+'"><div class="part-h"><span class="num">PART '+(i+1)+'</span>'+PARTS[i].t+tools+'</div>'
-      +'<div class="part-body">'+(txt?md(txt):'<p style="color:#b04">(내용이 비어 있습니다 — 「다시 생성」으로 채우세요)</p>')+'</div>'+regen+edit+'</div>';
+    let isAsk=PARTS[i].ask;
+    let askQuote=isAsk?'<div class="easy" style="margin:0 0 .9rem"><div class="et">💬 고객님의 질문</div>'+esc(cust.ask||'')+'</div>':'';
+    return '<div class="part pdf-block'+(isAsk?' ask-part':'')+'" data-i="'+i+'"><div class="part-h"><span class="num">'+(isAsk?'💬':'PART '+(i+1))+'</span>'+PARTS[i].t+tools+'</div>'
+      +'<div class="part-body">'+askQuote+(txt?md(txt):'<p style="color:#b04">(내용이 비어 있습니다 — 「다시 생성」으로 채우세요)</p>')+'</div>'+regen+edit+'</div>';
   }).join('');
   // 아직 진행 중이면 진행 표시 추가
   if(generating){let next=results.filter(x=>x).length;renderProgress(Math.min(next,PARTS.length-1));}
@@ -1008,7 +1025,7 @@ function renderHistory(){
 }
 function loadHistory(id){
   let x=getHist().find(r=>r.id===id); if(!x)return;
-  cust=x.cust; results=x.results.slice(); activePkg=cust.pkg; PARTS=partsFor(cust.pkg);
+  cust=x.cust; results=x.results.slice(); activePkg=cust.pkg; PARTS=buildParts(cust.pkg, cust.ask);
   renderCover(); renderResults();
   $('resultBar').style.display='flex'; $('discBox').style.display='block';
   go('result'); toast('기록을 불러왔습니다','ok');
