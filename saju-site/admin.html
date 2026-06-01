@@ -620,13 +620,22 @@ async function callClaude(sys,user){
   const k=getKey().replace(/[^\x20-\x7E]/g,'').trim();
   if(!k)throw new Error('API 키가 없습니다 — ⚙️설정에서 키를 저장하세요.');
   let r;
+  const ac=new AbortController();
+  const timer=setTimeout(()=>ac.abort(), 90000); // 90초 타임아웃 — 모바일에서 응답이 안 오고 멈추는 것 방지
   try{
-    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:getModel(),max_tokens:8000,system:sys,messages:[{role:'user',content:user}]})});
-  }catch(netErr){throw new Error('네트워크 오류 — 인터넷 연결을 확인하세요');}
+    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:ac.signal,headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:getModel(),max_tokens:8000,system:sys,messages:[{role:'user',content:user}]})});
+  }catch(netErr){
+    clearTimeout(timer);
+    if(netErr&&netErr.name==='AbortError')throw new Error('응답 시간 초과(90초) — 통신이 불안정합니다. 「다시 생성」으로 재시도하거나 Wi-Fi 연결 후 시도하세요.');
+    throw new Error('네트워크 오류 — 인터넷 연결을 확인하세요. (모바일 데이터가 불안정하거나, 인앱 브라우저면 크롬/사파리로 열어보세요)');
+  }
+  clearTimeout(timer);
   let d={}; try{d=await r.json();}catch(_){}
   if(r.status===401||(d.error&&/x-api-key|authentication|invalid.*key/i.test(d.error.message||''))){
     throw new Error('API 키 인증 실패(401). 키가 정확한 sk-ant-… 인지, 만료·오타·공백이 없는지 ⚙️설정의 「테스트」로 확인하세요.');
   }
+  if(r.status===429)throw new Error('요청이 많습니다(429) — 잠시 후 「다시 생성」으로 재시도하세요.');
+  if(r.status===529||r.status>=500)throw new Error('Anthropic 서버 혼잡('+r.status+') — 잠시 후 「다시 생성」으로 재시도하세요.');
   if(!r.ok||d.error)throw new Error((d.error&&d.error.message)||('API 오류 ('+r.status+')'));
   const t=d.content&&d.content.find(b=>b.type==='text');
   return t?(t.text||''):'';
@@ -657,14 +666,15 @@ async function generate(){
   const ctx=cust.pkg==='궁합'
     ? '[궁합 분석] 아래에는 본인과 상대방, 두 사람의 사주 데이터가 함께 주어집니다. 반드시 두 사람의 사주를 비교·교차하여 "관계" 관점에서 풀이하세요.'
     : (cust.pkg==='기본' ? '[기본 분석] 핵심을 명료하게, 군더더기 없이 작성하세요.' : '[프리미엄 심층 분석] 풍부하고 깊이 있게, 구체적 근거와 함께 작성하세요.');
+  let failed=false;
   for(let i=0;i<PARTS.length;i++){
     renderProgress(i);
     try{
-      results[i]=await callClaude(sysPrompt(),partPrompt(i));
+      results[i]=await callClaudeRetry(sysPrompt(),partPrompt(i));
     }catch(e){
-      results[i]='⚠️ 생성 오류: '+e.message;
-      generating=false; renderResults();           // 먼저 종료 → 다음 PART 스피너가 남지 않음
-      toast('생성 중단: '+e.message,'err'); return;
+      // 실패한 PART만 오류 표시하고 계속 진행(나머지는 정상 생성) → 무한 로딩 방지
+      results[i]='⚠️ 이 부분 생성 실패: '+e.message+'\n\n→ 이 섹션의 「🔄 다시 생성」 버튼으로 다시 시도하세요.';
+      failed=true;
     }
     renderResults();
   }
@@ -672,7 +682,18 @@ async function generate(){
   renderResults();   // 최종 정리 — 남은 진행 스피너 제거
   $('resultBar').style.display='flex'; $('discBox').style.display='block';
   saveHistory();     // 관리자 기록 저장
-  toast(cust.pkg+' 분석이 완료되었습니다!','ok');
+  toast(failed?'일부 섹션 생성 실패 — 해당 섹션의 「다시 생성」으로 재시도하세요':(cust.pkg+' 분석이 완료되었습니다!'), failed?'err':'ok');
+}
+// 네트워크/서버 혼잡 시 1회 자동 재시도
+async function callClaudeRetry(sys,user){
+  try{ return await callClaude(sys,user); }
+  catch(e){
+    if(/시간 초과|네트워크|서버 혼잡|429/.test(e.message)){
+      await new Promise(r=>setTimeout(r,2500));
+      return await callClaude(sys,user); // 재시도(여기서 또 실패하면 throw)
+    }
+    throw e;
+  }
 }
 // PART별 프롬프트 빌더(전체 생성·단일 재생성 공용). extra=추가 지시
 function partPrompt(i,extra){
