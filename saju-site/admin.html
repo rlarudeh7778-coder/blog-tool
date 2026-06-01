@@ -157,6 +157,11 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
 .part-body th,.part-body td{border:1px solid #d9deea;padding:8px 10px;text-align:center}
 .part-body th{background:#0e1530;color:var(--gold);font-weight:700}
 .part-body tr:nth-child(even) td{background:#f7f9ff}
+/* html2pdf 페이지 잘림 방지(@media print는 html2pdf에 적용 안 되므로 일반 규칙으로) */
+.html2pdf__page-break{height:0;display:block;page-break-before:always;break-before:page}
+.pdf-block{break-inside:avoid;page-break-inside:avoid}
+.part-body h2,.part-body h3{break-after:avoid;page-break-after:avoid}
+.part-body p,.part-body li,.part-body blockquote,.gloss-i,.easy,.act,.toc-i{break-inside:avoid;page-break-inside:avoid}
 @media print{
   @page{size:A4;margin:14mm}
   body{background:#fff;font-size:12pt}
@@ -752,13 +757,13 @@ function renderCover(){
     +'<h1><b>'+names+'</b> 님의<br>'+title+'</h1>'
     +'<div class="pdate">발행일 '+dateStr+'</div></div>';
   // ② 목차
-  let toc='<div class="rsec"><h2>목차</h2><div class="toc-list">'
+  let toc='<div class="rsec pdf-block"><h2>목차</h2><div class="toc-list">'
     +'<div class="toc-i"><b>🀄</b><span>만세력 — 나의 사주판 (사주팔자·오행·대운)</span></div>'
     +'<div class="toc-i"><b>📖</b><span>이 리포트 보는 법 &amp; 사주 용어 설명</span></div>'
     +PARTS.map((p,i)=>'<div class="toc-i"><b>'+(i+1)+'</b><span>'+esc(p.t)+'</span></div>').join('')
     +'</div></div>';
   // ③ 안내 + 용어 설명
-  let guide='<div class="rsec"><h2>이 리포트 보는 법</h2>'
+  let guide='<div class="rsec pdf-block"><h2>이 리포트 보는 법</h2>'
     +'<p class="guide-p">이 리포트는 <b>'+names+'</b> 님의 사주를 천문 계산으로 정밀하게 산출하여, 타고난 기질부터 재물·인연·직업·건강·시기별 운까지 깊이 있게 풀어낸 분석서입니다.</p>'
     +'<p class="guide-p">각 장(章)은 ① <b>전문 해석</b>, ② <b>💡 쉽게 풀어보면</b>(어려운 용어 없이 다시 설명), ③ <b>✅ 이렇게 해보세요</b>(도움이 되는 구체적 실천법) 순서로 구성됩니다. 어려운 한자 용어는 아래 「용어 설명」을 참고하세요.</p>'
     +'<p class="guide-p" style="color:#8a6a00">※ 본 리포트는 명리학 이론에 기반한 상담·참고용 콘텐츠이며, 운명은 정해진 것이 아니라 노력으로 만들어 가는 것입니다.</p>'
@@ -766,7 +771,7 @@ function renderCover(){
     +GLOSSARY.map(g=>'<div class="gloss-i"><div class="gt">'+g[0]+'</div><div class="gd">'+g[1]+'</div></div>').join('')
     +'</div></div>';
   // ④ 만세력 (항상 표시, 궁합은 2인)
-  let manse='<div class="rsec"><h2>🀄 만세력 — 나의 사주판</h2>'
+  let manse='<div class="rsec pdf-block"><h2>🀄 만세력 — 나의 사주판</h2>'
     +'<p class="guide-p" style="margin-bottom:.6rem">아래는 '+names+' 님의 사주팔자(여덟 글자)와 오행 분포, 대운(10년 단위 흐름)입니다.</p>'
     +'<div class="easy" style="margin:0 0 1rem"><div class="et">📅 나이 기준 안내</div>이 리포트에서 말하는 모든 나이(대운수·대운 나이·시기)는 <b>세는나이(한국식 나이)</b> 기준입니다. 태어나면 1살, 새해마다 +1살로 세는 방식이에요. 만 나이로는 보통 <b>1~2살 적게</b> 보시면 됩니다.</div>'
     +sajuPanelHTML(cust,cust.a);
@@ -800,7 +805,7 @@ function renderResults(){
     let edit=(editing===i)?'<div class="editbox no-print"><textarea id="editArea-'+i+'">'+esc(results[i]||'')+'</textarea>'
       +'<div class="ehint">마크다운으로 직접 수정하세요. (## 소제목, **굵게**, - 목록, 표 | … |)</div>'
       +'<div class="erow"><button class="tbtn gold" onclick="saveEdit('+i+')">저장</button><button class="tbtn" onclick="toggleEdit('+i+')">취소</button></div></div>':'';
-    return '<div class="part" data-i="'+i+'"><div class="part-h"><span class="num">PART '+(i+1)+'</span>'+PARTS[i].t+tools+'</div>'
+    return '<div class="part pdf-block" data-i="'+i+'"><div class="part-h"><span class="num">PART '+(i+1)+'</span>'+PARTS[i].t+tools+'</div>'
       +'<div class="part-body">'+(txt?md(txt):'<p style="color:#b04">(내용이 비어 있습니다 — 「다시 생성」으로 채우세요)</p>')+'</div>'+regen+edit+'</div>';
   }).join('');
   // 아직 진행 중이면 진행 표시 추가
@@ -847,9 +852,9 @@ function savePDF(){
 }
 function pdfFilename(){return (cust?cust.name:'saju')+'_'+(cust?cust.pkg:'')+'_사주리포트.pdf';}
 // 다운로드용: 데스크탑 고품질 / 모바일은 메모리 절약 위해 해상도 낮춤
-function pdfOpts(q){var sc=IS_MOBILE?1.4:2;return {margin:[8,7,10,7],filename:pdfFilename(),image:{type:'jpeg',quality:(q||0.95)},html2canvas:{scale:sc,useCORS:true,backgroundColor:'#0c1228'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy']}};}
+function pdfOpts(q){var sc=IS_MOBILE?1.4:2;return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:(q||0.95)},html2canvas:{scale:sc,useCORS:true,backgroundColor:'#0c1228',windowWidth:980},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
 // 메일 첨부용: 흰 배경 + 압축으로 용량 최소화(첨부 한도 대응)
-function pdfOptsMail(){return {margin:[8,7,10,7],filename:pdfFilename(),image:{type:'jpeg',quality:0.55},html2canvas:{scale:1.3,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy']}};}
+function pdfOptsMail(){return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:0.6},html2canvas:{scale:1.5,useCORS:true,backgroundColor:'#ffffff',windowWidth:980},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
 function hideNoPrint(){let els=$('resultView').querySelectorAll('.no-print');els.forEach(e=>{e.dataset._d=e.style.display;e.style.display='none';});return ()=>els.forEach(e=>{e.style.display=e.dataset._d||'';});}
 function dlBlob(blob,name){
   // 모바일/데스크탑 공통 다운로드(+ 실패 시 새 탭 열기 폴백)
