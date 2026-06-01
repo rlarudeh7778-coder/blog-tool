@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>앤텔레콤 블로그툴 - 관리자</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--green:#1B8F5E;--gl:#e8f7f1;--gd:#136b46;--red:#E24B4A;--rl:#fdeaea;--bg:#f6f8f7;--sur:#fff;--bor:#e2e8e5;--txt:#1a2520;--t2:#4a6058;--t3:#8aaa9e;--r:12px;--rs:8px;--blue:#2a7ab5;--bl:#e8f4ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;min-height:100vh}
+
+/* 로그인 화면 */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:1rem}
+.login-box{background:var(--sur);border-radius:var(--r);padding:2rem 1.5rem;max-width:360px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.12);text-align:center}
+.login-logo{font-size:24px;font-weight:700;color:var(--green);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--t3);margin-bottom:1.5rem}
+.login-input{width:100%;padding:11px 14px;border:2px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:14px;text-align:center;outline:none;margin-bottom:10px;transition:border-color .2s}
+.login-input:focus{border-color:var(--green)}
+.login-btn{width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+.login-btn:hover{background:var(--gd)}
+.login-err{font-size:12px;color:var(--red);min-height:18px;margin-bottom:6px}
+
+/* 메인 */
+header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.hlogo{font-size:15px;font-weight:700;color:var(--green)}
+.hbadge{font-size:12px;color:var(--t3);background:var(--bg);padding:4px 10px;border-radius:20px;border:1px solid var(--bor)}
+.wrap{max-width:960px;margin:0 auto;padding:1.5rem 1rem;display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;align-items:start}
+@media(max-width:700px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.ctitle{font-size:13px;font-weight:700;color:var(--t2);margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+.field{margin-bottom:.75rem}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:4px}
+.field input,.field select{width:100%;padding:8px 11px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);outline:none}
+.field input:focus,.field select:focus{border-color:var(--green)}
+.addbtn{width:100%;padding:10px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:4px}
+.addbtn:hover{background:var(--gd)}
+
+/* 코드 목록 */
+.code-list{display:flex;flex-direction:column;gap:8px;max-height:500px;overflow-y:auto}
+.code-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:var(--rs);border:1px solid var(--bor)}
+.code-item.expired{opacity:.5;background:var(--rl);border-color:#F09595}
+.ci-info{flex:1;min-width:0}
+.ci-name{font-size:13px;font-weight:700;color:var(--txt)}
+.ci-code{font-size:11px;color:var(--green);font-family:monospace;font-weight:700;background:var(--gl);padding:2px 6px;border-radius:4px;letter-spacing:1px}
+.ci-expire{font-size:11px;color:var(--t3);margin-top:2px}
+.ci-expire.red{color:var(--red)}
+.delbtn{padding:5px 10px;background:var(--rl);color:var(--red);border:1px solid #F09595;border-radius:var(--rs);font-size:11px;font-family:inherit;cursor:pointer;flex-shrink:0;font-weight:700}
+.delbtn:hover{background:var(--red);color:#fff}
+.empty-msg{text-align:center;padding:2rem;color:var(--t3);font-size:13px}
+
+/* 출력 영역 */
+.output-box{background:#1a2520;border-radius:var(--rs);padding:14px;font-family:monospace;font-size:11px;color:#9FE1CB;line-height:1.8;white-space:pre-wrap;max-height:300px;overflow-y:auto;margin-bottom:10px;border:1px solid #2a3830}
+.copybtn{width:100%;padding:9px;background:var(--blue);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer}
+.copybtn:hover{background:#1e5a87}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+.stat{background:var(--bg);border-radius:var(--rs);padding:10px;text-align:center;border:1px solid var(--bor)}
+.stat-l{font-size:10px;color:var(--t3);margin-bottom:2px}
+.stat-v{font-size:18px;font-weight:700;color:var(--txt)}
+.stat-v.ok{color:var(--green)}.stat-v.warn{color:#BA7517}.stat-v.ng{color:var(--red)}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:10px 18px;border-radius:var(--rs);font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;z-index:999;background:var(--txt);color:#fff}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{background:var(--green)}.toast.err{background:var(--red)}
+.guide-box{background:var(--gl);border:1px solid #9FE1CB;border-radius:var(--rs);padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.9;margin-bottom:1rem}
+.guide-box b{color:var(--green)}
+</style>
+</head>
+<body>
+
+<!-- 관리자 로그인 -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🔐 관리자 페이지</div>
+    <div class="login-sub">앤텔레콤 블로그툴 코드 관리</div>
+    <input type="password" class="login-input" id="admin-pw" placeholder="관리자 비밀번호"
+      onkeydown="if(event.key==='Enter')adminLogin()"/>
+    <div class="login-err" id="login-err"></div>
+    <button class="login-btn" onclick="adminLogin()">로그인</button>
+  </div>
+</div>
+
+<!-- 메인 관리 화면 -->
+<div id="main-screen" style="display:none">
+  <header>
+    <div class="hlogo">🔐 블로그툴 관리자</div>
+    <div class="hbadge">관리자(경도) 로그인 중</div>
+  </header>
+
+  <div style="max-width:960px;margin:0 auto;padding:1.5rem 1rem 0">
+    <!-- 안내 -->
+    <div class="guide-box">
+      💡 <b>사용 방법:</b> 코드 추가/삭제 후 → <b>"코드 복사"</b> 클릭 → <b>index.html</b>에서 <b>ACCESS_CODES</b> 배열 전체 교체 → GitHub 업로드<br>
+      ⚡ <b>즉시 차단:</b> 삭제한 코드는 GitHub 재업로드 후 바로 접속 불가
+    </div>
+    <!-- 통계 -->
+    <div class="stat-row">
+      <div class="stat"><div class="stat-l">전체 코드</div><div class="stat-v ok" id="stat-total">0</div></div>
+      <div class="stat"><div class="stat-l">유효</div><div class="stat-v ok" id="stat-active">0</div></div>
+      <div class="stat"><div class="stat-l">만료/삭제</div><div class="stat-v ng" id="stat-expired">0</div></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- 좌측: 코드 추가 -->
+    <div>
+      <div class="card">
+        <div class="ctitle">➕ 코드 추가</div>
+        <div class="field">
+          <label>사용자 이름 *</label>
+          <input type="text" id="new-name" placeholder="예: 홍길동"/>
+        </div>
+        <div class="field">
+          <label>접속 코드 *</label>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="new-code" placeholder="예: ANT-2026-A1" style="flex:1;text-transform:uppercase"/>
+            <button onclick="genCode()" style="padding:8px 12px;background:var(--bg);border:1px solid var(--bor);border-radius:var(--rs);font-size:12px;cursor:pointer;white-space:nowrap;font-family:inherit">🎲 자동</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>만료일 *</label>
+          <input type="date" id="new-expire"/>
+        </div>
+        <div class="field">
+          <label>메모 (선택)</label>
+          <input type="text" id="new-memo" placeholder="예: 파주지점 담당자"/>
+        </div>
+        <button class="addbtn" onclick="addCode()">✚ 코드 추가하기</button>
+      </div>
+
+      <!-- 코드 출력 -->
+      <div class="card" style="margin-top:1rem">
+        <div class="ctitle">
+          📋 index.html 적용 코드
+          <button class="copybtn" style="width:auto;padding:5px 12px;font-size:11px" onclick="copyCode()">복사</button>
+        </div>
+        <div class="output-box" id="output-box">코드를 추가하면 여기에 표시됩니다...</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:6px">위 내용을 index.html의 ACCESS_CODES 배열 전체와 교체하세요</div>
+      </div>
+    </div>
+
+    <!-- 우측: 코드 목록 -->
+    <div>
+      <div class="card">
+        <div class="ctitle">
+          👥 코드 목록
+          <span style="font-size:11px;font-weight:400;color:var(--t3)">클릭으로 삭제</span>
+        </div>
+        <div class="code-list" id="code-list">
+          <div class="empty-msg">아직 추가된 코드가 없어요</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 관리자 비밀번호 (변경 가능)
+var ADMIN_PW = 'ntelecom2026!';
+
+// ── 로컬 스토리지에서 코드 목록 관리
+var codes = [];
+
+function adminLogin(){
+  var pw = document.getElementById('admin-pw').value;
+  if(pw === ADMIN_PW){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('main-screen').style.display='block';
+    loadCodes();
+    // 기본 만료일 설정 (1년 후)
+    var d = new Date();
+    d.setFullYear(d.getFullYear()+1);
+    document.getElementById('new-expire').value = d.toISOString().slice(0,10);
+  } else {
+    document.getElementById('login-err').textContent='비밀번호가 틀렸습니다.';
+    document.getElementById('admin-pw').value='';
+  }
+}
+
+function loadCodes(){
+  try{ codes=JSON.parse(localStorage.getItem('ant_codes')||'[]'); }catch(e){ codes=[]; }
+  // 기본 관리자 코드가 없으면 추가
+  if(!codes.find(function(c){return c.code==='ANT-ADMIN-99';})){
+    codes.unshift({code:'ANT-ADMIN-99',name:'관리자(경도)',expire:'2099-12-31',memo:'관리자 전용',created:new Date().toISOString().slice(0,10)});
+    saveCodes();
+  }
+  renderCodes();
+  renderOutput();
+}
+
+function saveCodes(){
+  localStorage.setItem('ant_codes', JSON.stringify(codes));
+}
+
+function genCode(){
+  var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var part1='ANT', part2='', part3='';
+  for(var i=0;i<4;i++) part2+=chars[Math.floor(Math.random()*chars.length)];
+  for(var i=0;i<4;i++) part3+=chars[Math.floor(Math.random()*chars.length)];
+  document.getElementById('new-code').value=part1+'-'+part2+'-'+part3;
+}
+
+function addCode(){
+  var name = document.getElementById('new-name').value.trim();
+  var code = document.getElementById('new-code').value.trim().toUpperCase();
+  var expire = document.getElementById('new-expire').value;
+  var memo = document.getElementById('new-memo').value.trim();
+
+  if(!name){ showToast('사용자 이름을 입력해주세요','err'); return; }
+  if(!code){ showToast('접속 코드를 입력해주세요','err'); return; }
+  if(!expire){ showToast('만료일을 선택해주세요','err'); return; }
+  if(codes.find(function(c){return c.code===code;})){
+    showToast('이미 존재하는 코드입니다','err'); return;
+  }
+
+  codes.push({
+    code: code,
+    name: name,
+    expire: expire,
+    memo: memo||'',
+    created: new Date().toISOString().slice(0,10)
+  });
+  saveCodes();
+  renderCodes();
+  renderOutput();
+
+  // 입력 초기화
+  document.getElementById('new-name').value='';
+  document.getElementById('new-code').value='';
+  document.getElementById('new-memo').value='';
+  genCode(); // 다음 코드 미리 생성
+
+  showToast('[v] "'+name+'" 코드 추가됐어요!','ok');
+}
+
+function deleteCode(idx){
+  var c = codes[idx];
+  if(c.code==='ANT-ADMIN-99'){ showToast('관리자 코드는 삭제할 수 없어요','err'); return; }
+  if(!confirm('"'+c.name+'" ('+c.code+') 코드를 삭제할까요?\n삭제 후 GitHub 재업로드 하면 즉시 차단됩니다.')){ return; }
+  codes.splice(idx,1);
+  saveCodes();
+  renderCodes();
+  renderOutput();
+  showToast('"'+c.name+'" 코드 삭제됐어요. GitHub 재업로드 잊지 마세요!','');
+}
+
+function renderCodes(){
+  var list = document.getElementById('code-list');
+  var today = new Date().toISOString().slice(0,10);
+  var active=0, expired=0;
+
+  if(!codes.length){
+    list.innerHTML='<div class="empty-msg">아직 추가된 코드가 없어요</div>';
+    return;
+  }
+
+  list.innerHTML = codes.map(function(c,i){
+    var isExpired = c.expire < today;
+    if(isExpired) expired++; else active++;
+    var expireClass = isExpired ? 'red' : '';
+    var expireText = isExpired ? '⚠ 만료됨 ('+c.expire+')' : '~'+c.expire;
+    return '<div class="code-item'+(isExpired?' expired':'')+'">'
+      +'<div class="ci-info">'
+      +'<div class="ci-name">'+c.name+(c.memo?' <span style="font-size:10px;color:var(--t3)">'+c.memo+'</span>':'')+'</div>'
+      +'<div><span class="ci-code">'+c.code+'</span></div>'
+      +'<div class="ci-expire '+expireClass+'">'+expireText+' | 생성: '+c.created+'</div>'
+      +'</div>'
+      +(c.code!=='ANT-ADMIN-99'?'<button class="delbtn" onclick="deleteCode('+i+')">삭제</button>':'<span style="font-size:10px;color:var(--green);padding:4px 8px;border-radius:4px;background:var(--gl)">관리자</span>')
+      +'</div>';
+  }).join('');
+
+  document.getElementById('stat-total').textContent = codes.length;
+  document.getElementById('stat-active').textContent = active;
+  document.getElementById('stat-expired').textContent = expired;
+}
+
+function renderOutput(){
+  var lines = codes.map(function(c){
+    return '  {code:\''+c.code+'\', name:\''+c.name+'\', expire:\''+c.expire+'\'},'+(c.memo?' // '+c.memo:'');
+  });
+  var output = 'var ACCESS_CODES = [\n'+lines.join('\n')+'\n];';
+  document.getElementById('output-box').textContent = output;
+}
+
+function copyCode(){
+  var text = document.getElementById('output-box').textContent;
+  if(!text||text.includes('표시됩니다')){ showToast('복사할 코드가 없어요','err'); return; }
+  navigator.clipboard.writeText(text).then(function(){
+    showToast('[v] 복사됐어요! index.html의 ACCESS_CODES에 붙여넣으세요','ok');
+  });
+}
+
+function showToast(msg,type){
+  var el=document.getElementById('toast');
+  el.className='toast'+(type?' '+type:'');
+  el.textContent=msg;
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},3000);
+}
+
+// 엔터 키
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none'){
+    adminLogin();
+  }
+});
+</script>
+</body>
+</html>
