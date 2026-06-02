@@ -1104,16 +1104,33 @@ async function ensurePdfLibs(){
   return pdfDepsReady();
 }
 // ★긴 리포트도 안전하게★ — 전체를 하나의 거대 캔버스로 만들지 않고, 표지·각 PART를
-// 블록 단위로 캡처해 jsPDF로 직접 조립한다(브라우저 캔버스 높이 한계로 인한 빈 PDF 방지).
+// 블록 단위로 캡처해 jsPDF로 직접 조립(거대 캔버스로 인한 빈 PDF 방지).
+// 페이지 경계는 ★문단·카드·표 행 사이의 안전한 지점★에서만 끊어 글자가 잘리지 않게 한다.
+function collectBreakPoints(block, maxCssH){
+  // 페이지로 나눠도 되는 "안전한 끊김 지점"(각 단위의 아래 경계)을 css px(블록 상단 기준)로 수집
+  const top=block.getBoundingClientRect().top;
+  const pts=[];
+  function push(el){ const r=el.getBoundingClientRect(); if(r.height>0) pts.push(r.bottom-top); }
+  function walk(el){
+    const kids=Array.from(el.children).filter(c=>c.offsetHeight>0 && getComputedStyle(c).visibility!=='hidden' && getComputedStyle(c).display!=='none');
+    if(!kids.length){ push(el); return; }                 // 잎 요소
+    if(el!==block && el.getBoundingClientRect().height<=maxCssH){ push(el); return; } // 한 페이지에 들어가면 통째로 한 단위
+    for(const c of kids) walk(c);                          // 너무 크면 더 잘게
+  }
+  walk(block);
+  pts.sort((a,b)=>a-b);
+  // 중복 제거
+  const out=[]; for(const p of pts){ if(!out.length||p-out[out.length-1]>1) out.push(p); }
+  return out;
+}
 async function buildPdfDoc(scale,quality){
   const JsPDF=window.jspdf&&window.jspdf.jsPDF;
   if(!JsPDF||typeof html2canvas==='undefined')throw new Error('PDF 모듈 로드 실패 — 새로고침 후 다시 시도하세요');
   const pdf=new JsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
   const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
-  const Mx=8, Mtop=10, Mbot=12, contentW=pageW-2*Mx, usableH=pageH-Mtop-Mbot;
+  const Mx=8, Mtop=10, Mbot=12, contentW=pageW-2*Mx, fullUsableMm=pageH-Mtop-Mbot;
   let y=Mtop, first=true;
   const rv=$('resultView');
-  // 캡처 대상 블록: 표지·목차·안내·만세력 + 각 PART(파트박스 내부까지 펼침)
   const blocks=[];
   for(const el of rv.children){
     if(el.id==='partsBox'||el.classList.contains('parts')){
@@ -1123,24 +1140,33 @@ async function buildPdfDoc(scale,quality){
   const opt={scale:scale||2,useCORS:true,backgroundColor:'#ffffff',ignoreElements:(x)=>x.classList&&(x.classList.contains('sky')||x.classList.contains('aurora')||x.id==='stars')};
   for(const block of blocks){
     const isPart=block.classList.contains('part');
-    // PART는 새 페이지에서 시작(가독성)
     if(isPart && !first && y>Mtop){ pdf.addPage(); y=Mtop; }
+    const blockWcss=block.offsetWidth, blockHcss=block.scrollHeight;
+    const k=contentW/blockWcss;                 // mm per css px (세로 환산)
+    const fullUsableCss=fullUsableMm/k;
+    const cuts=collectBreakPoints(block, fullUsableCss); // 안전한 끊김 지점(css px)
+    cuts.push(blockHcss);
     const canvas=await html2canvas(block,opt);
     if(!canvas||!canvas.width||!canvas.height)continue;
-    const pxPerMm=canvas.width/contentW, fullHmm=canvas.height/pxPerMm;
-    // 한 페이지에 들어가는 블록인데 남은 공간이 부족하면 새 페이지로(잘림 최소화)
-    if(fullHmm<=usableH && y>Mtop && (y+fullHmm)>(pageH-Mbot)){ pdf.addPage(); y=Mtop; }
-    let srcY=0, remMm=fullHmm;
-    while(remMm>0.4){
-      let avail=pageH-Mbot-y;
-      if(avail<8){ pdf.addPage(); y=Mtop; avail=pageH-Mbot-y; }
-      const sliceMm=Math.min(avail,remMm), slicePx=Math.max(1,Math.round(sliceMm*pxPerMm));
-      const tmp=document.createElement('canvas'); tmp.width=canvas.width; tmp.height=slicePx;
+    const pxPerCss=canvas.height/blockHcss;     // 캔버스 px per css px
+    let cssY=0;
+    while(cssY < blockHcss-0.5){
+      let availMm=pageH-Mbot-y, availCss=availMm/k;
+      if(availCss<24){ pdf.addPage(); y=Mtop; availMm=fullUsableMm; availCss=fullUsableCss; }
+      const target=cssY+availCss;
+      // 남은 공간에 들어가는 가장 큰 안전 끊김 지점
+      let B=-1; for(const c of cuts){ if(c>cssY+1 && c<=target+0.5) B=c; }
+      if(B<0){
+        if(y>Mtop){ pdf.addPage(); y=Mtop; continue; } // 새 페이지(공간 더 확보) 후 재시도
+        B=Math.min(blockHcss, cssY+fullUsableCss);     // 한 단위가 한 페이지보다 큼 → 부득이 분할
+      }
+      const sCss=B-cssY, sPx=Math.max(1,Math.round(sCss*pxPerCss)), srcYpx=Math.round(cssY*pxPerCss);
+      const tmp=document.createElement('canvas'); tmp.width=canvas.width; tmp.height=sPx;
       const ctx=tmp.getContext('2d'); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,tmp.width,tmp.height);
-      ctx.drawImage(canvas,0,srcY,canvas.width,slicePx,0,0,canvas.width,slicePx);
-      pdf.addImage(tmp.toDataURL('image/jpeg',quality||0.85),'JPEG',Mx,y,contentW,sliceMm,undefined,'FAST');
-      srcY+=slicePx; remMm-=sliceMm; y+=sliceMm;
-      if(remMm>0.4){ pdf.addPage(); y=Mtop; }
+      ctx.drawImage(canvas,0,srcYpx,canvas.width,sPx,0,0,canvas.width,sPx);
+      pdf.addImage(tmp.toDataURL('image/jpeg',quality||0.85),'JPEG',Mx,y,contentW,sCss*k,undefined,'FAST');
+      y+=sCss*k; cssY=B;
+      if(cssY < blockHcss-0.5){ pdf.addPage(); y=Mtop; }
     }
     first=false;
     if(block.classList.contains('pdf-cover')){ pdf.addPage(); y=Mtop; } // 표지는 단독 페이지
