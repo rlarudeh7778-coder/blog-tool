@@ -133,7 +133,7 @@ select:focus{outline:0;border-color:var(--green)}
   </div>
 </div>
 
-<div class="demo-note">⚡ <b>데모 버전</b>입니다 — 아래 카드는 예시 샘플 데이터입니다. 검색·필터·정렬은 실제로 동작합니다. 나중에 실제 데이터(Supabase/JSON)로 교체할 수 있어요.</div>
+<div class="demo-note">⚡ 카드 데이터는 <b>data.json</b> 파일에서 불러옵니다 — 그 파일만 수정하면 레퍼런스가 추가/수정됩니다. (검색·필터·정렬 자동 동작)</div>
 
 <div class="resbar">
   <div class="rescount">검색 결과 <b id="cnt">0</b>건</div>
@@ -160,14 +160,12 @@ select:focus{outline:0;border-color:var(--green)}
 </div>
 
 <script>
-/* ===== 태그 정의 ===== */
-var TAGS=["음식/요리","카페","패션","뷰티","여행","인테리어","운동/헬스","육아","반려동물","IT/가전","자기계발","재테크"];
-
-/* ===== 샘플 레퍼런스 데이터 =====
-   실제 데이터로 교체 시: 이 배열을 fetch('data.json') 또는 Supabase 조회 결과로 바꾸면 됩니다.
-   필드: id, caption, tag, source(instagram|youtube|tiktok), media(IMAGE|CAROUSEL|VIDEO),
-        likes, comments, daysAgo, url(원본 링크) */
-var DATA=[
+/* ===== 데이터 =====
+   실제 데이터는 data.json 에서 로드합니다. (그 파일만 수정하면 됩니다)
+   아래 FALLBACK_* 는 data.json 로드 실패 시(예: 로컬 file:// 미리보기) 쓰이는 안전망입니다. */
+var TAGS=[], DATA=[];
+var FALLBACK_TAGS=["음식/요리","카페","패션","뷰티","여행","인테리어","운동/헬스","육아","반려동물","IT/가전","자기계발","재테크"];
+var FALLBACK_DATA=[
  {id:1, tag:"카페", source:"instagram", media:"CAROUSEL", likes:18400, comments:312, daysAgo:3,  caption:"요즘 뜨는 성수동 감성 카페 5곳 ☕ 저장 필수! 통창 뷰부터 베이커리 맛집까지 한 번에 정리했어요."},
  {id:2, tag:"음식/요리", source:"instagram", media:"VIDEO", likes:52300, comments:1240, daysAgo:1, caption:"꼭 ~ 해야 하는 에어프라이어 3가지 꿀팁 🍗 이거 모르면 손해! 바삭함이 차원이 달라져요."},
  {id:3, tag:"여행", source:"youtube", media:"VIDEO", likes:8700, comments:540, daysAgo:6, caption:"제주도 2박3일 우정여행 브이로그 🌊 가성비 숙소 + 인생샷 스팟 다 알려드림."},
@@ -203,22 +201,23 @@ var DATA=[
 /* 미디어 타입 표기 */
 var MEDIA_LABEL={IMAGE:"🖼 이미지",CAROUSEL:"🎞 캐러셀",VIDEO:"▶ 영상"};
 var SRC_ICON={instagram:"📷",youtube:"▶️",tiktok:"🎵"};
-function thumbUrl(it){return "https://picsum.photos/seed/ref"+it.id+"/480/600";}
+function thumbUrl(it){return it.thumbnail?it.thumbnail:("https://picsum.photos/seed/ref"+it.id+"/480/600");}
 function fmt(n){return n>=10000?(n/10000).toFixed(1).replace(/\.0$/,'')+"만":n>=1000?(n/1000).toFixed(1).replace(/\.0$/,'')+"천":""+n;}
 
 /* ===== 상태 ===== */
 var selectedTags=new Set();
 
 /* 태그 칩 렌더 */
-(function initTags(){
+function buildTags(){
   var box=document.getElementById('tagchips');
+  box.innerHTML='';
   TAGS.forEach(function(t){
     var c=document.createElement('div');
     c.className='chip';c.textContent=t;
     c.onclick=function(){ if(selectedTags.has(t)){selectedTags.delete(t);c.classList.remove('on');} else {selectedTags.add(t);c.classList.add('on');} render(); };
     box.appendChild(c);
   });
-})();
+}
 
 /* 필터 변경 시 자동 렌더 */
 ['source','media','likes','sort'].forEach(function(id){document.getElementById(id).addEventListener('change',render);});
@@ -246,7 +245,7 @@ function render(){
   rows.sort(function(a,b){
     if(sort==='likes') return b.likes-a.likes;
     if(sort==='comments') return b.comments-a.comments;
-    return a.daysAgo-b.daysAgo; /* recent */
+    return a._days-b._days; /* recent */
   });
 
   document.getElementById('cnt').textContent=rows.length;
@@ -278,7 +277,7 @@ function escapeHtml(s){return s.replace(/[&<>"']/g,function(c){return {'&':'&amp
 function openDetail(id){
   var it=DATA.find(function(x){return x.id===id;});if(!it)return;
   document.getElementById('d-img').src=thumbUrl(it);
-  document.getElementById('d-src').textContent=SRC_ICON[it.source]+' '+it.source+' · '+MEDIA_LABEL[it.media].replace(/^.\s?/,'')+' · '+it.daysAgo+'일 전';
+  document.getElementById('d-src').textContent=SRC_ICON[it.source]+' '+it.source+' · '+MEDIA_LABEL[it.media].replace(/^.\s?/,'')+' · '+it._days+'일 전';
   document.getElementById('d-tag').textContent='#'+it.tag;
   document.getElementById('d-likes').textContent='❤ 좋아요 '+it.likes.toLocaleString();
   document.getElementById('d-comments').textContent='💬 댓글 '+it.comments.toLocaleString();
@@ -301,7 +300,26 @@ function resetAll(){
   render();
 }
 
-render();
+/* ===== 데이터 로드 (data.json) ===== */
+function normalize(items){
+  var now=Date.now();
+  items.forEach(function(it){
+    if(typeof it.daysAgo==='number'){ it._days=it.daysAgo; }
+    else if(it.date){ it._days=Math.max(0,Math.round((now-new Date(it.date).getTime())/86400000)); }
+    else { it._days=0; }
+  });
+  return items;
+}
+function applyData(tags,items){
+  TAGS=(tags&&tags.length)?tags:FALLBACK_TAGS;
+  DATA=normalize((items&&items.length)?items:FALLBACK_DATA);
+  buildTags();
+  render();
+}
+fetch('data.json',{cache:'no-store'})
+  .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+  .then(function(j){ applyData(j.tags, j.items); })
+  .catch(function(){ applyData(FALLBACK_TAGS, FALLBACK_DATA); });
 </script>
 </body>
 </html>
