@@ -208,8 +208,9 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
         <div class="segbtn on" data-v="기본">기본</div>
         <div class="segbtn" data-v="프리미엄">프리미엄</div>
         <div class="segbtn" data-v="궁합">궁합</div>
+        <div class="segbtn" data-v="작명">작명·개명</div>
       </div>
-      <div class="hint" id="pkgHint">기본: 핵심 3파트 · 프리미엄: 심층 10파트 · 궁합: 두 사람 관계 분석</div>
+      <div class="hint" id="pkgHint">기본: 핵심 3파트 · 프리미엄: 심층 10파트 · 궁합: 두 사람 관계 분석 · 작명: 사주 기반 이름 추천</div>
     </div>
 
     <div id="p1head" style="display:none;font-weight:800;color:var(--navy);font-size:13px;margin:.2rem 0 .7rem">👤 본인 정보</div>
@@ -277,6 +278,37 @@ header{background:linear-gradient(90deg,#0e1530,#1a2750);border-bottom:1px solid
         </div>
         <div class="chk"><input type="checkbox" id="iNoTime2"><label for="iNoTime2">상대방 시각을 모름 (시주 제외)</label></div>
       </div>
+    </div>
+
+    <!-- 작명·개명 전용 -->
+    <div id="namingblock" style="display:none">
+      <div style="font-weight:800;color:var(--navy);font-size:13px;margin:1.1rem 0 .7rem;border-top:1px dashed #d9deea;padding-top:1.1rem">✒️ 작명·개명 정보</div>
+      <div class="hint" style="margin:-.2rem 0 .8rem">위 「생년월일·시각·성별」은 <b>이름의 주인공(아이 또는 본인)</b> 기준으로 입력하세요. 사주를 계산해 이름에 보완할 기운을 찾습니다.</div>
+      <div class="field"><label>작명 종류</label>
+        <div class="seg" id="iNameType">
+          <div class="segbtn on" data-v="작명">신생아 작명</div>
+          <div class="segbtn" data-v="개명">개명(이름 변경)</div>
+        </div>
+      </div>
+      <div class="field"><label>성씨(姓) <span class="csub">한글 + 가능하면 한자</span></label><input id="iSurname" placeholder="예: 김 (金) / 이 / 박">
+        <div class="hint">성씨는 이름 추천과 발음·획수 계산의 기준이라 꼭 입력하세요.</div>
+      </div>
+      <div class="field" id="curNameField" style="display:none"><label>현재 이름 <span class="csub">개명 시</span></label><input id="iCurName" placeholder="예: 김철수 (바꾸고 싶은 현재 이름)"></div>
+      <div class="field"><label>이름 글자 수</label>
+        <div class="seg" id="iNameLen">
+          <div class="segbtn on" data-v="2">두 글자(권장)</div>
+          <div class="segbtn" data-v="1">외자(한 글자)</div>
+          <div class="segbtn" data-v="3">세 글자</div>
+        </div>
+      </div>
+      <div class="field"><label>표기 선호</label>
+        <div class="seg" id="iNameStyle">
+          <div class="segbtn on" data-v="한자">한자 이름(권장)</div>
+          <div class="segbtn" data-v="한글">순우리말(한글)</div>
+        </div>
+      </div>
+      <div class="field"><label>돌림자(항렬) (선택)</label><input id="iDolrim" placeholder="예: 가운데 '준'자 돌림 / 끝자 '현'자 — 없으면 비워두세요"></div>
+      <div class="field"><label>피하고 싶은 글자·발음 / 원하는 느낌 (선택)</label><textarea id="iNamePref" placeholder="예: '자'로 끝나는 이름 제외, 부르기 쉬운 이름, 영어로도 자연스러운 이름, 밝고 씩씩한 느낌 등"></textarea></div>
     </div>
 
     <div class="field"><label>특히 궁금한 점 / 추가 질문 (선택) <span class="csub">프리미엄·궁합: 전용 답변 섹션 추가</span></label><textarea id="iAsk" placeholder="예: 올해 이직운, 결혼 시기, 두 사람 결혼해도 될지 등 — 프리미엄·궁합은 이 질문에 답하는 「추가 질문 답변」 섹션이 리포트 맨 뒤에 추가됩니다."></textarea></div>
@@ -473,7 +505,14 @@ const GUNGHAP_PARTS=[
  {t:'갈등 요소와 보완점',g:'서로의 부족한 오행과 성향 차이에서 오는 현실적 갈등 포인트와, 그것을 메워주는 구체적인 보완 방법.'},
  {t:'관계 발전을 위한 조언',g:'두 사람이 오래 좋은 관계를 이어가기 위한 실천적 조언 — 소통 방식, 역할, 서로를 위하는 태도, 좋은 시기 활용법.'}
 ];
-function partsFor(p){return p==='프리미엄'?PREMIUM_PARTS:(p==='궁합'?GUNGHAP_PARTS:BASIC_PARTS);}
+const NAMING_PARTS=[
+ {t:'사주로 본 타고난 기운',g:'이름의 주인공(아이 또는 본인)의 사주팔자·오행 분포·일간·신강신약을 분석해 타고난 기질과 성향을 정리하고, 무엇보다 사주의 균형을 위해 「채워주면 좋은 오행(용신·희신)」과 「과한 오행(피할 기운)」을 명확히 도출하세요. 이 결론이 뒤의 작명 기준이 됩니다.'},
+ {t:'이 아이에게 맞는 작명 기준',g:'위에서 도출한 보완 오행을 바탕으로, 성명학의 세 가지 기준을 쉽게 설명하며 이 사람에게 적용할 방향을 제시하세요. ① 발음오행(이름을 소리 냈을 때의 오행, 성씨와의 상생) ② 자원오행(한자 부수가 품은 오행으로 부족한 기운 보완) ③ 수리길흉(획수 조합의 길한 수리). 어떤 소리/한자 기운을 넣고 무엇을 피할지 기준을 정리합니다.'},
+ {t:'추천 이름 후보',g:'위 기준을 충족하는 이름 후보를 5~7개 제시하세요. 반드시 표로 정리: | 이름(성+이름) | 한자 | 한자 뜻(훈음) | 보완 오행 | 한 줄 추천 이유 |. 한자는 대법원 인명용 한자 중 뜻이 밝고 부르기 좋은 글자만 쓰고, 어렵거나 부정적·이상한 뜻의 글자는 제외하세요. 성씨와 어감이 잘 어울리고 발음이 편한 이름으로.'},
+ {t:'베스트 추천 이름 상세 풀이',g:'후보 중 가장 추천하는 이름 1~2개를 골라 깊이 있게 풀이하세요. 각 한자의 뜻과 기대하는 모습, 발음오행과 성씨와의 상생, 자원오행이 사주의 어떤 부족을 채우는지, 수리(획수) 구성과 의미, 부를 때의 어감과 인상까지. 이 이름을 가진 아이가 어떤 사람으로 자라길 바라는지 따뜻한 메시지로 마무리.'},
+ {t:'작명·출생신고 시 주의사항과 조언',g:'좋은 이름을 짓고 쓰기 위한 실용 조언 — 부르기 쉽고 별명·놀림 소지가 없는지, 항렬(돌림자)·가족 이름과의 중복, 출생신고 시 한자 등록(인명용 한자) 확인, 영문 표기, 이름이 운을 만드는 게 아니라 좋은 기운을 더해 주는 보조임을 따뜻하게 안내.'}
+];
+function partsFor(p){return p==='프리미엄'?PREMIUM_PARTS:(p==='궁합'?GUNGHAP_PARTS:(p==='작명'?NAMING_PARTS:BASIC_PARTS));}
 let activePkg='기본';
 let PARTS=BASIC_PARTS; // 활성 패키지의 파트(패키지 선택/계산 시 갱신)
 
@@ -518,15 +557,22 @@ $('iNoTime').onchange=function(){let dis=this.checked;$('iH').disabled=dis;$('iM
 $('iNoTime2').onchange=function(){let dis=this.checked;$('iH2').disabled=dis;$('iMin2').disabled=dis;$('iH2').style.opacity=$('iMin2').style.opacity=dis?.4:1;};
 
 // 패키지 전환
-const PKG_HINT={기본:'기본: 사주팔자·오행·성격·올해의 운세 (핵심 3파트)',프리미엄:'프리미엄: 대운·재물·애정·직업·건강 등 심층 10파트 + 추가질문 1회',궁합:'궁합: 두 사람 정보를 입력해 관계를 심층 분석 (5파트)'};
+const PKG_HINT={기본:'기본: 사주팔자·오행·성격·올해의 운세 (핵심 3파트)',프리미엄:'프리미엄: 대운·재물·애정·직업·건강 등 심층 10파트 + 추가질문 1회',궁합:'궁합: 두 사람 정보를 입력해 관계를 심층 분석 (5파트)',작명:'작명·개명: 아이/본인의 사주로 보완할 기운을 찾아 어울리는 이름을 추천 (5파트)'};
 $('iPkg').querySelectorAll('.segbtn').forEach(b=>b.addEventListener('click',()=>{
   activePkg=b.dataset.v; PARTS=partsFor(activePkg);
-  let isG=(activePkg==='궁합');
+  let isG=(activePkg==='궁합'), isN=(activePkg==='작명');
   $('p2block').style.display=isG?'block':'none';
   $('p1head').style.display=isG?'block':'none';
+  $('namingblock').style.display=isN?'block':'none';
   $('pkgHint').textContent=PKG_HINT[activePkg];
   renderTOC();
 }));
+// 작명: 개명 선택 시 현재 이름 입력칸 표시
+document.addEventListener('click',e=>{
+  if(e.target&&e.target.closest&&e.target.closest('#iNameType')){
+    const cf=$('curNameField'); if(cf) cf.style.display=(segVal('iNameType')==='개명')?'block':'none';
+  }
+});
 function renderTOC(){
   const list=partsFor(activePkg);
   $('tocList').innerHTML=list.map((p,i)=>'<div><b style="color:var(--gold2)">PART '+(i+1)+'</b> · '+p.t+'</div>').join('');
@@ -552,7 +598,7 @@ function readPerson(suf){
 function buildParts(pkg, ask){
   let base=partsFor(pkg).slice();
   // 프리미엄·궁합에서 추가 질문이 있으면 전용 섹션을 마지막에 추가
-  if(ask && ask.trim() && pkg!=='기본'){
+  if(ask && ask.trim() && (pkg==='프리미엄'||pkg==='궁합')){
     base.push({t:'고객님의 추가 질문 답변', ask:true,
       g:'고객이 직접 남긴 질문에 대해, 위 사주(궁합이면 두 사람의 사주)를 근거로 정성껏 답하는 섹션입니다. 질문에 정면으로 답하되 사주적 근거(일간·오행·십성·대운/세운)를 들어 설명하고, 단정 대신 경향·가능성으로 서술하세요. 질문: 「'+ask.trim()+'」'});
   }
@@ -561,11 +607,18 @@ function buildParts(pkg, ask){
 function calcAndShow(){
   const pkg=segVal('iPkg'); activePkg=pkg;
   let p1=readPerson(''); if(p1.err){toast(p1.err,'err');return;}
-  let p2=null;
+  let p2=null, naming=null;
   if(pkg==='궁합'){ p2=readPerson('2'); if(p2.err){toast(p2.err,'err');return;} }
+  if(pkg==='작명'){
+    const sur=$('iSurname').value.trim();
+    if(!sur){toast('성씨(姓)를 입력하세요','err');return;}
+    const type=segVal('iNameType');
+    if(type==='개명'&&!$('iCurName').value.trim()){toast('개명은 현재 이름을 입력하세요','err');return;}
+    naming={type, surname:sur, curName:$('iCurName').value.trim(), nameLen:segVal('iNameLen'), style:segVal('iNameStyle'), dolrim:$('iDolrim').value.trim(), pref:$('iNamePref').value.trim()};
+  }
   const ask=$('iAsk').value.trim();
   PARTS=buildParts(pkg, ask);
-  cust=Object.assign({}, p1, {pkg, ask, email:$('iEmail').value.trim(), phone:$('iPhone').value.trim(), p2});
+  cust=Object.assign({}, p1, {pkg, ask, email:$('iEmail').value.trim(), phone:$('iPhone').value.trim(), p2, naming});
   renderSaju();
   go('saju');
   toast(ask&&pkg!=='기본'?'사주판 계산 완료 — 추가 질문 답변 섹션이 포함됩니다':'사주판이 계산되었습니다','ok');
@@ -628,12 +681,28 @@ function sajuDataText(){
   if(cust.pkg==='궁합'&&cust.p2){
     return '■ 본인\n'+personData(cust)+'\n\n■ 상대방\n'+personData(cust.p2)+(cust.ask?'\n\n■ 추가 질문: '+cust.ask:'');
   }
+  if(cust.pkg==='작명'&&cust.naming){
+    const n=cust.naming;
+    let req='\n\n■ 작명 요청 정보'
+      +'\n・작명 종류: '+(n.type==='개명'?'개명(현재 이름을 바꿈)':'신생아 작명')
+      +(n.type==='개명'&&n.curName?'\n・현재 이름: '+n.curName:'')
+      +'\n・성씨(姓): '+n.surname
+      +'\n・이름 글자 수: '+(n.nameLen==='1'?'외자(한 글자)':n.nameLen+'글자')
+      +'\n・표기 선호: '+(n.style==='한글'?'순우리말(한글)':'한자 이름')
+      +(n.dolrim?'\n・돌림자(항렬): '+n.dolrim:'')
+      +(n.pref?'\n・피하고 싶은 글자/원하는 느낌: '+n.pref:'');
+    return '■ 이름의 주인공(사주)\n'+personData(cust)+req;
+  }
   return '■ 고객\n'+personData(cust)+(cust.ask?'\n\n■ 고객이 특히 궁금해하는 점: '+cust.ask:'');
 }
 function sysPrompt(){
+  if(cust&&cust.pkg==='작명') return namingSysPrompt();
   return '당신은 30년 경력의 정통 명리학자이자, 따뜻하고 친절한 사주 상담가입니다. 사주팔자(천간·지지), 오행의 생극제화, 십성(비겁·식상·재성·관성·인성), 신강신약, 용신, 대운·세운을 근거로 깊이 있게 풀이합니다.\n\n[작성 원칙]\n- 반드시 제공된 사주 데이터(팔자·오행·십성·대운)를 구체적 근거로 들어 설명하세요. "일간 OO은…", "월지 OO가 …이므로"처럼.\n- 한자 전문용어(상관·비견·식신·정인·편관·용신 등)가 나오면 반드시 괄호로 쉬운 뜻을 붙이세요. 예: 상관(傷官, 자유롭고 표현력이 강한 기운).\n- 분량은 넉넉하고 풍부하게. 두루뭉술한 일반론 금지, 이 사람만의 사주에 맞춰 개인화.\n- 따뜻하고 품격 있는 존댓말. 공포 조성 금지, 희망과 실천 방향을 함께.\n- ★단정적·확정적 예언 절대 금지★: "올해 이혼합니다", "~병에 걸립니다", "반드시 망합니다" 같은 표현 금지. 대신 "~한 경향이 있습니다", "~에 유의하시면 좋겠습니다", "~할 가능성이 보입니다"처럼 경향·가능성으로만 서술하고, 노력으로 충분히 달라질 수 있음을 함께 전하세요. 본 콘텐츠는 참고용임을 전제로 합니다.\n- ★나이 기준★: 사주 데이터의 대운 나이를 비롯해 본문에서 언급하는 모든 나이·시기는 반드시 <b>세는나이(한국식 나이)</b> 기준으로 서술하세요. 특정 나이를 처음 언급할 때 한 번 "(세는나이 기준)"이라고 덧붙여 독자가 헷갈리지 않게 하세요.\n- 마크다운 사용: ## 소제목, **강조**, 표(| 머리 | … |), 목록(-), > 인용.\n\n[★각 PART는 아래 세 부분을 반드시 모두 포함하세요★]\n1) (본문 해석) 명리학 근거를 들어 전문적으로, 풍부하게 풀이.\n2) "## 💡 쉽게 풀어보면" — 바로 위 내용을 한자·전문용어 없이 중학생도 이해할 수 있게, 일상적인 비유를 들어 다시 설명(4~6문장).\n3) "## ✅ 이렇게 해보세요" — 이 영역에서 운을 더 좋게 만드는 구체적인 행동·말·습관·태도를 당장 실천 가능한 형태로 4~6가지 목록으로.\n\n- 인사말·맺음말·군더더기 없이 본문만. 다른 PART와 중복 금지. 요청된 PART 내용만 작성.';
 }
 function lenGuide(){return {표준:'각 부분을 충실히(본문 5~7문단)',상세:'각 부분을 풍부하고 구체적으로(본문 7~10문단)',최대:'각 부분을 매우 상세하고 깊이 있게(본문 10~14문단, 소제목 활용)'}[getLen()];}
+function namingSysPrompt(){
+  return '당신은 30년 경력의 작명(성명학) 전문가이자 정통 명리학자입니다. 사주의 부족한 기운을 이름으로 보완하는 「사주 작명」을 합니다.\n\n[작명 3대 원리 — 반드시 근거로 사용]\n1) 발음오행(소리오행): 이름을 소리 냈을 때 자음이 갖는 오행(ㄱㅋ=목, ㄴㄷㄹㅌ=화, ㅇㅎ=토, ㅅㅈㅊ=금, ㅁㅂㅍ=수)이 성씨→이름으로 상생(서로 살려주는)으로 흐르도록.\n2) 자원오행(한자오행): 한자 부수가 품은 오행으로 사주에서 부족한 오행을 채움.\n3) 수리길흉: 성+이름 획수 조합이 길한 수리가 되도록(흉수 회피).\n\n[작성 원칙]\n- 먼저 사주(팔자·오행 분포·일간·신강신약)를 근거로 「채워야 할 오행(용신·희신)」과 「피할 오행」을 분명히 정한 뒤, 그 결론에 맞는 이름을 제시하세요. "오행에 OO가 부족하므로 OO 기운의 글자를…"처럼 반드시 사주와 연결.\n- 한자는 대법원 인명용 한자 중에서, 뜻이 밝고 부르기 좋은 글자만 사용하세요. 어렵거나 부정적·기괴한 뜻의 글자는 절대 제외.\n- 추천 이름은 성씨와 함께(예: 김+이름) 제시하고, 각 한자의 훈음(뜻)·발음오행·자원오행·획수를 밝히세요. 추천 후보는 표로 정리.\n- 한자 전문용어가 나오면 괄호로 쉬운 뜻을 붙이세요.\n- 따뜻하고 품격 있는 존댓말. ★단정 금지★: "이 이름이면 반드시 성공/부자/출세" 같은 표현 금지. "좋은 기운을 더해 주는 이름", "~에 도움이 되는 방향"처럼 보조적·참고용으로 서술하세요. 이름이 운명을 정하는 것이 아니라 좋은 기운을 보태는 것임을 전제로 합니다.\n- 마크다운 사용: ## 소제목, **강조**, 표(| 머리 | … |), 목록(-), > 인용.\n\n[★각 PART는 아래 세 부분을 반드시 모두 포함하세요★]\n1) (전문 풀이) 성명학·명리학 근거를 들어 작성.\n2) "## 💡 쉽게 풀어보면" — 위 내용을 한자·전문용어 없이 부모님(또는 본인)도 쉽게 이해하도록 비유를 들어 다시 설명(4~6문장).\n3) "## ✅ 이렇게 해보세요" — 이름을 고르고 쓸 때 바로 실천할 수 있는 조언을 4~6가지 목록으로.\n\n- 인사말·맺음말 없이 본문만. 다른 PART와 중복 금지. 요청된 PART 내용만 작성.';
+}
 
 // 스트리밍 호출 — 긴 분석도 글자가 계속 흘러오므로 "응답 없음"으로 끊기지 않음.
 // 일정 시간(IDLE) 동안 한 글자도 안 오면 그때만 끊김으로 간주(전체 소요시간으로 끊지 않음).
@@ -751,7 +820,7 @@ async function generate(){
   const allTitles=PARTS.map((p,i)=>'PART '+(i+1)+': '+p.t).join(' / ');
   const ctx=cust.pkg==='궁합'
     ? '[궁합 분석] 아래에는 본인과 상대방, 두 사람의 사주 데이터가 함께 주어집니다. 반드시 두 사람의 사주를 비교·교차하여 "관계" 관점에서 풀이하세요.'
-    : (cust.pkg==='기본' ? '[기본 분석] 핵심을 명료하게, 군더더기 없이 작성하세요.' : '[프리미엄 심층 분석] 풍부하고 깊이 있게, 구체적 근거와 함께 작성하세요.');
+    : (cust.pkg==='기본' ? '[기본 분석] 핵심을 명료하게, 군더더기 없이 작성하세요.' : (cust.pkg==='작명' ? '[사주 작명] 이름의 주인공 사주를 근거로 보완할 오행을 정하고, 발음오행·자원오행·수리를 고려한 어울리는 이름을 추천하세요.' : '[프리미엄 심층 분석] 풍부하고 깊이 있게, 구체적 근거와 함께 작성하세요.'));
   let failed=false;
   for(let i=0;i<PARTS.length;i++){
     renderProgress(i);
@@ -789,7 +858,7 @@ function partPrompt(i,extra){
   const allTitles=PARTS.map((p,k)=>'PART '+(k+1)+': '+p.t).join(' / ');
   const ctx=cust.pkg==='궁합'
     ? '[궁합 분석] 아래에는 본인과 상대방, 두 사람의 사주 데이터가 함께 주어집니다. 반드시 두 사람의 사주를 비교·교차하여 "관계" 관점에서 풀이하세요.'
-    : (cust.pkg==='기본' ? '[기본 분석] 핵심을 명료하게, 군더더기 없이 작성하세요.' : '[프리미엄 심층 분석] 풍부하고 깊이 있게, 구체적 근거와 함께 작성하세요.');
+    : (cust.pkg==='기본' ? '[기본 분석] 핵심을 명료하게, 군더더기 없이 작성하세요.' : (cust.pkg==='작명' ? '[사주 작명] 이름의 주인공 사주를 근거로 보완할 오행을 정하고, 발음오행·자원오행·수리를 고려한 어울리는 이름을 추천하세요.' : '[프리미엄 심층 분석] 풍부하고 깊이 있게, 구체적 근거와 함께 작성하세요.'));
   let u=ctx+'\n\n[전체 보고서 목차] '+allTitles+'\n\n[사주 데이터]\n'+data
     +'\n\n위 데이터를 근거로 아래 PART를 '+lenGuide()+' 작성하세요.\n\n■ PART '+(i+1)+': '+PARTS[i].t+'\n▶ 다뤄야 할 내용: '+PARTS[i].g;
   if(PARTS[i].ask && cust.ask) u+='\n\n[★이 섹션은 고객이 직접 남긴 질문에 답하는 전용 섹션입니다★]\n고객 질문 원문: 「'+cust.ask+'」\n→ 이 질문에 정면으로, 구체적으로 답하세요. 질문에서 묻는 핵심(시기·여부·방법 등)을 명확히 짚고, 사주적 근거를 들어 설명하세요.';
@@ -828,9 +897,11 @@ function coverWho(m){
   return esc(m.name)+' · '+calTxt+' '+born+' · '+m.gender+'성 · 일간 <b>'+GAN[m.a.ilG]+'('+GAN_HJA[m.a.ilG]+')</b>';
 }
 function renderCover(){
-  const label=cust.pkg==='기본'?'기본 사주분석':(cust.pkg==='궁합'?'궁합 분석':'고급 프리미엄 사주분석');
-  const title=cust.pkg==='궁합'?'궁합 운명 리포트':'사주명리 운명 리포트';
-  const names=esc(cust.name)+(cust.pkg==='궁합'&&cust.p2?(' &amp; '+esc(cust.p2.name)):'');
+  const isN=cust.pkg==='작명', nType=isN&&cust.naming?cust.naming.type:'작명';
+  const label=cust.pkg==='기본'?'기본 사주분석':(cust.pkg==='궁합'?'궁합 분석':(isN?(nType==='개명'?'사주 개명':'사주 작명'):'고급 프리미엄 사주분석'));
+  const title=cust.pkg==='궁합'?'궁합 운명 리포트':(isN?(nType==='개명'?'개명 추천 리포트':'작명 추천 리포트'):'사주명리 운명 리포트');
+  let names=esc(cust.name)+(cust.pkg==='궁합'&&cust.p2?(' &amp; '+esc(cust.p2.name)):'');
+  if(isN&&cust.naming&&(!cust.name||cust.name==='고객')) names=esc(cust.naming.surname)+'○ (작명 대상)';
   const now=new Date(), dateStr=now.getFullYear()+'.'+pad(now.getMonth()+1)+'.'+pad(now.getDate());
   // ① 표지(브랜드 로고)
   let cover='<div class="pdf-cover">'
@@ -848,7 +919,9 @@ function renderCover(){
     +'</div></div>';
   // ③ 안내 + 용어 설명
   let guide='<div class="rsec"><h2>이 리포트 보는 법</h2>'
-    +'<p class="guide-p">이 리포트는 <b>'+names+'</b> 님의 사주를 천문 계산으로 정밀하게 산출하여, 타고난 기질부터 재물·인연·직업·건강·시기별 운까지 깊이 있게 풀어낸 분석서입니다.</p>'
+    +'<p class="guide-p">'+(isN
+      ?'이 리포트는 <b>'+names+'</b> 님의 사주를 천문 계산으로 정밀하게 산출하여, 타고난 기운에 부족한 부분을 찾아 이를 채워 주는 어울리는 <b>이름</b>을 추천하는 작명 분석서입니다.'
+      :'이 리포트는 <b>'+names+'</b> 님의 사주를 천문 계산으로 정밀하게 산출하여, 타고난 기질부터 재물·인연·직업·건강·시기별 운까지 깊이 있게 풀어낸 분석서입니다.')+'</p>'
     +'<p class="guide-p">각 장(章)은 ① <b>전문 해석</b>, ② <b>💡 쉽게 풀어보면</b>(어려운 용어 없이 다시 설명), ③ <b>✅ 이렇게 해보세요</b>(도움이 되는 구체적 실천법) 순서로 구성됩니다. 어려운 한자 용어는 아래 「용어 설명」을 참고하세요.</p>'
     +'<p class="guide-p" style="color:#8a6a00">※ 본 리포트는 명리학 이론에 기반한 상담·참고용 콘텐츠이며, 운명은 정해진 것이 아니라 노력으로 만들어 가는 것입니다.</p>'
     +'<h2 style="margin-top:1.5rem">사주 용어 설명</h2><div class="gloss">'
@@ -1072,8 +1145,8 @@ function delHistory(id){
   localStorage.setItem('saju_hist',JSON.stringify(getHist().filter(r=>r.id!==id)));
   renderHistory(); toast('삭제되었습니다','');
 }
-function reportNames(){return cust.name+(cust.pkg==='궁합'&&cust.p2?(' & '+cust.p2.name):'');}
-function reportTitle(){return cust.pkg==='궁합'?'궁합 운명 리포트':'사주명리 운명 리포트';}
+function reportNames(){if(cust.pkg==='작명'&&cust.naming&&(!cust.name||cust.name==='고객'))return cust.naming.surname+'○';return cust.name+(cust.pkg==='궁합'&&cust.p2?(' & '+cust.p2.name):'');}
+function reportTitle(){return cust.pkg==='궁합'?'궁합 운명 리포트':(cust.pkg==='작명'?(cust.naming&&cust.naming.type==='개명'?'개명 추천 리포트':'작명 추천 리포트'):'사주명리 운명 리포트');}
 function manseSummary(m){
   const a=m.a,s=a.s;
   let pil=[s.year,s.month,s.day].concat(s.hour!=='(시 불명)'?[s.hour]:[]).join(' ');
