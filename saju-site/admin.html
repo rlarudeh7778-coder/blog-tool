@@ -1038,21 +1038,24 @@ function savePDF(){
 }
 function pdfFilename(){return (cust?cust.name:'saju')+'_'+(cust?cust.pkg:'')+'_사주리포트.pdf';}
 // 다운로드용: 데스크탑 고품질 / 모바일은 메모리 절약 위해 해상도 낮춤
-function pdfOpts(q){var sc=IS_MOBILE?1.4:2;return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:(q||0.95)},html2canvas:{scale:sc,useCORS:true,backgroundColor:'#ffffff',windowWidth:980,ignoreElements:(el)=>el.classList&&(el.classList.contains('sky')||el.classList.contains('aurora')||el.id==='stars')},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
+function pdfOpts(q){var sc=IS_MOBILE?1.4:2;return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:(q||0.95)},html2canvas:{scale:sc,useCORS:true,backgroundColor:'#ffffff',ignoreElements:(el)=>el.classList&&(el.classList.contains('sky')||el.classList.contains('aurora')||el.id==='stars')},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
 // 메일 첨부용: 흰 배경 + 압축으로 용량 최소화(첨부 한도 대응)
-function pdfOptsMail(){return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:0.6},html2canvas:{scale:1.5,useCORS:true,backgroundColor:'#ffffff',windowWidth:980,ignoreElements:(el)=>el.classList&&(el.classList.contains('sky')||el.classList.contains('aurora')||el.id==='stars')},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
-// PDF 캡처 준비: ① 우주 배경 레이어 숨김(html2canvas 깨짐 방지) ② 결과 영역 흰 배경 ③ .no-print 숨김
+function pdfOptsMail(){return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:0.6},html2canvas:{scale:1.5,useCORS:true,backgroundColor:'#ffffff',ignoreElements:(el)=>el.classList&&(el.classList.contains('sky')||el.classList.contains('aurora')||el.id==='stars')},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
+// PDF 캡처 준비: ① 우주 배경 레이어 숨김 ② 결과영역 흰 배경 ③ 카드 그림자 제거(html2canvas 회색 얼룩 방지) ④ .no-print 숨김
 function hideNoPrint(){
   const rv=$('resultView');
   const bg=Array.from(document.querySelectorAll('.sky,.aurora,#stars'));
   bg.forEach(e=>{e.dataset._pd=e.style.display;e.style.display='none';});
   const nps=Array.from(rv.querySelectorAll('.no-print'));
   nps.forEach(e=>{e.dataset._pd=e.style.display;e.style.display='none';});
+  const sh=Array.from(rv.querySelectorAll('.rsec,.part,.pdf-cover,.sajupan,.cover'));
+  sh.forEach(e=>{e.dataset._sh=e.style.boxShadow;e.style.boxShadow='none';});
   const prevBg=rv.style.background;
   rv.style.background='#fff';
   return ()=>{
     bg.forEach(e=>{e.style.display=e.dataset._pd||'';delete e.dataset._pd;});
     nps.forEach(e=>{e.style.display=e.dataset._pd||'';delete e.dataset._pd;});
+    sh.forEach(e=>{e.style.boxShadow=e.dataset._sh||'';delete e.dataset._sh;});
     rv.style.background=prevBg;
   };
 }
@@ -1252,7 +1255,7 @@ async function savePNG(){
   toast('이미지 생성 중…','');
   const restore=hideNoPrint();
   try{
-    let cv=await html2canvas(el,{backgroundColor:'#ffffff',scale:2,useCORS:true,windowWidth:980,ignoreElements:(x)=>x.classList&&(x.classList.contains('sky')||x.classList.contains('aurora')||x.id==='stars')});
+    let cv=await html2canvas(el,{backgroundColor:'#ffffff',scale:2,useCORS:true,ignoreElements:(x)=>x.classList&&(x.classList.contains('sky')||x.classList.contains('aurora')||x.id==='stars')});
     restore();
     let a=document.createElement('a');
     a.download=(cust?cust.name:'saju')+'_사주리포트.png';
