@@ -1031,10 +1031,24 @@ function savePDF(){
 }
 function pdfFilename(){return (cust?cust.name:'saju')+'_'+(cust?cust.pkg:'')+'_사주리포트.pdf';}
 // 다운로드용: 데스크탑 고품질 / 모바일은 메모리 절약 위해 해상도 낮춤
-function pdfOpts(q){var sc=IS_MOBILE?1.4:2;return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:(q||0.95)},html2canvas:{scale:sc,useCORS:true,backgroundColor:'#0c1228',windowWidth:980},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
+function pdfOpts(q){var sc=IS_MOBILE?1.4:2;return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:(q||0.95)},html2canvas:{scale:sc,useCORS:true,backgroundColor:'#ffffff',windowWidth:980,ignoreElements:(el)=>el.classList&&(el.classList.contains('sky')||el.classList.contains('aurora')||el.id==='stars')},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
 // 메일 첨부용: 흰 배경 + 압축으로 용량 최소화(첨부 한도 대응)
-function pdfOptsMail(){return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:0.6},html2canvas:{scale:1.5,useCORS:true,backgroundColor:'#ffffff',windowWidth:980},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
-function hideNoPrint(){let els=$('resultView').querySelectorAll('.no-print');els.forEach(e=>{e.dataset._d=e.style.display;e.style.display='none';});return ()=>els.forEach(e=>{e.style.display=e.dataset._d||'';});}
+function pdfOptsMail(){return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:0.6},html2canvas:{scale:1.5,useCORS:true,backgroundColor:'#ffffff',windowWidth:980,ignoreElements:(el)=>el.classList&&(el.classList.contains('sky')||el.classList.contains('aurora')||el.id==='stars')},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
+// PDF 캡처 준비: ① 우주 배경 레이어 숨김(html2canvas 깨짐 방지) ② 결과 영역 폭 고정·흰 배경(좌측 쏠림/쪼개짐 방지) ③ .no-print 숨김
+function hideNoPrint(){
+  const rv=$('resultView');
+  const bg=Array.from(document.querySelectorAll('.sky,.aurora,#stars'));
+  bg.forEach(e=>{e.dataset._pd=e.style.display;e.style.display='none';});
+  const nps=Array.from(rv.querySelectorAll('.no-print'));
+  nps.forEach(e=>{e.dataset._pd=e.style.display;e.style.display='none';});
+  const prev={w:rv.style.width,mw:rv.style.maxWidth,mg:rv.style.margin,bg:rv.style.background};
+  rv.style.width='980px';rv.style.maxWidth='980px';rv.style.margin='0 auto';rv.style.background='#fff';
+  return ()=>{
+    bg.forEach(e=>{e.style.display=e.dataset._pd||'';delete e.dataset._pd;});
+    nps.forEach(e=>{e.style.display=e.dataset._pd||'';delete e.dataset._pd;});
+    rv.style.width=prev.w;rv.style.maxWidth=prev.mw;rv.style.margin=prev.mg;rv.style.background=prev.bg;
+  };
+}
 function dlBlob(blob,name){
   // 모바일/데스크탑 공통 다운로드(+ 실패 시 새 탭 열기 폴백)
   try{
@@ -1229,13 +1243,15 @@ async function emailToCustomer(){
 async function savePNG(){
   let el=$('resultView');
   toast('이미지 생성 중…','');
+  const restore=hideNoPrint();
   try{
-    let cv=await html2canvas(el,{backgroundColor:'#0c1228',scale:2,useCORS:true});
+    let cv=await html2canvas(el,{backgroundColor:'#ffffff',scale:2,useCORS:true,windowWidth:980,ignoreElements:(x)=>x.classList&&(x.classList.contains('sky')||x.classList.contains('aurora')||x.id==='stars')});
+    restore();
     let a=document.createElement('a');
     a.download=(cust?cust.name:'saju')+'_사주리포트.png';
     a.href=cv.toDataURL('image/png');a.click();
     toast('이미지가 저장되었습니다','ok');
-  }catch(e){toast('이미지 저장 실패: '+e.message,'err');}
+  }catch(e){restore();toast('이미지 저장 실패: '+e.message,'err');}
 }
 
 /* ═══════════ 설정 저장 ═══════════ */
