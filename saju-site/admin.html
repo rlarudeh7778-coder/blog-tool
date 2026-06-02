@@ -9,6 +9,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Nanum+Myeongjo:wght@700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
@@ -731,7 +732,8 @@ function namingSysPrompt(){
 
 // 스트리밍 호출 — 긴 분석도 글자가 계속 흘러오므로 "응답 없음"으로 끊기지 않음.
 // 일정 시간(IDLE) 동안 한 글자도 안 오면 그때만 끊김으로 간주(전체 소요시간으로 끊지 않음).
-async function callClaude(sys,user,onText){
+// 단일 스트리밍 요청 — {text, stop} 반환. baseText는 이어쓰기 시 누적표시용.
+async function streamClaude(sys,messages,onText,baseText){
   const k=getKey().replace(/[^\x20-\x7E]/g,'').trim();
   if(!k)throw new Error('API 키가 없습니다 — ⚙️설정에서 키를 저장하세요.');
   const ac=new AbortController();
@@ -740,7 +742,7 @@ async function callClaude(sys,user,onText){
   let r;
   try{
     bump();
-    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:ac.signal,headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:getModel(),max_tokens:8000,stream:true,system:sys,messages:[{role:'user',content:user}]})});
+    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:ac.signal,headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:getModel(),max_tokens:16000,stream:true,system:sys,messages:messages})});
   }catch(netErr){
     clearTimeout(idle);
     if(ac.signal.aborted||(netErr&&netErr.name==='AbortError'))throw new Error('응답 시간 초과 — 통신이 불안정합니다. 「다시 생성」으로 재시도하거나 Wi-Fi 연결 후 시도하세요.');
@@ -758,9 +760,11 @@ async function callClaude(sys,user,onText){
   if(!r.body){ // 스트림 미지원 환경 — 통째로 받기(폴백)
     clearTimeout(idle);
     let d={}; try{d=await r.json();}catch(_){}
-    const t=d.content&&d.content.find(b=>b.type==='text'); return t?(t.text||''):'';
+    const t=d.content&&d.content.find(b=>b.type==='text'); const tx=t?(t.text||''):'';
+    if(onText)try{onText((baseText||'')+tx);}catch(_){}
+    return {text:tx, stop:(d.stop_reason||'end_turn')};
   }
-  const reader=r.body.getReader(), dec=new TextDecoder(); let buf='', out='';
+  const reader=r.body.getReader(), dec=new TextDecoder(); let buf='', out='', stop='end_turn';
   try{
     while(true){
       const {done,value}=await reader.read();
@@ -771,10 +775,11 @@ async function callClaude(sys,user,onText){
       while((nl=buf.indexOf('\n'))>=0){
         const line=buf.slice(0,nl); buf=buf.slice(nl+1);
         if(line.indexOf('data:')!==0)continue;
-        const p=line.slice(5).trim();
-        if(!p||p==='[DONE]')continue;
-        let ev; try{ev=JSON.parse(p);}catch(_){continue;}
-        if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.type==='text_delta'){out+=ev.delta.text; if(onText)try{onText(out);}catch(_){}}
+        const pp=line.slice(5).trim();
+        if(!pp||pp==='[DONE]')continue;
+        let ev; try{ev=JSON.parse(pp);}catch(_){continue;}
+        if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.type==='text_delta'){out+=ev.delta.text; if(onText)try{onText((baseText||'')+out);}catch(_){}}
+        else if(ev.type==='message_delta'&&ev.delta&&ev.delta.stop_reason){stop=ev.delta.stop_reason;}
         else if(ev.type==='error')throw new Error((ev.error&&ev.error.message)||'스트림 오류');
       }
     }
@@ -784,8 +789,22 @@ async function callClaude(sys,user,onText){
     throw new Error(streamErr.message||'스트림 오류 — 「다시 생성」으로 재시도하세요.');
   }
   clearTimeout(idle);
-  if(!out.trim())throw new Error('빈 응답 — 「다시 생성」으로 재시도하세요.');
-  return out;
+  return {text:out, stop:stop};
+}
+// 토큰 상한으로 잘리면 assistant 프리필로 자동 이어쓰기 → 항상 끝까지 완성
+async function callClaude(sys,user,onText){
+  let messages=[{role:'user',content:user}];
+  let full='';
+  for(let turn=0;turn<6;turn++){
+    const res=await streamClaude(sys,messages,onText,full);
+    full+=res.text;
+    if(res.stop!=='max_tokens'||!res.text.trim())break; // 완료
+    const prefill=full.replace(/\s+$/,''); // 프리필 끝 공백 금지(400 방지)
+    full=prefill;
+    messages=[{role:'user',content:user},{role:'assistant',content:prefill}];
+  }
+  if(!full.trim())throw new Error('빈 응답 — 「다시 생성」으로 재시도하세요.');
+  return full;
 }
 async function testKey(){
   let k=($('apiKey').value.trim()||getKey()).replace(/[^\x20-\x7E]/g,'').trim();
@@ -1059,6 +1078,52 @@ function hideNoPrint(){
     rv.style.background=prevBg;
   };
 }
+function pdfDepsReady(){return typeof html2canvas!=='undefined' && !!(window.jspdf&&window.jspdf.jsPDF);}
+// ★긴 리포트도 안전하게★ — 전체를 하나의 거대 캔버스로 만들지 않고, 표지·각 PART를
+// 블록 단위로 캡처해 jsPDF로 직접 조립한다(브라우저 캔버스 높이 한계로 인한 빈 PDF 방지).
+async function buildPdfDoc(scale,quality){
+  const JsPDF=window.jspdf&&window.jspdf.jsPDF;
+  if(!JsPDF||typeof html2canvas==='undefined')throw new Error('PDF 모듈 로드 실패 — 새로고침 후 다시 시도하세요');
+  const pdf=new JsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
+  const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
+  const Mx=8, Mtop=10, Mbot=12, contentW=pageW-2*Mx, usableH=pageH-Mtop-Mbot;
+  let y=Mtop, first=true;
+  const rv=$('resultView');
+  // 캡처 대상 블록: 표지·목차·안내·만세력 + 각 PART(파트박스 내부까지 펼침)
+  const blocks=[];
+  for(const el of rv.children){
+    if(el.id==='partsBox'||el.classList.contains('parts')){
+      for(const c of el.children){ if(c.offsetHeight>0&&!c.classList.contains('no-print'))blocks.push(c); }
+    }else if(el.offsetHeight>0&&!el.classList.contains('no-print')){ blocks.push(el); }
+  }
+  const opt={scale:scale||2,useCORS:true,backgroundColor:'#ffffff',ignoreElements:(x)=>x.classList&&(x.classList.contains('sky')||x.classList.contains('aurora')||x.id==='stars')};
+  for(const block of blocks){
+    const isPart=block.classList.contains('part');
+    // PART는 새 페이지에서 시작(가독성)
+    if(isPart && !first && y>Mtop){ pdf.addPage(); y=Mtop; }
+    const canvas=await html2canvas(block,opt);
+    if(!canvas||!canvas.width||!canvas.height)continue;
+    const pxPerMm=canvas.width/contentW, fullHmm=canvas.height/pxPerMm;
+    // 한 페이지에 들어가는 블록인데 남은 공간이 부족하면 새 페이지로(잘림 최소화)
+    if(fullHmm<=usableH && y>Mtop && (y+fullHmm)>(pageH-Mbot)){ pdf.addPage(); y=Mtop; }
+    let srcY=0, remMm=fullHmm;
+    while(remMm>0.4){
+      let avail=pageH-Mbot-y;
+      if(avail<8){ pdf.addPage(); y=Mtop; avail=pageH-Mbot-y; }
+      const sliceMm=Math.min(avail,remMm), slicePx=Math.max(1,Math.round(sliceMm*pxPerMm));
+      const tmp=document.createElement('canvas'); tmp.width=canvas.width; tmp.height=slicePx;
+      const ctx=tmp.getContext('2d'); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,tmp.width,tmp.height);
+      ctx.drawImage(canvas,0,srcY,canvas.width,slicePx,0,0,canvas.width,slicePx);
+      pdf.addImage(tmp.toDataURL('image/jpeg',quality||0.85),'JPEG',Mx,y,contentW,sliceMm,undefined,'FAST');
+      srcY+=slicePx; remMm-=sliceMm; y+=sliceMm;
+      if(remMm>0.4){ pdf.addPage(); y=Mtop; }
+    }
+    first=false;
+    if(block.classList.contains('pdf-cover')){ pdf.addPage(); y=Mtop; } // 표지는 단독 페이지
+    else { y+=3; }
+  }
+  return pdf;
+}
 function dlBlob(blob,name){
   // 모바일/데스크탑 공통 다운로드(+ 실패 시 새 탭 열기 폴백)
   try{
@@ -1073,7 +1138,7 @@ function dlBlob(blob,name){
 }
 async function downloadPDF(){
   if(!results.length||results.some(x=>!x)){toast('빈 섹션이 있습니다 — 모든 PART를 채운 뒤 저장하세요','err');return;}
-  if(typeof html2pdf==='undefined'){toast('PDF 모듈 로드 실패 — 새로고침 후 다시 시도하세요','err');return;}
+  if(!pdfDepsReady()){toast('PDF 모듈 로드 실패 — 새로고침 후 다시 시도하세요','err');return;}
   if(editing>=0||regenOpen>=0){editing=-1;regenOpen=-1;renderResults();}
   if(IS_INAPP){
     if(!confirm('카카오톡/인앱 브라우저에서는 다운로드가 제한될 수 있어요.\n그래도 시도할까요? (안 되면 우측 ⋮ 메뉴 → 「다른 브라우저로 열기」 후 이용하세요)'))return;
@@ -1082,7 +1147,8 @@ async function downloadPDF(){
   toast(IS_MOBILE?'PDF 생성 중… 모바일은 30초~1분 걸릴 수 있어요':'PDF 생성 중… 잠시만 기다려 주세요','');
   const restore=hideNoPrint();
   try{
-    const blob=await html2pdf().set(pdfOpts(IS_MOBILE?0.8:0.96)).from($('resultView')).outputPdf('blob');
+    const pdf=await buildPdfDoc(IS_MOBILE?1.5:2, IS_MOBILE?0.72:0.82);
+    const blob=pdf.output('blob');
     restore();
     const ok=dlBlob(blob, pdfFilename());
     toast(ok?'✅ PDF가 저장되었습니다 (다운로드 폴더 확인)':'다운로드 실패 — 「인쇄」 또는 다른 브라우저로 시도하세요', ok?'ok':'err');
@@ -1096,14 +1162,15 @@ async function downloadPDF(){
 // 모바일: PDF 파일을 카톡·문자·메일 등으로 바로 공유(가장 확실한 방법)
 async function sharePDF(){
   if(!results.length||results.some(x=>!x)){toast('빈 섹션이 있습니다 — 모든 PART를 채운 뒤 공유하세요','err');return;}
-  if(typeof html2pdf==='undefined'){toast('PDF 모듈 로드 실패 — 새로고침 후 다시 시도하세요','err');return;}
+  if(!pdfDepsReady()){toast('PDF 모듈 로드 실패 — 새로고침 후 다시 시도하세요','err');return;}
   if(editing>=0||regenOpen>=0){editing=-1;regenOpen=-1;renderResults();}
   const btn=document.querySelector('[onclick="sharePDF()"]'); if(btn){btn.disabled=true;btn.textContent='📤 PDF 만드는 중…';}
   const reset=()=>{if(btn){btn.disabled=false;btn.textContent='📤 PDF 공유 (카톡·문자)';}};
   toast('PDF 만드는 중… 잠시만요','');
   const restore=hideNoPrint();
   try{
-    const blob=await html2pdf().set(pdfOpts(IS_MOBILE?0.8:0.92)).from($('resultView')).outputPdf('blob');
+    const pdf=await buildPdfDoc(IS_MOBILE?1.5:2, IS_MOBILE?0.72:0.82);
+    const blob=pdf.output('blob');
     restore();
     const file=new File([blob], pdfFilename(), {type:'application/pdf'});
     // 1순위: 파일 공유 지원(모바일 크롬/사파리) → 카톡·문자·메일 선택 시트
@@ -1131,13 +1198,14 @@ async function emailPDF(){
   const cfg=getEmailCfg();
   if(!cfg.pub||!cfg.service||!cfg.template){toast('⚙️설정에서 EmailJS 정보를 먼저 입력하세요','err');go('settings');return;}
   if(typeof emailjs==='undefined'){toast('이메일 모듈 로드 실패 — 네트워크 확인','err');return;}
-  if(typeof html2pdf==='undefined'){toast('PDF 모듈 로드 실패','err');return;}
+  if(!pdfDepsReady()){toast('PDF 모듈 로드 실패','err');return;}
   if(!confirm(cust.email+' 으로 PDF 리포트를 발송할까요?'))return;
   if(editing>=0||regenOpen>=0){editing=-1;regenOpen=-1;renderResults();}
   toast('PDF 생성 중…','');
   const restore=hideNoPrint();
   try{
-    const blob=await html2pdf().set(pdfOptsMail()).from($('resultView')).outputPdf('blob');
+    const pdf=await buildPdfDoc(1.4,0.6);
+    const blob=pdf.output('blob');
     restore();
     const mb=blob.size/1024/1024;
     if(mb>1.9){
