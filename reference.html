@@ -117,7 +117,7 @@ select:focus{outline:0;border-color:var(--green)}
   </div>
   <div class="fgroup">
     <div class="flabel">소스</div>
-    <select id="source"><option value="">전체</option><option value="instagram">인스타그램</option><option value="youtube">유튜브</option><option value="tiktok">틱톡</option></select>
+    <select id="source"><option value="">전체</option><option value="youtube">유튜브</option><option value="reddit">레딧</option><option value="instagram">인스타그램</option><option value="tiktok">틱톡</option></select>
   </div>
   <div class="fgroup">
     <div class="flabel">미디어 타입</div>
@@ -133,7 +133,7 @@ select:focus{outline:0;border-color:var(--green)}
   </div>
 </div>
 
-<div class="demo-note">⚡ 카드 데이터는 <b>data.json</b> 파일에서 불러옵니다 — 그 파일만 수정하면 레퍼런스가 추가/수정됩니다. (검색·필터·정렬 자동 동작)</div>
+<div class="demo-note">⚡ 매일 자동 수집된 레퍼런스입니다 (유튜브·레딧·구글트렌드) <span id="updated" style="margin-left:6px;color:#a98a3f"></span></div>
 
 <div class="resbar">
   <div class="rescount">검색 결과 <b id="cnt">0</b>건</div>
@@ -200,7 +200,8 @@ var FALLBACK_DATA=[
 
 /* 미디어 타입 표기 */
 var MEDIA_LABEL={IMAGE:"🖼 이미지",CAROUSEL:"🎞 캐러셀",VIDEO:"▶ 영상"};
-var SRC_ICON={instagram:"📷",youtube:"▶️",tiktok:"🎵"};
+var SRC_ICON={instagram:"📷",youtube:"▶️",tiktok:"🎵",reddit:"👽"};
+function srcIcon(s){return SRC_ICON[s]||"🔗";}
 function thumbUrl(it){return it.thumbnail?it.thumbnail:("https://picsum.photos/seed/ref"+it.id+"/480/600");}
 function fmt(n){return n>=10000?(n/10000).toFixed(1).replace(/\.0$/,'')+"만":n>=1000?(n/1000).toFixed(1).replace(/\.0$/,'')+"천":""+n;}
 
@@ -261,7 +262,7 @@ function render(){
       '<div class="thumb">'+
         '<img loading="lazy" src="'+thumbUrl(it)+'" alt=""/>'+
         '<div class="mt-badge">'+MEDIA_LABEL[it.media]+'</div>'+
-        '<div class="src-badge">'+SRC_ICON[it.source]+'</div>'+
+        '<div class="src-badge">'+srcIcon(it.source)+'</div>'+
       '</div>'+
       '<div class="cbody">'+
         '<div class="ccap">'+escapeHtml(it.caption)+'</div>'+
@@ -277,7 +278,7 @@ function escapeHtml(s){return s.replace(/[&<>"']/g,function(c){return {'&':'&amp
 function openDetail(id){
   var it=DATA.find(function(x){return x.id===id;});if(!it)return;
   document.getElementById('d-img').src=thumbUrl(it);
-  document.getElementById('d-src').textContent=SRC_ICON[it.source]+' '+it.source+' · '+MEDIA_LABEL[it.media].replace(/^.\s?/,'')+' · '+it._days+'일 전';
+  document.getElementById('d-src').textContent=srcIcon(it.source)+' '+it.source+' · '+MEDIA_LABEL[it.media].replace(/^.\s?/,'')+' · '+it._days+'일 전';
   document.getElementById('d-tag').textContent='#'+it.tag;
   document.getElementById('d-likes').textContent='❤ 좋아요 '+it.likes.toLocaleString();
   document.getElementById('d-comments').textContent='💬 댓글 '+it.comments.toLocaleString();
@@ -310,16 +311,19 @@ function normalize(items){
   });
   return items;
 }
-function applyData(tags,items){
-  TAGS=(tags&&tags.length)?tags:FALLBACK_TAGS;
-  DATA=normalize((items&&items.length)?items:FALLBACK_DATA);
+function applyData(j){
+  j=j||{};
+  TAGS=(j.tags&&j.tags.length)?j.tags:FALLBACK_TAGS;
+  DATA=normalize((j.items&&j.items.length)?j.items:FALLBACK_DATA);
+  var u=document.getElementById('updated');
+  if(u) u.textContent=j._generated?('· 갱신 '+j._generated):'';
   buildTags();
   render();
 }
 fetch('data.json',{cache:'no-store'})
   .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-  .then(function(j){ applyData(j.tags, j.items); })
-  .catch(function(){ applyData(FALLBACK_TAGS, FALLBACK_DATA); });
+  .then(function(j){ applyData(j); })
+  .catch(function(){ applyData(null); });
 </script>
 </body>
 </html>
