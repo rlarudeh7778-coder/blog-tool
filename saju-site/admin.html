@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Nanum+Myeongjo:wght@700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
@@ -737,12 +737,14 @@ async function streamClaude(sys,messages,onText,baseText){
   const k=getKey().replace(/[^\x20-\x7E]/g,'').trim();
   if(!k)throw new Error('API 키가 없습니다 — ⚙️설정에서 키를 저장하세요.');
   const ac=new AbortController();
-  const IDLE_MS=70000; // 70초 동안 새 데이터가 전혀 안 오면 중단
+  const IDLE_MS=110000; // 새 데이터가 전혀 안 오면 중단(모바일 프록시 버퍼링 대비 넉넉히)
   let idle; const bump=()=>{clearTimeout(idle);idle=setTimeout(()=>ac.abort(),IDLE_MS);};
+  // 요청당 토큰: 모바일은 짧게(끊김 적게) — 길이는 자동 이어쓰기가 보완
+  const MAXT=IS_MOBILE?6000:8000;
   let r;
   try{
     bump();
-    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:ac.signal,headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:getModel(),max_tokens:16000,stream:true,system:sys,messages:messages})});
+    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:ac.signal,headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:getModel(),max_tokens:MAXT,stream:true,system:sys,messages:messages})});
   }catch(netErr){
     clearTimeout(idle);
     if(ac.signal.aborted||(netErr&&netErr.name==='AbortError'))throw new Error('응답 시간 초과 — 통신이 불안정합니다. 「다시 생성」으로 재시도하거나 Wi-Fi 연결 후 시도하세요.');
@@ -885,16 +887,20 @@ async function generate(){
   saveHistory();     // 관리자 기록 저장
   toast(failed?'일부 섹션 생성 실패 — 해당 섹션의 「다시 생성」으로 재시도하세요':(cust.pkg+' 분석이 완료되었습니다!'), failed?'err':'ok');
 }
-// 네트워크/서버 혼잡 시 1회 자동 재시도
+// 네트워크/서버 혼잡 시 자동 재시도(최대 3회, 지수 백오프) — 모바일 불안정 대응
 async function callClaudeRetry(sys,user,onText){
-  try{ return await callClaude(sys,user,onText); }
-  catch(e){
-    if(/시간 초과|네트워크|서버 혼잡|429|스트림|빈 응답/.test(e.message)){
-      await new Promise(r=>setTimeout(r,2500));
-      return await callClaude(sys,user,onText); // 재시도(여기서 또 실패하면 throw)
+  let lastErr;
+  for(let attempt=0;attempt<4;attempt++){
+    try{ return await callClaude(sys,user,onText); }
+    catch(e){
+      lastErr=e;
+      // 인증 오류 등 재시도 무의미한 건 즉시 중단
+      if(!/시간 초과|네트워크|서버 혼잡|429|스트림|빈 응답/.test(e.message))throw e;
+      if(attempt===3)break;
+      await new Promise(r=>setTimeout(r,2000*Math.pow(2,attempt))); // 2s,4s,8s
     }
-    throw e;
   }
+  throw lastErr;
 }
 // PART별 프롬프트 빌더(전체 생성·단일 재생성 공용). extra=추가 지시
 function partPrompt(i,extra){
@@ -1079,6 +1085,24 @@ function hideNoPrint(){
   };
 }
 function pdfDepsReady(){return typeof html2canvas!=='undefined' && !!(window.jspdf&&window.jspdf.jsPDF);}
+function loadScriptOnce(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.async=true;s.onload=()=>resolve(true);s.onerror=()=>reject(new Error('load fail: '+src));document.head.appendChild(s);});}
+// PDF 모듈(html2canvas·jsPDF)이 안 떠 있으면 여러 CDN에서 즉시 불러온다(모바일/광고차단/CDN 장애 대비)
+async function ensurePdfLibs(){
+  if(pdfDepsReady())return true;
+  if(typeof html2canvas==='undefined'){
+    for(const u of ['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js','https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js','https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js']){
+      try{await loadScriptOnce(u);}catch(_){}
+      if(typeof html2canvas!=='undefined')break;
+    }
+  }
+  if(!(window.jspdf&&window.jspdf.jsPDF)){
+    for(const u of ['https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js']){
+      try{await loadScriptOnce(u);}catch(_){}
+      if(window.jspdf&&window.jspdf.jsPDF)break;
+    }
+  }
+  return pdfDepsReady();
+}
 // ★긴 리포트도 안전하게★ — 전체를 하나의 거대 캔버스로 만들지 않고, 표지·각 PART를
 // 블록 단위로 캡처해 jsPDF로 직접 조립한다(브라우저 캔버스 높이 한계로 인한 빈 PDF 방지).
 async function buildPdfDoc(scale,quality){
@@ -1138,7 +1162,7 @@ function dlBlob(blob,name){
 }
 async function downloadPDF(){
   if(!results.length||results.some(x=>!x)){toast('빈 섹션이 있습니다 — 모든 PART를 채운 뒤 저장하세요','err');return;}
-  if(!pdfDepsReady()){toast('PDF 모듈 로드 실패 — 새로고침 후 다시 시도하세요','err');return;}
+  if(!pdfDepsReady()){toast('PDF 모듈 불러오는 중…','');if(!(await ensurePdfLibs())){toast('PDF 모듈 로드 실패 — 인터넷(광고차단 끄기) 확인 후 다시 시도하세요','err');return;}}
   if(editing>=0||regenOpen>=0){editing=-1;regenOpen=-1;renderResults();}
   if(IS_INAPP){
     if(!confirm('카카오톡/인앱 브라우저에서는 다운로드가 제한될 수 있어요.\n그래도 시도할까요? (안 되면 우측 ⋮ 메뉴 → 「다른 브라우저로 열기」 후 이용하세요)'))return;
@@ -1162,7 +1186,7 @@ async function downloadPDF(){
 // 모바일: PDF 파일을 카톡·문자·메일 등으로 바로 공유(가장 확실한 방법)
 async function sharePDF(){
   if(!results.length||results.some(x=>!x)){toast('빈 섹션이 있습니다 — 모든 PART를 채운 뒤 공유하세요','err');return;}
-  if(!pdfDepsReady()){toast('PDF 모듈 로드 실패 — 새로고침 후 다시 시도하세요','err');return;}
+  if(!pdfDepsReady()){toast('PDF 모듈 불러오는 중…','');if(!(await ensurePdfLibs())){toast('PDF 모듈 로드 실패 — 인터넷(광고차단 끄기) 확인 후 다시 시도하세요','err');return;}}
   if(editing>=0||regenOpen>=0){editing=-1;regenOpen=-1;renderResults();}
   const btn=document.querySelector('[onclick="sharePDF()"]'); if(btn){btn.disabled=true;btn.textContent='📤 PDF 만드는 중…';}
   const reset=()=>{if(btn){btn.disabled=false;btn.textContent='📤 PDF 공유 (카톡·문자)';}};
@@ -1198,7 +1222,7 @@ async function emailPDF(){
   const cfg=getEmailCfg();
   if(!cfg.pub||!cfg.service||!cfg.template){toast('⚙️설정에서 EmailJS 정보를 먼저 입력하세요','err');go('settings');return;}
   if(typeof emailjs==='undefined'){toast('이메일 모듈 로드 실패 — 네트워크 확인','err');return;}
-  if(!pdfDepsReady()){toast('PDF 모듈 로드 실패','err');return;}
+  if(!pdfDepsReady()){toast('PDF 모듈 불러오는 중…','');if(!(await ensurePdfLibs())){toast('PDF 모듈 로드 실패 — 인터넷 확인 후 다시 시도하세요','err');return;}}
   if(!confirm(cust.email+' 으로 PDF 리포트를 발송할까요?'))return;
   if(editing>=0||regenOpen>=0){editing=-1;regenOpen=-1;renderResults();}
   toast('PDF 생성 중…','');
