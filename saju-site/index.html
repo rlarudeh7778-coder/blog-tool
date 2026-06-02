@@ -394,8 +394,9 @@
       <input type="checkbox" name="botcheck" class="hp" tabindex="-1" aria-hidden="true">
 
       <div class="form-field">
-        <label>성함 <i>*</i></label>
-        <input name="성함" required placeholder="홍길동">
+        <label id="nameLabel">성함 <i>*</i></label>
+        <input name="성함" id="nameInput" required placeholder="홍길동">
+        <div class="inline-chk" id="nameHint" style="display:none;color:var(--gold)">✦ 아직 이름이 정해지지 않은 <b>신생아 작명</b>은 이 칸을 <b>비우고</b> 제출해 주세요.</div>
       </div>
 
       <div class="form-row2">
@@ -681,11 +682,18 @@ function onPkgChange(){
   document.getElementById('namingbox').style.display=isN?'block':'none';
   // 신생아 작명은 성함이 없을 수 있으므로 필수 해제
   const nameEl=f.elements['성함']; if(nameEl)nameEl.required=!isN;
-  if(isN)onNameType();
+  if(isN)onNameType(); else updateNameHint(false);
 }
 function onNameType(){
   const t=(f.elements['작명종류']||{}).value;
   const box=document.getElementById('curNameBox'); if(box)box.style.display=(t==='개명')?'block':'none';
+  updateNameHint(t==='작명'); // 신생아 작명일 때만 '비우고 제출' 안내
+}
+function updateNameHint(show){
+  const hint=document.getElementById('nameHint'), label=document.getElementById('nameLabel'), inp=document.getElementById('nameInput');
+  if(hint)hint.style.display=show?'block':'none';
+  if(label)label.innerHTML=show?'성함 <span style="color:var(--mut);font-weight:400">(신생아는 비워두세요)</span>':'성함 <i>*</i>';
+  if(inp){inp.placeholder=show?'미정이면 비워두고 제출':'홍길동';if(show)inp.value='';}
 }
 function pickPkg(v){const s=document.getElementById('pkgSel');if(s){s.value=v;onPkgChange();}}
 const noTime2=document.getElementById('noTime2');
