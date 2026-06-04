@@ -2559,6 +2559,60 @@ function getTodayCount(){
 }
 
 
+/* 레퍼런스 붙여넣기 정리: 네이버 등에서 복사할 때 딸려오는
+   HTML 태그·스크립트·에디터 내부 코드 찌꺼기를 제거한다.
+   판단 기준: 한글이 거의 없고 코드 패턴이 있는 줄만 제거(본문은 보존). */
+function cleanRefText(s){
+  if(!s) return '';
+  // 1) script/style 블록 통째로 제거
+  s = s.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ');
+  // 2) 남은 HTML 태그 제거
+  s = s.replace(/<\/?[a-z][^>]*>/gi,' ');
+  // 3) 자주 나오는 HTML 엔티티 복원
+  s = s.replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/&lt;/gi,'<')
+       .replace(/&gt;/gi,'>').replace(/&quot;/gi,'"').replace(/&#39;/gi,"'");
+  // 4) 코드처럼 보이는 줄 제거
+  var codePat = /(function\s*\(|=>|\bvar\b|\blet\b|\bconst\b|\breturn\b|\$Element|welParents|editorVersion|document\.|window\.|\.attr\(|console\.|=== |!==|\bnull\b|\bundefined\b|;\s*$|^\s*[{}();]+\s*$)/;
+  var lines = s.split(/\r?\n/).filter(function(ln){
+    var t = ln.trim();
+    if(!t) return true;                              // 빈 줄(문단 구분)은 유지
+    var hangul = (t.match(/[가-힣]/g)||[]).length;
+    if(hangul >= 2) return true;                     // 한글 2자 이상이면 본문으로 보고 유지
+    if(codePat.test(t)) return false;                // 한글 거의 없고 코드패턴이면 제거
+    return true;
+  });
+  s = lines.join('\n');
+  // 5) 과도한 공백/빈 줄 정리
+  s = s.replace(/[ \t]{2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+  return s;
+}
+
+/* 레퍼런스/가이드 입력칸: 붙여넣을 때 자동으로 위 정리 적용 */
+function initRefPasteCleaners(){
+  ['ref1','ref2','ref3','guide-text'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el || el._pasteClean) return;
+    el._pasteClean = true;
+    el.addEventListener('paste', function(e){
+      var cd = e.clipboardData || window.clipboardData;
+      if(!cd) return;
+      var t = cd.getData('text');
+      if(t == null) return;
+      e.preventDefault();
+      var cleaned = cleanRefText(t);
+      var s = this.selectionStart || 0, en = this.selectionEnd || 0;
+      this.value = this.value.slice(0, s) + cleaned + this.value.slice(en);
+      var pos = s + cleaned.length;
+      try { this.selectionStart = this.selectionEnd = pos; } catch(_){}
+    });
+  });
+}
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', initRefPasteCleaners);
+} else {
+  initRefPasteCleaners();
+}
+
 function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,reviewData){
   var catLabel={phone:'선불폰/알뜰폰',english:'영어회화/학원',food:'음식/맛집',product:'제품리뷰',travel:'여행/카페',custom:'일반'}[cat]||'일반';
   var subList=subkw?subkw.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
@@ -2904,11 +2958,11 @@ async function generate(){
   var region=document.getElementById('region').value.trim();
   var dir=document.getElementById('dir').value.trim();
   var cat=document.getElementById('cat').value;
-  // 체험단 레퍼런스 수집
-  var ref1=document.getElementById('ref1')?document.getElementById('ref1').value.trim():'';
-  var ref2=document.getElementById('ref2')?document.getElementById('ref2').value.trim():'';
-  var ref3=document.getElementById('ref3')?document.getElementById('ref3').value.trim():'';
-  var guideText=document.getElementById('guide-text')?document.getElementById('guide-text').value.trim():'';
+  // 체험단 레퍼런스 수집 (붙여넣기 시 못 걸러진 코드 찌꺼기 대비, 한 번 더 정리)
+  var ref1=document.getElementById('ref1')?cleanRefText(document.getElementById('ref1').value).trim():'';
+  var ref2=document.getElementById('ref2')?cleanRefText(document.getElementById('ref2').value).trim():'';
+  var ref3=document.getElementById('ref3')?cleanRefText(document.getElementById('ref3').value).trim():'';
+  var guideText=document.getElementById('guide-text')?cleanRefText(document.getElementById('guide-text').value).trim():'';
   if(!apiKey){showToast('먼저 API 키를 저장해주세요','err');return;}
   if(!kw){showToast('메인 키워드를 입력해주세요','err');return;}
   // 하루 3개 제한 경고 (차단 없이 경고만)
