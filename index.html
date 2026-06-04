@@ -1822,6 +1822,7 @@ function renderGuides(){document.getElementById('glist').innerHTML=GUIDES.map(fu
 var AI='claude',tone='친근한',dealer='',autoSave=false,hist=[],cur=null;
 var selectedSuggestKws=[];
 var kwSuggestTimer=null,kwSuggestLast='';
+var kwSuggestReqId=0; // 추천키워드 비동기 레이스 가드 토큰
 var crRegion='전체',crActive=-1;
 
 var AICFG={
@@ -2137,7 +2138,9 @@ function onCatChange(){
   kwSuggestLast = '';
   selectedSuggestKws = [];
   document.getElementById('kw-suggest-box').style.display = 'none';
-  
+  if(kwSuggestTimer)clearTimeout(kwSuggestTimer); // 대기중 추천요청 취소
+  kwSuggestReqId++;                                // 진행중 비동기 응답 무효화
+
 
   // 지역 필드 표시/숨김
   if(regionField) regionField.style.display = isReview ? 'none' : '';
@@ -2355,31 +2358,70 @@ function onKwInput(){
   kwSuggestTimer=setTimeout(function(){fetchKwSuggest(kw);},700);
 }
 function onKwBlur(){setTimeout(function(){if(!document.getElementById('kw').value.trim())document.getElementById('kw-suggest-box').style.display='none';},200);}
+// 카테고리별 추천 키워드 프롬프트 생성 (선불폰/영어/일반 분리)
+function buildSuggestPrompt(kw,cat){
+  if(cat==='english'){
+    return {
+      sys:'You are a Korean Naver blog SEO keyword expert specializing in 영어회화, 영어학원, 화상영어, 전화영어, 토익/오픽 topics. Respond ONLY with a valid JSON array. No other text, no markdown.',
+      user:'네이버 블로그 메인 키워드 "'+kw+'" 에 대해 SEO 상위노출에 최적화된 연관 서브키워드 16개를 추천해주세요.\n\n'
+        +'[추천 기준]\n'
+        +'1. 영어회화/영어학원/화상영어/전화영어 관련 실제 검색어 우선\n'
+        +'2. 검색량 있지만 경쟁강도 낮은 롱테일 키워드 포함\n'
+        +'3. 지역명+영어 조합 (예: 강남영어회화, 부산영어학원 등 kw 지역 기반)\n'
+        +'4. 네이버 VIEW탭에서 상위노출 유리한 조합\n'
+        +'5. 성인영어, 왕초보영어, 화상영어추천, 전화영어비교, 오픽, 토익스피킹, 비즈니스영어, 원어민회화 등 적합한 것 우선 포함\n'
+        +'\n응답: ["키워드1","키워드2",...,"키워드16"] 형식 JSON 배열만. 설명 없이.'
+    };
+  }
+  if(cat==='phone'){
+    return {
+      sys:'You are a Korean Naver blog SEO keyword expert specializing in 선불폰, 알뜰폰, 앤텔레콤, 선불유심 topics. Respond ONLY with valid JSON array. No other text, no markdown.',
+      user:'네이버 블로그 메인 키워드 "'+kw+'" 에 대해 SEO 상위노출에 최적화된 연관 서브키워드 16개를 추천해주세요.\n\n'
+        +'[추천 기준]\n'
+        +'1. 앤텔레콤/선불폰/알뜰폰 관련 실제 검색어 우선\n'
+        +'2. 검색량 있지만 경쟁강도 낮은 롱테일 키워드 포함\n'
+        +'3. 지역명+선불폰 조합 (예: 부산선불폰, 대구선불유심 등 kw 지역 기반)\n'
+        +'4. 네이버 VIEW탭에서 상위노출 유리한 조합\n'
+        +'5. "kw"와 자연스럽게 함께 쓸 수 있는 단어\n'
+        +'6. 아래 풀에서 적합한 것 우선 포함:\n'
+        +'   - 선불유심, 알뜰폰, KT선불폰, LG선불폰, 비대면개통\n'
+        +'   - 앤텔레콤, 선불폰개통방법, 편의점유심, 바로유심\n'
+        +'   - 모두의원칩, 선불요금제, 미납개통, 세컨폰\n'
+        +'   - 외국인유심, 선불폰구매, 유심요금제, 데이터유심\n'
+        +'\n응답: ["키워드1","키워드2",...,"키워드16"] 형식 JSON 배열만. 설명 없이.'
+    };
+  }
+  // 일반(맛집/제품/여행/커스텀)
+  var label={food:'음식/맛집',product:'제품리뷰',travel:'여행/카페',custom:'일반'}[cat]||'일반';
+  return {
+    sys:'You are a Korean Naver blog SEO keyword expert. Respond ONLY with a valid JSON array. No other text, no markdown.',
+    user:'네이버 블로그 카테고리 "'+label+'", 메인 키워드 "'+kw+'" 에 대해 SEO 상위노출에 최적화된 연관 서브키워드 16개를 추천해주세요.\n\n'
+      +'[추천 기준]\n'
+      +'1. "'+kw+'"와 직접 관련된 실제 검색어 우선\n'
+      +'2. 검색량 있지만 경쟁강도 낮은 롱테일 키워드 포함\n'
+      +'3. 지역명/세부 니즈 조합\n'
+      +'4. 네이버 VIEW탭에서 상위노출 유리한 조합\n'
+      +'\n응답: ["키워드1","키워드2",...,"키워드16"] 형식 JSON 배열만. 설명 없이.'
+  };
+}
 async function fetchKwSuggest(kw){
   var apiKey=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk);
   var box=document.getElementById('kw-suggest-box');
   if(!apiKey){box.style.display='none';return;}
+  var cat=document.getElementById('cat')?document.getElementById('cat').value:'';
+  var myId=++kwSuggestReqId; // 이 요청의 토큰 (이후 더 새 요청이 생기면 무효화됨)
   kwSuggestLast=kw;selectedSuggestKws=[];
   box.style.display='block';
   document.getElementById('kw-suggest-chips').innerHTML='<span class="kw-suggest-loading">✦ 키워드 분석 중...</span>';
-  
-  var sys='You are a Korean Naver blog SEO keyword expert specializing in 선불폰, 알뜰폰, 앤텔레콤, 선불유심 topics. Respond ONLY with valid JSON array. No other text, no markdown.';
-  var user='네이버 블로그 메인 키워드 "'+kw+'" 에 대해 SEO 상위노출에 최적화된 연관 서브키워드 16개를 추천해주세요.\n\n'
-    +'[추천 기준]\n'
-    +'1. 앤텔레콤/선불폰/알뜰폰 관련 실제 검색어 우선\n'
-    +'2. 검색량 있지만 경쟁강도 낮은 롱테일 키워드 포함\n'
-    +'3. 지역명+선불폰 조합 (예: 부산선불폰, 대구선불유심 등 kw 지역 기반)\n'
-    +'4. 네이버 VIEW탭에서 상위노출 유리한 조합\n'
-    +'5. "kw"와 자연스럽게 함께 쓸 수 있는 단어\n'
-    +'6. 아래 풀에서 적합한 것 우선 포함:\n'
-    +'   - 선불유심, 알뜰폰, KT선불폰, LG선불폰, 비대면개통\n'
-    +'   - 앤텔레콤, 선불폰개통방법, 편의점유심, 바로유심\n'
-    +'   - 모두의원칩, 선불요금제, 미납개통, 세컨폰\n'
-    +'   - 외국인유심, 선불폰구매, 유심요금제, 데이터유심\n'
-    +'\n응답: ["키워드1","키워드2",...,"키워드16"] 형식 JSON 배열만. 설명 없이.';
-  
+
+  var p=buildSuggestPrompt(kw,cat);
   try{
-    var raw=await callClaude(apiKey,sys,user);
+    var raw=await callClaude(apiKey,p.sys,p.user);
+    // 응답 도착 시점 검증: 더 새 요청이 있었거나, 그새 카테고리/키워드가 바뀌었으면 폐기
+    if(myId!==kwSuggestReqId) return;
+    var curCat=document.getElementById('cat')?document.getElementById('cat').value:'';
+    var curKw=document.getElementById('kw')?document.getElementById('kw').value.trim():'';
+    if(curCat!==cat||curKw!==kw) return;
     var s=raw.indexOf('['),e=raw.lastIndexOf(']');
     var arr=[];
     if(s>=0&&e>s){try{arr=JSON.parse(raw.slice(s,e+1));}catch(e2){}}
@@ -2388,7 +2430,7 @@ async function fetchKwSuggest(kw){
       var esc=k.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"\'");
       return '<span class="kw-chip" data-kw="'+esc+'" onclick="toggleSuggestKw(this)">'+k.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>';
     }).join('');
-  }catch(e){box.style.display='none';}
+  }catch(e){ if(myId===kwSuggestReqId) box.style.display='none'; }
 }
 
 
