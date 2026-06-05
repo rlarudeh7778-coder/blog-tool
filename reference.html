@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https: blob:; connect-src 'self' https:; frame-src 'self' https:;">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="키워드·태그·좋아요 수로 인스타그램/유튜브/틱톡 콘텐츠 레퍼런스를 빠르게 찾는 검색 도구입니다."/>
+<title>레퍼런스 찾기 · 콘텐츠 레퍼런스 검색</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="리치원 AI 툴셋">
+<meta property="og:title" content="레퍼런스 찾기 — 콘텐츠 레퍼런스 검색">
+<meta property="og:description" content="키워드·태그·좋아요 수로 잘 되는 콘텐츠 레퍼런스를 한 번에 찾기">
+<meta property="og:image" content="https://rlarudeh7778-coder.github.io/blog-tool/og-image.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{--green:#1B8F5E;--gl:#e8f7f1;--gd:#136b46;--red:#E24B4A;--rl:#fdeaea;--bg:#f6f8f7;--sur:#fff;--bor:#e2e8e5;--txt:#1a2520;--t2:#4a6058;--t3:#8aaa9e;--r:12px;--rs:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.6;min-height:100vh}
+a{color:inherit}
+/* 헤더 */
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--sur);border-bottom:1px solid var(--bor);position:sticky;top:0;z-index:30}
+.logo{font-size:16px;font-weight:800;display:flex;align-items:center;gap:6px}
+.logo span{color:var(--green)}
+.hright{display:flex;gap:8px;align-items:center}
+.hlink{font-size:12px;color:var(--t2);text-decoration:none;padding:7px 12px;border:1px solid var(--bor);border-radius:var(--rs);background:var(--sur);transition:.15s;white-space:nowrap}
+.hlink:hover{background:var(--gl);border-color:var(--green);color:var(--gd)}
+/* 검색 히어로 */
+.hero{max-width:880px;margin:0 auto;padding:36px 20px 8px;text-align:center}
+.hero h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.hero p{color:var(--t2);margin-top:8px;font-size:14px}
+.searchbar{display:flex;align-items:center;gap:8px;background:var(--sur);border:2px solid var(--bor);border-radius:999px;padding:6px 6px 6px 18px;margin-top:22px;box-shadow:0 4px 18px rgba(27,143,94,.06);transition:border-color .15s}
+.searchbar:focus-within{border-color:var(--green)}
+.searchbar input{flex:1;border:0;outline:0;font-size:15px;font-family:inherit;background:transparent;color:var(--txt)}
+.searchbar .sicon{color:var(--t3);font-size:17px}
+.sbtn{border:0;background:var(--green);color:#fff;font-family:inherit;font-weight:700;font-size:14px;padding:11px 24px;border-radius:999px;cursor:pointer;transition:background .15s;white-space:nowrap}
+.sbtn:hover{background:var(--gd)}
+/* 필터 */
+.filters{max-width:1180px;margin:18px auto 0;padding:0 20px;display:flex;flex-wrap:wrap;gap:18px 26px;align-items:flex-end}
+.fgroup{display:flex;flex-direction:column;gap:7px}
+.flabel{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.3px;padding-left:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12.5px;font-weight:500;padding:7px 13px;border:1px solid var(--bor);border-radius:999px;background:var(--sur);cursor:pointer;transition:.12s;color:var(--t2);user-select:none}
+.chip:hover{border-color:var(--green);color:var(--gd)}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff}
+select{font-family:inherit;font-size:13px;padding:8px 30px 8px 12px;border:1px solid var(--bor);border-radius:var(--rs);background:var(--sur) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%238aaa9e' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>") no-repeat right 11px center;appearance:none;color:var(--txt);cursor:pointer}
+select:focus{outline:0;border-color:var(--green)}
+/* 결과 바 */
+.resbar{max-width:1180px;margin:24px auto 0;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rescount{font-size:13px;color:var(--t2)}
+.rescount b{color:var(--txt)}
+.resbar .reset{font-size:12px;color:var(--t3);background:0;border:0;cursor:pointer;text-decoration:underline;font-family:inherit}
+.resbar .reset:hover{color:var(--red)}
+/* 그리드 */
+.grid{max-width:1180px;margin:14px auto 60px;padding:0 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(20,40,32,.10)}
+.thumb{position:relative;aspect-ratio:4/5;background:var(--gl);overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.mt-badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.62);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;backdrop-filter:blur(2px);display:flex;align-items:center;gap:3px}
+.src-badge{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;background:rgba(255,255,255,.92)}
+.cbody{padding:11px 12px 13px}
+.ccap{font-size:12.5px;color:var(--txt);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:38px}
+.cmeta{display:flex;align-items:center;gap:12px;margin-top:9px;font-size:12px;color:var(--t2);font-weight:500}
+.cmeta .tagp{margin-left:auto;font-size:11px;color:var(--gd);background:var(--gl);padding:2px 8px;border-radius:6px;font-weight:700}
+.empty{grid-column:1/-1;text-align:center;padding:70px 20px;color:var(--t3)}
+.empty .ei{font-size:44px;margin-bottom:10px}
+.foot{max-width:1180px;margin:0 auto;padding:0 20px 50px;text-align:center;color:var(--t3);font-size:11.5px;line-height:1.8}
+.demo-note{background:#fff8e8;border:1px solid #f0e0b8;color:#8a6d2f;font-size:12px;max-width:1180px;margin:18px auto 0;padding:10px 14px;border-radius:var(--rs);display:flex;gap:8px;align-items:center}
+/* 모달 (상세) */
+.mbg{position:fixed;inset:0;background:rgba(10,20,16,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.mbg.on{display:flex}
+.detail{background:var(--sur);border-radius:16px;overflow:hidden;max-width:760px;width:100%;max-height:90vh;display:grid;grid-template-columns:1fr 1fr}
+.detail .dimg{background:#000;aspect-ratio:4/5}
+.detail .dimg img{width:100%;height:100%;object-fit:cover}
+.detail .dside{padding:22px;display:flex;flex-direction:column;overflow:auto}
+.detail .dclose{position:absolute;top:16px;right:18px;background:rgba(0,0,0,.5);color:#fff;border:0;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px;z-index:2}
+.detail h3{font-size:16px;margin-bottom:4px}
+.dstats{display:flex;gap:16px;margin:12px 0;font-size:13px;color:var(--t2);font-weight:600}
+.dcap{font-size:13px;color:var(--txt);line-height:1.7;white-space:pre-wrap;flex:1}
+.dgo{margin-top:16px;display:block;text-align:center;background:var(--green);color:#fff;text-decoration:none;font-weight:700;padding:12px;border-radius:var(--rs);transition:.15s}
+.dgo:hover{background:var(--gd)}
+@media(max-width:1024px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){
+  .grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .hero h1{font-size:21px}
+  .detail{grid-template-columns:1fr;max-height:88vh}
+  .detail .dimg{aspect-ratio:16/10}
+  .sbtn{padding:11px 16px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo" style="text-decoration:none">✦ <span>레퍼런스</span> 찾기</a>
+  <div class="hright">
+    <a href="index.html" class="hlink">✏ 블로그 글쓰기</a>
+    <a href="tax.html" class="hlink">🧾 AI 세무사</a>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>잘 되는 콘텐츠, 한 번에 찾기 🔎</h1>
+  <p>키워드·태그·좋아요 수로 인스타그램·유튜브·틱톡 레퍼런스를 탐색하세요.</p>
+  <div class="searchbar">
+    <span class="sicon">🔍</span>
+    <input id="q" type="text" placeholder="예) 카페 인테리어, 다이어트 식단, 3가지 꿀팁…" autocomplete="off"/>
+    <button class="sbtn" onclick="render()">검색</button>
+  </div>
+</section>
+
+<div class="filters">
+  <div class="fgroup" style="flex:1;min-width:260px">
+    <div class="flabel">태그</div>
+    <div class="chips" id="tagchips"></div>
+  </div>
+  <div class="fgroup">
+    <div class="flabel">소스</div>
+    <select id="source"><option value="">전체</option><option value="youtube">유튜브</option><option value="reddit">레딧</option><option value="instagram">인스타그램</option><option value="tiktok">틱톡</option></select>
+  </div>
+  <div class="fgroup">
+    <div class="flabel">미디어 타입</div>
+    <select id="media"><option value="">전체</option><option value="IMAGE">이미지</option><option value="CAROUSEL">캐러셀</option><option value="VIDEO">영상/릴스</option></select>
+  </div>
+  <div class="fgroup">
+    <div class="flabel">최소 좋아요</div>
+    <select id="likes"><option value="0">전체</option><option value="1000">1,000+</option><option value="5000">5,000+</option><option value="10000">10,000+</option><option value="50000">50,000+</option></select>
+  </div>
+  <div class="fgroup">
+    <div class="flabel">정렬</div>
+    <select id="sort"><option value="likes">인기순(좋아요)</option><option value="comments">댓글순</option><option value="recent">최신순</option></select>
+  </div>
+</div>
+
+<div class="demo-note">⚡ 매일 자동 수집된 레퍼런스입니다 (유튜브·레딧·구글트렌드) <span id="updated" style="margin-left:6px;color:#a98a3f"></span></div>
+
+<div class="resbar">
+  <div class="rescount">검색 결과 <b id="cnt">0</b>건</div>
+  <button class="reset" onclick="resetAll()">필터 초기화</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="foot">리치원 AI 툴셋 · 레퍼런스 찾기 (데모)<br>샘플 이미지는 picsum.photos에서 제공됩니다.</div>
+
+<!-- 상세 모달 -->
+<div class="mbg" id="mbg" onclick="if(event.target===this)closeDetail()">
+  <div class="detail" style="position:relative">
+    <button class="dclose" onclick="closeDetail()">✕</button>
+    <div class="dimg"><img id="d-img" alt=""/></div>
+    <div class="dside">
+      <div style="font-size:12px;color:var(--t3)" id="d-src"></div>
+      <h3 id="d-tag"></h3>
+      <div class="dstats"><span id="d-likes"></span><span id="d-comments"></span></div>
+      <div class="dcap" id="d-cap"></div>
+      <a class="dgo" id="d-go" target="_blank" rel="noopener">원본 보러가기 ↗</a>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== 데이터 =====
+   실제 데이터는 data.json 에서 로드합니다. (그 파일만 수정하면 됩니다)
+   아래 FALLBACK_* 는 data.json 로드 실패 시(예: 로컬 file:// 미리보기) 쓰이는 안전망입니다. */
+var TAGS=[], DATA=[];
+var FALLBACK_TAGS=["음식/요리","카페","패션","뷰티","여행","인테리어","운동/헬스","육아","반려동물","IT/가전","자기계발","재테크"];
+var FALLBACK_DATA=[
+ {id:1, tag:"카페", source:"instagram", media:"CAROUSEL", likes:18400, comments:312, daysAgo:3,  caption:"요즘 뜨는 성수동 감성 카페 5곳 ☕ 저장 필수! 통창 뷰부터 베이커리 맛집까지 한 번에 정리했어요."},
+ {id:2, tag:"음식/요리", source:"instagram", media:"VIDEO", likes:52300, comments:1240, daysAgo:1, caption:"꼭 ~ 해야 하는 에어프라이어 3가지 꿀팁 🍗 이거 모르면 손해! 바삭함이 차원이 달라져요."},
+ {id:3, tag:"여행", source:"youtube", media:"VIDEO", likes:8700, comments:540, daysAgo:6, caption:"제주도 2박3일 우정여행 브이로그 🌊 가성비 숙소 + 인생샷 스팟 다 알려드림."},
+ {id:4, tag:"인테리어", source:"instagram", media:"CAROUSEL", likes:31200, comments:870, daysAgo:2, caption:"10평 원룸 셀프 인테리어 비포애프터 🏠 100만원으로 이렇게 바뀝니다. 가구 리스트 댓글에."},
+ {id:5, tag:"뷰티", source:"instagram", media:"IMAGE", likes:24600, comments:430, daysAgo:5, caption:"여름 데일리 메이크업 루틴 💄 무너지지 않는 베이스 제품 추천까지."},
+ {id:6, tag:"운동/헬스", source:"tiktok", media:"VIDEO", likes:98100, comments:2100, daysAgo:1, caption:"하루 5분 홈트로 뱃살 빼기 🔥 따라만 하세요. 2주 후기 보장."},
+ {id:7, tag:"재테크", source:"youtube", media:"VIDEO", likes:14300, comments:980, daysAgo:8, caption:"사회초년생이 꼭 알아야 할 적금 3가지 💰 이자 두 배로 받는 법."},
+ {id:8, tag:"음식/요리", source:"instagram", media:"CAROUSEL", likes:43800, comments:760, daysAgo:4, caption:"편의점 꿀조합 베스트 10 🍜 다이어트 중에도 가능한 조합까지 모음."},
+ {id:9, tag:"반려동물", source:"instagram", media:"VIDEO", likes:67200, comments:1530, daysAgo:2, caption:"강아지가 좋아하는 노즈워크 만들기 🐶 집에 있는 박스로 5분 완성."},
+ {id:10, tag:"패션", source:"instagram", media:"CAROUSEL", likes:29900, comments:610, daysAgo:3, caption:"키 작은 사람 여름 코디 꿀팁 👗 비율 살리는 룩북 7가지."},
+ {id:11, tag:"IT/가전", source:"youtube", media:"VIDEO", likes:11200, comments:720, daysAgo:7, caption:"10만원대 가성비 무선이어폰 비교 🎧 솔직 리뷰. 1위는 의외의 제품."},
+ {id:12, tag:"자기계발", source:"instagram", media:"IMAGE", likes:38400, comments:540, daysAgo:5, caption:"아침 루틴 바꾸고 인생이 달라진 이유 ☀️ 미라클모닝 3주 기록."},
+ {id:13, tag:"카페", source:"instagram", media:"IMAGE", likes:9800, comments:140, daysAgo:9, caption:"홈카페 라떼아트 입문 🥛 집에서 카페 감성 내는 법."},
+ {id:14, tag:"육아", source:"instagram", media:"CAROUSEL", likes:21500, comments:1120, daysAgo:4, caption:"6개월 아기 이유식 첫 시작 가이드 🍼 식재료 순서 정리표."},
+ {id:15, tag:"여행", source:"instagram", media:"CAROUSEL", likes:46700, comments:830, daysAgo:2, caption:"오사카 자유여행 3박4일 코스 🗾 동선 낭비 없는 완벽 일정표."},
+ {id:16, tag:"음식/요리", source:"tiktok", media:"VIDEO", likes:120400, comments:3400, daysAgo:1, caption:"10분 완성 마라탕 레시피 🌶️ 집에서 더 맛있게! 재료는 마트에서 다 구해요."},
+ {id:17, tag:"뷰티", source:"youtube", media:"VIDEO", likes:7600, comments:410, daysAgo:11, caption:"피부과 다닐 돈 아끼는 홈케어 루틴 ✨ 모공 줄이는 진짜 방법."},
+ {id:18, tag:"운동/헬스", source:"instagram", media:"IMAGE", likes:33100, comments:520, daysAgo:6, caption:"초보를 위한 데드리프트 자세 교정 💪 허리 안 다치는 핵심 3가지."},
+ {id:19, tag:"인테리어", source:"instagram", media:"CAROUSEL", likes:27800, comments:690, daysAgo:3, caption:"무드등 하나로 방 분위기 끝내기 💡 가성비 조명 추천 모음."},
+ {id:20, tag:"재테크", source:"instagram", media:"IMAGE", likes:54200, comments:1340, daysAgo:2, caption:"월급 250 직장인 통장 쪼개기 💸 자동이체 세팅 그대로 따라하기."},
+ {id:21, tag:"반려동물", source:"tiktok", media:"VIDEO", likes:88300, comments:1900, daysAgo:1, caption:"고양이가 갑자기 안기는 마법의 손동작 🐱 효과 100%? 직접 해봤어요."},
+ {id:22, tag:"패션", source:"instagram", media:"IMAGE", likes:16400, comments:280, daysAgo:7, caption:"미니멀 데일리룩 일주일 코디 🧥 옷장 비우고 산 베이직템 추천."},
+ {id:23, tag:"IT/가전", source:"instagram", media:"CAROUSEL", likes:19900, comments:360, daysAgo:5, caption:"작업 효율 2배 올려주는 데스크 셋업템 🖥️ 직장인 필수 아이템."},
+ {id:24, tag:"자기계발", source:"youtube", media:"VIDEO", likes:23700, comments:1080, daysAgo:4, caption:"하루 10분 독서 습관 만드는 법 📚 1년에 50권 읽은 비결."},
+ {id:25, tag:"음식/요리", source:"instagram", media:"IMAGE", likes:12800, comments:190, daysAgo:8, caption:"한 그릇 다이어트 덮밥 🥗 맛있는데 칼로리 걱정 없는 레시피."},
+ {id:26, tag:"여행", source:"tiktok", media:"VIDEO", likes:73600, comments:1450, daysAgo:2, caption:"공항에서 이거 모르면 손해 ✈️ 여행 꿀팁 3가지 30초 정리."},
+ {id:27, tag:"카페", source:"instagram", media:"CAROUSEL", likes:35400, comments:720, daysAgo:3, caption:"전국 디저트 맛집 지도 🍰 저장하고 하나씩 도장깨기 하세요."},
+ {id:28, tag:"육아", source:"youtube", media:"VIDEO", likes:9100, comments:630, daysAgo:10, caption:"아이 떼쓸 때 부모의 한마디 👶 육아 전문가가 알려주는 대화법."},
+ {id:29, tag:"뷰티", source:"instagram", media:"CAROUSEL", likes:41200, comments:940, daysAgo:2, caption:"올리브영 세일 때 꼭 사는 인생템 🛍️ 재구매만 5번 한 제품들."},
+ {id:30, tag:"운동/헬스", source:"youtube", media:"VIDEO", likes:15600, comments:880, daysAgo:6, caption:"3개월 -10kg 다이어트 식단 공개 🥦 굶지 않고 뺀 진짜 식단표."}
+];
+
+/* 미디어 타입 표기 */
+var MEDIA_LABEL={IMAGE:"🖼 이미지",CAROUSEL:"🎞 캐러셀",VIDEO:"▶ 영상"};
+var SRC_ICON={instagram:"📷",youtube:"▶️",tiktok:"🎵",reddit:"👽"};
+function srcIcon(s){return SRC_ICON[s]||"🔗";}
+function thumbUrl(it){return it.thumbnail?it.thumbnail:("https://picsum.photos/seed/ref"+it.id+"/480/600");}
+function fmt(n){return n>=10000?(n/10000).toFixed(1).replace(/\.0$/,'')+"만":n>=1000?(n/1000).toFixed(1).replace(/\.0$/,'')+"천":""+n;}
+
+/* ===== 상태 ===== */
+var selectedTags=new Set();
+
+/* 태그 칩 렌더 */
+function buildTags(){
+  var box=document.getElementById('tagchips');
+  box.innerHTML='';
+  TAGS.forEach(function(t){
+    var c=document.createElement('div');
+    c.className='chip';c.textContent=t;
+    c.onclick=function(){ if(selectedTags.has(t)){selectedTags.delete(t);c.classList.remove('on');} else {selectedTags.add(t);c.classList.add('on');} render(); };
+    box.appendChild(c);
+  });
+}
+
+/* 필터 변경 시 자동 렌더 */
+['source','media','likes','sort'].forEach(function(id){document.getElementById(id).addEventListener('change',render);});
+document.getElementById('q').addEventListener('input',debounce(render,180));
+document.getElementById('q').addEventListener('keydown',function(e){if(e.key==='Enter')render();});
+function debounce(fn,ms){var t;return function(){clearTimeout(t);t=setTimeout(fn,ms);};}
+
+/* ===== 메인 렌더 ===== */
+function render(){
+  var q=document.getElementById('q').value.trim().toLowerCase();
+  var src=document.getElementById('source').value;
+  var media=document.getElementById('media').value;
+  var minLikes=parseInt(document.getElementById('likes').value,10);
+  var sort=document.getElementById('sort').value;
+
+  var rows=DATA.filter(function(it){
+    if(q && it.caption.toLowerCase().indexOf(q)<0 && it.tag.toLowerCase().indexOf(q)<0) return false;
+    if(selectedTags.size && !selectedTags.has(it.tag)) return false;
+    if(src && it.source!==src) return false;
+    if(media && it.media!==media) return false;
+    if(it.likes<minLikes) return false;
+    return true;
+  });
+
+  rows.sort(function(a,b){
+    if(sort==='likes') return b.likes-a.likes;
+    if(sort==='comments') return b.comments-a.comments;
+    return a._days-b._days; /* recent */
+  });
+
+  document.getElementById('cnt').textContent=rows.length;
+  var grid=document.getElementById('grid');
+
+  if(!rows.length){
+    grid.innerHTML='<div class="empty"><div class="ei">🔍</div>조건에 맞는 레퍼런스가 없어요.<br>키워드나 필터를 바꿔보세요.</div>';
+    return;
+  }
+
+  grid.innerHTML=rows.map(function(it){
+    return '<div class="card" onclick="openDetail('+it.id+')">'+
+      '<div class="thumb">'+
+        '<img loading="lazy" src="'+thumbUrl(it)+'" alt=""/>'+
+        '<div class="mt-badge">'+MEDIA_LABEL[it.media]+'</div>'+
+        '<div class="src-badge">'+srcIcon(it.source)+'</div>'+
+      '</div>'+
+      '<div class="cbody">'+
+        '<div class="ccap">'+escapeHtml(it.caption)+'</div>'+
+        '<div class="cmeta"><span>❤ '+fmt(it.likes)+'</span><span>💬 '+fmt(it.comments)+'</span><span class="tagp">#'+it.tag+'</span></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function escapeHtml(s){return s.replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+/* ===== 상세 모달 ===== */
+function openDetail(id){
+  var it=DATA.find(function(x){return x.id===id;});if(!it)return;
+  document.getElementById('d-img').src=thumbUrl(it);
+  document.getElementById('d-src').textContent=srcIcon(it.source)+' '+it.source+' · '+MEDIA_LABEL[it.media].replace(/^.\s?/,'')+' · '+it._days+'일 전';
+  document.getElementById('d-tag').textContent='#'+it.tag;
+  document.getElementById('d-likes').textContent='❤ 좋아요 '+it.likes.toLocaleString();
+  document.getElementById('d-comments').textContent='💬 댓글 '+it.comments.toLocaleString();
+  document.getElementById('d-cap').textContent=it.caption;
+  document.getElementById('d-go').href=it.url||('https://www.'+(it.source==='instagram'?'instagram.com':it.source==='youtube'?'youtube.com':'tiktok.com'));
+  document.getElementById('mbg').classList.add('on');
+}
+function closeDetail(){document.getElementById('mbg').classList.remove('on');}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDetail();});
+
+/* 초기화 */
+function resetAll(){
+  document.getElementById('q').value='';
+  document.getElementById('source').value='';
+  document.getElementById('media').value='';
+  document.getElementById('likes').value='0';
+  document.getElementById('sort').value='likes';
+  selectedTags.clear();
+  document.querySelectorAll('#tagchips .chip').forEach(function(c){c.classList.remove('on');});
+  render();
+}
+
+/* ===== 데이터 로드 (data.json) ===== */
+function normalize(items){
+  var now=Date.now();
+  items.forEach(function(it){
+    if(typeof it.daysAgo==='number'){ it._days=it.daysAgo; }
+    else if(it.date){ it._days=Math.max(0,Math.round((now-new Date(it.date).getTime())/86400000)); }
+    else { it._days=0; }
+  });
+  return items;
+}
+function applyData(j){
+  j=j||{};
+  TAGS=(j.tags&&j.tags.length)?j.tags:FALLBACK_TAGS;
+  DATA=normalize((j.items&&j.items.length)?j.items:FALLBACK_DATA);
+  var u=document.getElementById('updated');
+  if(u) u.textContent=j._generated?('· 갱신 '+j._generated):'';
+  buildTags();
+  render();
+}
+fetch('data.json',{cache:'no-store'})
+  .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+  .then(function(j){ applyData(j); })
+  .catch(function(){ applyData(null); });
+</script>
+</body>
+</html>

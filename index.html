@@ -323,6 +323,9 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
   <a href="tax.html" class="maintab" id="mt-tax" style="position:relative;text-decoration:none">🧾 AI 세무사
     <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
   </a>
+  <a href="reference.html" class="maintab" id="mt-reference" style="position:relative;text-decoration:none">🔎 레퍼런스 찾기
+    <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
+  </a>
   <div class="maintab" id="mt-homepage" data-tab="homepage" style="position:relative">🏠 홈페이지 제작
     <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
   </div>
@@ -1819,6 +1822,7 @@ function renderGuides(){document.getElementById('glist').innerHTML=GUIDES.map(fu
 var AI='claude',tone='친근한',dealer='',autoSave=false,hist=[],cur=null;
 var selectedSuggestKws=[];
 var kwSuggestTimer=null,kwSuggestLast='';
+var kwSuggestReqId=0; // 추천키워드 비동기 레이스 가드 토큰
 var crRegion='전체',crActive=-1;
 
 var AICFG={
@@ -2134,7 +2138,9 @@ function onCatChange(){
   kwSuggestLast = '';
   selectedSuggestKws = [];
   document.getElementById('kw-suggest-box').style.display = 'none';
-  
+  if(kwSuggestTimer)clearTimeout(kwSuggestTimer); // 대기중 추천요청 취소
+  kwSuggestReqId++;                                // 진행중 비동기 응답 무효화
+
 
   // 지역 필드 표시/숨김
   if(regionField) regionField.style.display = isReview ? 'none' : '';
@@ -2352,31 +2358,70 @@ function onKwInput(){
   kwSuggestTimer=setTimeout(function(){fetchKwSuggest(kw);},700);
 }
 function onKwBlur(){setTimeout(function(){if(!document.getElementById('kw').value.trim())document.getElementById('kw-suggest-box').style.display='none';},200);}
+// 카테고리별 추천 키워드 프롬프트 생성 (선불폰/영어/일반 분리)
+function buildSuggestPrompt(kw,cat){
+  if(cat==='english'){
+    return {
+      sys:'You are a Korean Naver blog SEO keyword expert specializing in 영어회화, 영어학원, 화상영어, 전화영어, 토익/오픽 topics. Respond ONLY with a valid JSON array. No other text, no markdown.',
+      user:'네이버 블로그 메인 키워드 "'+kw+'" 에 대해 SEO 상위노출에 최적화된 연관 서브키워드 16개를 추천해주세요.\n\n'
+        +'[추천 기준]\n'
+        +'1. 영어회화/영어학원/화상영어/전화영어 관련 실제 검색어 우선\n'
+        +'2. 검색량 있지만 경쟁강도 낮은 롱테일 키워드 포함\n'
+        +'3. 지역명+영어 조합 (예: 강남영어회화, 부산영어학원 등 kw 지역 기반)\n'
+        +'4. 네이버 VIEW탭에서 상위노출 유리한 조합\n'
+        +'5. 성인영어, 왕초보영어, 화상영어추천, 전화영어비교, 오픽, 토익스피킹, 비즈니스영어, 원어민회화 등 적합한 것 우선 포함\n'
+        +'\n응답: ["키워드1","키워드2",...,"키워드16"] 형식 JSON 배열만. 설명 없이.'
+    };
+  }
+  if(cat==='phone'){
+    return {
+      sys:'You are a Korean Naver blog SEO keyword expert specializing in 선불폰, 알뜰폰, 앤텔레콤, 선불유심 topics. Respond ONLY with valid JSON array. No other text, no markdown.',
+      user:'네이버 블로그 메인 키워드 "'+kw+'" 에 대해 SEO 상위노출에 최적화된 연관 서브키워드 16개를 추천해주세요.\n\n'
+        +'[추천 기준]\n'
+        +'1. 앤텔레콤/선불폰/알뜰폰 관련 실제 검색어 우선\n'
+        +'2. 검색량 있지만 경쟁강도 낮은 롱테일 키워드 포함\n'
+        +'3. 지역명+선불폰 조합 (예: 부산선불폰, 대구선불유심 등 kw 지역 기반)\n'
+        +'4. 네이버 VIEW탭에서 상위노출 유리한 조합\n'
+        +'5. "kw"와 자연스럽게 함께 쓸 수 있는 단어\n'
+        +'6. 아래 풀에서 적합한 것 우선 포함:\n'
+        +'   - 선불유심, 알뜰폰, KT선불폰, LG선불폰, 비대면개통\n'
+        +'   - 앤텔레콤, 선불폰개통방법, 편의점유심, 바로유심\n'
+        +'   - 모두의원칩, 선불요금제, 미납개통, 세컨폰\n'
+        +'   - 외국인유심, 선불폰구매, 유심요금제, 데이터유심\n'
+        +'\n응답: ["키워드1","키워드2",...,"키워드16"] 형식 JSON 배열만. 설명 없이.'
+    };
+  }
+  // 일반(맛집/제품/여행/커스텀)
+  var label={food:'음식/맛집',product:'제품리뷰',travel:'여행/카페',custom:'일반'}[cat]||'일반';
+  return {
+    sys:'You are a Korean Naver blog SEO keyword expert. Respond ONLY with a valid JSON array. No other text, no markdown.',
+    user:'네이버 블로그 카테고리 "'+label+'", 메인 키워드 "'+kw+'" 에 대해 SEO 상위노출에 최적화된 연관 서브키워드 16개를 추천해주세요.\n\n'
+      +'[추천 기준]\n'
+      +'1. "'+kw+'"와 직접 관련된 실제 검색어 우선\n'
+      +'2. 검색량 있지만 경쟁강도 낮은 롱테일 키워드 포함\n'
+      +'3. 지역명/세부 니즈 조합\n'
+      +'4. 네이버 VIEW탭에서 상위노출 유리한 조합\n'
+      +'\n응답: ["키워드1","키워드2",...,"키워드16"] 형식 JSON 배열만. 설명 없이.'
+  };
+}
 async function fetchKwSuggest(kw){
   var apiKey=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk);
   var box=document.getElementById('kw-suggest-box');
   if(!apiKey){box.style.display='none';return;}
+  var cat=document.getElementById('cat')?document.getElementById('cat').value:'';
+  var myId=++kwSuggestReqId; // 이 요청의 토큰 (이후 더 새 요청이 생기면 무효화됨)
   kwSuggestLast=kw;selectedSuggestKws=[];
   box.style.display='block';
   document.getElementById('kw-suggest-chips').innerHTML='<span class="kw-suggest-loading">✦ 키워드 분석 중...</span>';
-  
-  var sys='You are a Korean Naver blog SEO keyword expert specializing in 선불폰, 알뜰폰, 앤텔레콤, 선불유심 topics. Respond ONLY with valid JSON array. No other text, no markdown.';
-  var user='네이버 블로그 메인 키워드 "'+kw+'" 에 대해 SEO 상위노출에 최적화된 연관 서브키워드 16개를 추천해주세요.\n\n'
-    +'[추천 기준]\n'
-    +'1. 앤텔레콤/선불폰/알뜰폰 관련 실제 검색어 우선\n'
-    +'2. 검색량 있지만 경쟁강도 낮은 롱테일 키워드 포함\n'
-    +'3. 지역명+선불폰 조합 (예: 부산선불폰, 대구선불유심 등 kw 지역 기반)\n'
-    +'4. 네이버 VIEW탭에서 상위노출 유리한 조합\n'
-    +'5. "kw"와 자연스럽게 함께 쓸 수 있는 단어\n'
-    +'6. 아래 풀에서 적합한 것 우선 포함:\n'
-    +'   - 선불유심, 알뜰폰, KT선불폰, LG선불폰, 비대면개통\n'
-    +'   - 앤텔레콤, 선불폰개통방법, 편의점유심, 바로유심\n'
-    +'   - 모두의원칩, 선불요금제, 미납개통, 세컨폰\n'
-    +'   - 외국인유심, 선불폰구매, 유심요금제, 데이터유심\n'
-    +'\n응답: ["키워드1","키워드2",...,"키워드16"] 형식 JSON 배열만. 설명 없이.';
-  
+
+  var p=buildSuggestPrompt(kw,cat);
   try{
-    var raw=await callClaude(apiKey,sys,user);
+    var raw=await callClaude(apiKey,p.sys,p.user);
+    // 응답 도착 시점 검증: 더 새 요청이 있었거나, 그새 카테고리/키워드가 바뀌었으면 폐기
+    if(myId!==kwSuggestReqId) return;
+    var curCat=document.getElementById('cat')?document.getElementById('cat').value:'';
+    var curKw=document.getElementById('kw')?document.getElementById('kw').value.trim():'';
+    if(curCat!==cat||curKw!==kw) return;
     var s=raw.indexOf('['),e=raw.lastIndexOf(']');
     var arr=[];
     if(s>=0&&e>s){try{arr=JSON.parse(raw.slice(s,e+1));}catch(e2){}}
@@ -2385,7 +2430,7 @@ async function fetchKwSuggest(kw){
       var esc=k.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"\'");
       return '<span class="kw-chip" data-kw="'+esc+'" onclick="toggleSuggestKw(this)">'+k.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>';
     }).join('');
-  }catch(e){box.style.display='none';}
+  }catch(e){ if(myId===kwSuggestReqId) box.style.display='none'; }
 }
 
 
@@ -2499,13 +2544,64 @@ var PHONE_SIM_POOL=[
   '유심 종류는 망에 따라 달라요.\n\nKT망 쓸 분: 편의점에서 KT 바로유심 (8,800원) 사면 돼요. CU, GS25, 이마트24 다 있어요.\nLG망 쓸 분: LG 모두의원칩 (8,800원) / 아니면 다이소에서 LG국민유심칩 (5,000원)으로 더 저렴하게.\n\nKT 요금 미납이 있는 분이라면 KT망은 가입이 막혀요. 이럴 때 LG U+망으로 가면 되는데, LG망은 SK·KT·LG 3사 연체가 있어도 선불폰 가입이 가능해요.'
 ];
 
-var PHONE_PLAN_POOL=[
-  '앤텔레콤 요금제는 KT망과 LG망 둘 다 비슷하게 구성되어 있어요.\n\n요금제명 | 월정액 | 기본데이터 | 소진후속도 | 특징\nLTE기본1 | 12,100원 | 300MB | - | 인증용/최저가\nLTE396 | 39,600원 | 10.3GB | 3Mbps 무제한 | 가성비 1위\nLTE459 | 45,900원 | 20.3GB | 3Mbps 무제한 | 데이터 여유\nLTE770 | 77,000원 | 10GB+일2GB | 1Mbps | 고용량\nLTE비디오 | 85,900원 | 100GB | 5Mbps | 동영상 헤비유저\n\n3Mbps는 유튜브 SD화질, 카카오톡, 네이버 등 일상적인 사용에 문제없는 속도예요.',
-  '앤텔레콤 요금제 중 제일 많이 선택하는 건 LTE396이에요. 월 39,600원에 10.3GB 쓰고 나서도 3Mbps로 계속 터지거든요.\n\n속도 참고로 말씀드리면\n- 3Mbps: 유튜브 SD화질, 카카오톡, 웹서핑 가능\n- 5Mbps: 유튜브 HD화질 가능\n- 1Mbps: 카카오톡, 웹서핑만 가능\n\n전화·문자만 필요하면 LTE기본1(12,100원), 데이터 넉넉히 쓰고 싶으면 LTE459(45,900원), 영상 많이 보면 LTE비디오(85,900원) 가면 돼요.',
-  '요금제 고를 때 핵심은 소진 후 속도예요.\n\nLTE396 (39,600원): 10.3GB + 이후 3Mbps 무제한 → 가성비 최고\nLTE459 (45,900원): 20.3GB + 이후 3Mbps 무제한 → 데이터 좀 더 여유\nLTE770 (77,000원): 10GB + 하루 2GB 추가 + 이후 1Mbps\nLTE비디오 (85,900원): 100GB + 이후 5Mbps → 유튜브 HD 헤비유저\nLTE기본1 (12,100원): 300MB → 인증용 or 세컨폰\n\nLG망도 동일한 요금제 구성이에요.',
-  '요금제는 이렇게 보시면 돼요.\n\n가장 인기: LTE396 (39,600원) - 10.3GB 기본 + 소진 후 3Mbps 무제한\n데이터 더: LTE459 (45,900원) - 20.3GB + 소진 후 3Mbps\n고용량: LTE770 (77,000원) - 10GB + 하루 추가 2GB\n영상특화: LTE비디오 (85,900원) - 100GB + 5Mbps\n인증전용: LTE기본1 (12,100원) - 300MB\n\n3Mbps면 유튜브 SD, 카카오톡, 웹서핑은 충분해요. KT망·LG망 동일 요금제 적용.',
-  '앤텔레콤 요금제 한눈에 정리\n\nLTE기본1: 12,100원 / 300MB / 인증·세컨폰용\nLTE396: 39,600원 / 10.3GB + 3Mbps무제한 / 가성비왕\nLTE459: 45,900원 / 20.3GB + 3Mbps무제한 / 데이터여유\nLTE770: 77,000원 / 10GB+일2GB + 1Mbps / 고용량\nLTE비디오: 85,900원 / 100GB + 5Mbps / 영상헤비\n\n3Mbps = 유튜브SD·카카오톡·웹서핑 OK / 5Mbps = 유튜브HD OK / 1Mbps = 카톡·웹서핑만 OK'
+// ── 앤텔레콤 선불 요금제 카탈로그 (가이드탭 KT망/LG망 요금제 링크 기준)
+//    KT망: https://info.n-telecom.co.kr/products/Ktprepay_all.jsp
+//    LG망: https://info.n-telecom.co.kr/products/Lg_all.jsp
+//    ※ 실제 요금제가 바뀌거나 망별로 다르면 아래 두 배열만 수정하면 됩니다.
+var KT_PLAN_CATALOG=[
+  {name:'LTE기본1',  price:'12,100원', data:'300MB',        after:'-',                 tag:'인증·세컨폰용 최저가'},
+  {name:'LTE396',    price:'39,600원', data:'10.3GB',       after:'소진 후 3Mbps 무제한', tag:'가성비 1위·제일 인기'},
+  {name:'LTE459',    price:'45,900원', data:'20.3GB',       after:'소진 후 3Mbps 무제한', tag:'데이터 여유'},
+  {name:'LTE770',    price:'77,000원', data:'10GB+하루 2GB', after:'소진 후 1Mbps',       tag:'고용량'},
+  {name:'LTE비디오', price:'85,900원', data:'100GB',        after:'소진 후 5Mbps',       tag:'영상 헤비유저'}
 ];
+var LG_PLAN_CATALOG=[
+  {name:'LTE기본1',  price:'12,100원', data:'300MB',        after:'-',                 tag:'인증·세컨폰용 최저가'},
+  {name:'LTE396',    price:'39,600원', data:'10.3GB',       after:'소진 후 3Mbps 무제한', tag:'가성비 1위·제일 인기'},
+  {name:'LTE459',    price:'45,900원', data:'20.3GB',       after:'소진 후 3Mbps 무제한', tag:'데이터 여유'},
+  {name:'LTE770',    price:'77,000원', data:'10GB+하루 2GB', after:'소진 후 1Mbps',       tag:'고용량'},
+  {name:'LTE비디오', price:'85,900원', data:'100GB',        after:'소진 후 5Mbps',       tag:'영상 헤비유저'}
+];
+
+// 요금제 설명 앵글 (매번 다른 톤·구성으로 풀어쓰게)
+var PLAN_DESC_ANGLES=[
+  '본인 데이터 사용량 기준으로 골라주는 느낌으로',
+  '"이런 분은 이 요금제" 식으로 상황별 추천하는 느낌으로',
+  '가성비/소진 후 속도 관점에서 비교해주는 느낌으로',
+  '제일 인기 요금제부터 하나씩 짚어주는 느낌으로',
+  '월 예산대별로 묶어서 추천하는 느낌으로'
+];
+
+// 카탈로그에서 무작위 n개 선택
+function pickPlans(catalog,n){
+  var a=catalog.slice();
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
+  return a.slice(0,Math.min(n,a.length));
+}
+function planLines(plans){
+  return plans.map(function(p){
+    return '- '+p.name+' ('+p.price+'): '+p.data+(p.after&&p.after!=='-'?' / '+p.after:'')+' → '+p.tag;
+  }).join('\n');
+}
+// KT망/LG망을 명확히 구분해, 매번 다른 조합으로 추천하는 요금제 섹션 생성
+function buildPlanSection(){
+  var kt=pickPlans(KT_PLAN_CATALOG,getRandomInt(3,4)); // KT 3~4개 랜덤
+  var lg=pickPlans(LG_PLAN_CATALOG,getRandomInt(3,4)); // LG 3~4개 랜덤
+  var angle=getRandom(PLAN_DESC_ANGLES);
+  return '★★ KT망과 LG U+망은 서로 다른 통신망입니다. 절대 "동일하다/같다/비슷하다"고 표현하지 말 것. '
+    +'두 망을 각각 단락(또는 소제목)으로 나눠 구분해서 설명할 것. ★★\n\n'
+    +'[망 선택 기준 - 설명에 자연스럽게 녹일 것]\n'
+    +'· KT망: KT 통신망 사용. KT에 미납/연체 이력이 있으면 KT망 개통이 막힘. KT가 잘 터지는 지역이거나 기존 KT 사용자에게 적합.\n'
+    +'· LG U+망: LG 통신망 사용. KT 미납이 있어도 가입 가능(망이 달라 KT 연체 영향 없음). SK·KT·LG 3사 연체가 있어도 가입돼 조건이 가장 넓음. LG U+가 잘 터지는 지역에 적합.\n'
+    +'→ "본인 생활 지역에서 잘 터지는 망 + 미납 이력 없는 망"으로 고르라고 안내.\n\n'
+    +'[이번 글에서 추천할 KT망 요금제 ('+kt.length+'개) — 이 요금제들 중심으로]\n'+planLines(kt)+'\n\n'
+    +'[이번 글에서 추천할 LG U+망 요금제 ('+lg.length+'개) — 이 요금제들 중심으로]\n'+planLines(lg)+'\n\n'
+    +'[표현 지침]\n'
+    +'- '+angle+' 매번 다른 문장/구성으로 풀어쓰기 (이전 글과 다르게)\n'
+    +'- 속도 보충: 3Mbps=유튜브 SD·카톡·웹서핑 OK / 5Mbps=유튜브 HD OK / 1Mbps=카톡·웹서핑 정도\n'
+    +'- KT망 추천 요금제와 LG망 추천 요금제를 섞지 말고 망별로 분리해서 제시\n'
+    +'- 요금/데이터 수치는 위 값 그대로 쓰되 문장 표현만 새롭게';
+}
 
 var PHONE_WEB_STEPS = "\n[웹 플랫폼 셀프 개통 절차] - 매출자코드 없을 때 적용\n접수 가능 시간: 오전 8시~오후 9시 50분 / 평일·주말·공휴일 365일\n\n① 홈페이지 이동\n앤플랫폼 사이트에 접속한 후, 구입한 유심 종류에 맞게 KT 또는 LG 개통하기를 클릭해 접수를 시작합니다.\n\n② 유형 체크\n신규 → 내국인 순서대로 클릭하고, 기존에 사용하던 번호를 입력한 후 다음으로 넘어갑니다.\n\n③ 안면 인증\n7월 1일 의무화 이전까지는 안면 인증 건너뛰기를 클릭하면 됩니다.\n\n④ 간편 인증서 본인확인\n카카오·토스·PASS·신한·국민 중 보유하고 있는 수단으로 본인 확인을 진행합니다.\n\n⑤ 유심 정보 등록\nKT망: 8982로 시작하는 19자리 숫자 입력 (영문 F 제외)\nLG U+망: 모델명(U8680, K3630 등 5자리) + 일련번호(8자리 숫자)\n\n⑥ 요금제 선택\n사용량과 이용 목적에 맞춰 화면에서 요금제를 선택합니다.\n\n⑦ 사전 체크\n온라인 신청 가능 여부 확인을 위해 사전 체크를 진행합니다.\n\n⑧ 번호 예약\n원하는 뒷번호 4자리를 조회하고 채번된 번호 중 하나를 선택해 예약합니다.\n\n⑨ 개통 신청 완료\n가입 정보를 기입하고 '개통 신청' 버튼을 클릭합니다. 평균 3~5분 이내로 단말기 활성화 처리가 완료됩니다.\n";
 var PHONE_APP_STEPS_TPL = '\n[앤텔레콤 멤버십 앱 셀프 개통 절차] - 매출자코드 있을 때 적용\n접수 가능 시간: 오전 8시~오후 9시 50분 / 365일\n\n① 전용 앱 설치\n플레이스토어 또는 앱스토어에서 [앤텔레콤 멤버십]을 검색합니다.\nKT망 쓸 분은 KT망, LG망 쓸 분은 LG망 앱으로 설치하세요.\n\n② 태블릿소유자회원번호 입력 ({DEALER})\n앱 실행 후 [신규 개통]을 누릅니다.\n태블릿소유자회원번호 입력란에 {DEALER}을 입력합니다.\n담당자 확인 후 최종 승인을 진행해주는 담당자 번호이니 정확히 입력해주세요.\n\n③ 안면 인증\n연락 가능한 번호를 입력합니다.\nQR 또는 문자 링크로 접속 후 PASS·브라우저로 안면 인식을 진행합니다.\n7월 1일 의무화 전까지는 건너뛰기도 가능합니다.\n\n④ 본인 인증\n유형 화면에서 [선불]을 클릭합니다.\n토스·카카오·PASS·국민·신한 간편인증서 중 보유하고 있는 것으로 전자서명합니다.\n\n⑤ 고객 정보 입력\n주민등록증 또는 운전면허증의 정보를 참고해 고객 정보를 정확히 입력합니다.\n\n⑥ 번호 선택\n원하는 뒷번호 4자리를 조회한 후 원하는 번호를 선택합니다.\n\n⑦ 유심(USIM) 등록\nKT망: 8982로 시작하는 19자리 숫자 입력 (영문 F 제외)\nLG U+망: 모델코드(U8680·K3630 등 5자리) + 일련번호(8자리)\n\n⑧ 요금제 선택\nLTE 396 (39,600원/10.3GB+3Mbps 무제한)이 가장 인기 있는 요금제입니다.\n실속형~무제한까지 다양하게 구성되어 있으니 사용 패턴에 맞게 선택하세요.\n\n⑨ 승인 요청 및 개통 완료\n고객명과 서명을 입력하면 접수가 완료됩니다.\n담당자에게 승인 요청을 하면 평균 3~5분 이내 개통이 완료됩니다.\n';
@@ -2556,6 +2652,60 @@ function getTodayCount(){
 }
 
 
+/* 레퍼런스 붙여넣기 정리: 네이버 등에서 복사할 때 딸려오는
+   HTML 태그·스크립트·에디터 내부 코드 찌꺼기를 제거한다.
+   판단 기준: 한글이 거의 없고 코드 패턴이 있는 줄만 제거(본문은 보존). */
+function cleanRefText(s){
+  if(!s) return '';
+  // 1) script/style 블록 통째로 제거
+  s = s.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ');
+  // 2) 남은 HTML 태그 제거
+  s = s.replace(/<\/?[a-z][^>]*>/gi,' ');
+  // 3) 자주 나오는 HTML 엔티티 복원
+  s = s.replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/&lt;/gi,'<')
+       .replace(/&gt;/gi,'>').replace(/&quot;/gi,'"').replace(/&#39;/gi,"'");
+  // 4) 코드처럼 보이는 줄 제거
+  var codePat = /(function\s*\(|=>|\bvar\b|\blet\b|\bconst\b|\breturn\b|\$Element|welParents|editorVersion|document\.|window\.|\.attr\(|console\.|=== |!==|\bnull\b|\bundefined\b|;\s*$|^\s*[{}();]+\s*$)/;
+  var lines = s.split(/\r?\n/).filter(function(ln){
+    var t = ln.trim();
+    if(!t) return true;                              // 빈 줄(문단 구분)은 유지
+    var hangul = (t.match(/[가-힣]/g)||[]).length;
+    if(hangul >= 2) return true;                     // 한글 2자 이상이면 본문으로 보고 유지
+    if(codePat.test(t)) return false;                // 한글 거의 없고 코드패턴이면 제거
+    return true;
+  });
+  s = lines.join('\n');
+  // 5) 과도한 공백/빈 줄 정리
+  s = s.replace(/[ \t]{2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+  return s;
+}
+
+/* 레퍼런스/가이드 입력칸: 붙여넣을 때 자동으로 위 정리 적용 */
+function initRefPasteCleaners(){
+  ['ref1','ref2','ref3','guide-text'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el || el._pasteClean) return;
+    el._pasteClean = true;
+    el.addEventListener('paste', function(e){
+      var cd = e.clipboardData || window.clipboardData;
+      if(!cd) return;
+      var t = cd.getData('text');
+      if(t == null) return;
+      e.preventDefault();
+      var cleaned = cleanRefText(t);
+      var s = this.selectionStart || 0, en = this.selectionEnd || 0;
+      this.value = this.value.slice(0, s) + cleaned + this.value.slice(en);
+      var pos = s + cleaned.length;
+      try { this.selectionStart = this.selectionEnd = pos; } catch(_){}
+    });
+  });
+}
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', initRefPasteCleaners);
+} else {
+  initRefPasteCleaners();
+}
+
 function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,reviewData){
   var catLabel={phone:'선불폰/알뜰폰',english:'영어회화/학원',food:'음식/맛집',product:'제품리뷰',travel:'여행/카페',custom:'일반'}[cat]||'일반';
   var subList=subkw?subkw.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
@@ -2594,14 +2744,14 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
 
   // ── 소제목 표현 풀 (자연스러운 한국인 표현으로)
   var simStyles=['편의점 유심 종류','유심 어디서 사?','유심 사는 곳','편의점 유심 총정리'];
-  var planStyles=['요금제 종류','데이터 요금제 정리','요금제 뭐가 좋아?','데이터 요금제 종류','월요금 얼마야?'];
+  var planStyles=['요금제 종류','KT망·LG망 요금제 비교','요금제 뭐가 좋아?','KT망 vs LG망 요금제','망별 요금제 정리','월요금 얼마야?'];
   var stepStyles=['개통 순서','앱으로 개통하기','개통 어떻게 해?','비대면 개통 방법','직접 해보니까'];
 
   var phoneInfo='';
   if(isPhone){
     var conceptExpr=getRandom(PHONE_CONCEPT_POOL);
     var simExpr=getRandom(PHONE_SIM_POOL);
-    var planExpr=getRandom(PHONE_PLAN_POOL);
+    var planExpr=buildPlanSection();
     var stepExpr=getPhoneSteps(dealer);
     var dealerNote=dealer?'태블릿소유자회원번호: '+dealer+' (본문에 반드시 포함)':'';
     phoneInfo='\n\n[선불폰 필수 구성]\n아래 참고 내용을 절대 그대로 복사하지 말 것. 같은 정보를 완전히 다른 일상적인 문장으로 풀어서 쓸 것.\n\n섹션1 개념 참고: '+conceptExpr+'\n\n섹션2 소제목"'+getRandom(simStyles)+'" 참고: '+simExpr+'\n\n섹션3 소제목"'+getRandom(planStyles)+'" 참고: '+planExpr+'\n\n섹션4 개통절차 (아래 ①~⑨ 절차를 반드시 순서대로 포함. 각 단계 설명 후 독자가 헷갈릴 수 있는 부분엔 부연설명 자연스럽게 추가):\n'+stepExpr+'\n접수시간: 오전 8시~오후 9시50분, 365일\n★ 절차는 고정이지만 각 단계 뒤에 "처음 하시는 분들은 ~", "이 부분에서 막히는 경우가 많은데" 같은 독자 친화적 부연설명 추가 권장\n';
@@ -2901,11 +3051,11 @@ async function generate(){
   var region=document.getElementById('region').value.trim();
   var dir=document.getElementById('dir').value.trim();
   var cat=document.getElementById('cat').value;
-  // 체험단 레퍼런스 수집
-  var ref1=document.getElementById('ref1')?document.getElementById('ref1').value.trim():'';
-  var ref2=document.getElementById('ref2')?document.getElementById('ref2').value.trim():'';
-  var ref3=document.getElementById('ref3')?document.getElementById('ref3').value.trim():'';
-  var guideText=document.getElementById('guide-text')?document.getElementById('guide-text').value.trim():'';
+  // 체험단 레퍼런스 수집 (붙여넣기 시 못 걸러진 코드 찌꺼기 대비, 한 번 더 정리)
+  var ref1=document.getElementById('ref1')?cleanRefText(document.getElementById('ref1').value).trim():'';
+  var ref2=document.getElementById('ref2')?cleanRefText(document.getElementById('ref2').value).trim():'';
+  var ref3=document.getElementById('ref3')?cleanRefText(document.getElementById('ref3').value).trim():'';
+  var guideText=document.getElementById('guide-text')?cleanRefText(document.getElementById('guide-text').value).trim():'';
   if(!apiKey){showToast('먼저 API 키를 저장해주세요','err');return;}
   if(!kw){showToast('메인 키워드를 입력해주세요','err');return;}
   // 하루 3개 제한 경고 (차단 없이 경고만)
