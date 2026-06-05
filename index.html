@@ -2558,7 +2558,6 @@ var KT_PLAN_CATALOG=[
 var LG_PLAN_CATALOG=[
   {name:'LTE기본1',  price:'12,100원', data:'300MB',        after:'-',                 tag:'인증·세컨폰용 최저가'},
   {name:'LTE396',    price:'39,600원', data:'10.3GB',       after:'소진 후 3Mbps 무제한', tag:'가성비 1위·제일 인기'},
-  {name:'LTE459',    price:'45,900원', data:'20.3GB',       after:'소진 후 3Mbps 무제한', tag:'데이터 여유'},
   {name:'LTE770',    price:'77,000원', data:'10GB+하루 2GB', after:'소진 후 1Mbps',       tag:'고용량'},
   {name:'LTE비디오', price:'85,900원', data:'100GB',        after:'소진 후 5Mbps',       tag:'영상 헤비유저'}
 ];
@@ -2579,8 +2578,8 @@ function pickPlans(catalog,n){
   return a.slice(0,Math.min(n,a.length));
 }
 function planLines(plans){
-  return plans.map(function(p){
-    return '- '+p.name+' ('+p.price+'): '+p.data+(p.after&&p.after!=='-'?' / '+p.after:'')+' → '+p.tag;
+  return plans.map(function(p,i){
+    return (i+1)+'. '+p.name+' ('+p.price+'): '+p.data+(p.after&&p.after!=='-'?' / '+p.after:'')+' → '+p.tag;
   }).join('\n');
 }
 // KT망/LG망을 명확히 구분해, 매번 다른 조합으로 추천하는 요금제 섹션 생성
@@ -2600,6 +2599,8 @@ function buildPlanSection(){
     +'- '+angle+' 매번 다른 문장/구성으로 풀어쓰기 (이전 글과 다르게)\n'
     +'- 속도 보충: 3Mbps=유튜브 SD·카톡·웹서핑 OK / 5Mbps=유튜브 HD OK / 1Mbps=카톡·웹서핑 정도\n'
     +'- KT망 추천 요금제와 LG망 추천 요금제를 섞지 말고 망별로 분리해서 제시\n'
+    +'- 각 망의 요금제는 반드시 1, 2, 3… 번호를 매겨 항목별로 정리(가독성). 줄바꿈해서 한 줄에 하나씩, 요금제명·월요금·데이터·소진 후 속도가 한눈에 보이게\n'
+    +'- 위 목록에 없는 요금제는 절대 지어내지 말 것 (특히 LG U+망에는 LTE459 요금제 없음)\n'
     +'- 요금/데이터 수치는 위 값 그대로 쓰되 문장 표현만 새롭게';
 }
 
