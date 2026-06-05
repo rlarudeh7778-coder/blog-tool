@@ -2549,17 +2549,37 @@ var PHONE_SIM_POOL=[
 //    LG망: https://info.n-telecom.co.kr/products/Lg_all.jsp
 //    ※ 실제 요금제가 바뀌거나 망별로 다르면 아래 두 배열만 수정하면 됩니다.
 var KT_PLAN_CATALOG=[
-  {name:'LTE기본1',  price:'12,100원', data:'300MB',        after:'-',                 tag:'인증·세컨폰용 최저가'},
-  {name:'LTE396',    price:'39,600원', data:'10.3GB',       after:'소진 후 3Mbps 무제한', tag:'가성비 1위·제일 인기'},
-  {name:'LTE459',    price:'45,900원', data:'20.3GB',       after:'소진 후 3Mbps 무제한', tag:'데이터 여유'},
-  {name:'LTE770',    price:'77,000원', data:'10GB+하루 2GB', after:'소진 후 1Mbps',       tag:'고용량'},
-  {name:'LTE비디오', price:'85,900원', data:'100GB',        after:'소진 후 5Mbps',       tag:'영상 헤비유저'}
+  // 데이터 무제한
+  {name:'LTE 396',         price:'39,600원', voice:'기본제공', sms:'기본제공', data:'10.3GB + 소진 후 3Mbps 무제한', group:'데이터무제한'},
+  {name:'LTE 459',         price:'45,900원', voice:'기본제공', sms:'기본제공', data:'20.3GB + 소진 후 3Mbps 무제한', group:'데이터무제한'},
+  {name:'LTE 선택 770',    price:'77,000원', voice:'기본제공', sms:'기본제공', data:'10GB + 매일 2GB + 소진 후 3Mbps', group:'데이터무제한'},
+  {name:'LTE 비디오',      price:'85,900원', voice:'기본제공', sms:'기본제공', data:'100GB + 소진 후 5Mbps', group:'데이터무제한'},
+  // 실속형
+  {name:'LTE 기본 1',      price:'12,100원', voice:'50분',  sms:'30건',  data:'300MB', group:'실속형'},
+  {name:'LTE 실속데이터 1', price:'21,890원', voice:'50분',  sms:'30건',  data:'1GB',   group:'실속형'},
+  {name:'LTE 28',          price:'30,800원', voice:'200분', sms:'200건', data:'1.5GB', group:'실속형'},
+  {name:'LTE 42',          price:'46,200원', voice:'350분', sms:'350건', data:'6GB',   group:'실속형'},
+  {name:'300MB 라이트',    price:'33,000원', voice:'기본제공', sms:'기본제공', data:'300MB + 1Mbps', group:'실속형'},
+  {name:'LTE 선택 348',    price:'34,800원', voice:'기본제공', sms:'기본제공', data:'300MB', group:'실속형'},
+  {name:'LTE 베이직',      price:'36,000원', voice:'기본제공', sms:'기본제공', data:'1.4GB', group:'실속형'},
+  // 약정형 (신용카드 할부 결제 가능 / 중도 해지 불가)
+  {name:'LTE 299 약정',    price:'358,800원(월 29,900원)', voice:'기본제공', sms:'기본제공', data:'10.3GB + 3Mbps', group:'약정'},
+  {name:'LTE 399 약정',    price:'478,700원(월 39,900원)', voice:'기본제공', sms:'기본제공', data:'20.3GB + 3Mbps', group:'약정'}
 ];
 var LG_PLAN_CATALOG=[
-  {name:'LTE기본1',  price:'12,100원', data:'300MB',        after:'-',                 tag:'인증·세컨폰용 최저가'},
-  {name:'LTE396',    price:'39,600원', data:'10.3GB',       after:'소진 후 3Mbps 무제한', tag:'가성비 1위·제일 인기'},
-  {name:'LTE770',    price:'77,000원', data:'10GB+하루 2GB', after:'소진 후 1Mbps',       tag:'고용량'},
-  {name:'LTE비디오', price:'85,900원', data:'100GB',        after:'소진 후 5Mbps',       tag:'영상 헤비유저'}
+  // 데이터 무제한
+  {name:'LTE 선택 396',    price:'39,600원', voice:'기본제공(영상·부가 50분)',  sms:'기본제공', data:'10.3GB + 소진 후 3Mbps 무제한', group:'데이터무제한'},
+  {name:'LTE 선택 770',    price:'77,000원', voice:'기본제공(영상·부가 300분)', sms:'기본제공', data:'11GB + 매일 2GB + 소진 후 3Mbps', group:'데이터무제한'},
+  {name:'LTE 매일 5GB',    price:'85,900원', voice:'기본제공(영상·부가 300분)', sms:'기본제공', data:'매일 5GB + 5Mbps', group:'데이터무제한'},
+  {name:'LTE 데이터 15G',  price:'49,500원', voice:'100분', sms:'100건', data:'15GB + 소진 후 3Mbps', group:'데이터무제한'},
+  // 실속형
+  {name:'LTE 기본 1',      price:'12,100원', voice:'50분',  sms:'30건',  data:'300MB', group:'실속형'},
+  {name:'LTE 데이터 2.5GB', price:'17,000원', voice:'100분', sms:'50건',  data:'2.5GB', group:'실속형'},
+  {name:'선불 300분',      price:'20,800원', voice:'300분', sms:'300건', data:'300MB + 400Kbps', group:'실속형'},
+  {name:'300MB 라이트',    price:'33,000원', voice:'기본제공(영상·부가 50분)', sms:'기본제공', data:'300MB + 1Mbps', group:'실속형'},
+  // 약정형 (신용카드 할부 결제 가능 / 중도 해지 불가)
+  {name:'LTE 299 약정',    price:'358,800원(월 29,900원)', voice:'기본제공(영상·부가 50분)',  sms:'기본제공', data:'10.3GB + 3Mbps', group:'약정'},
+  {name:'LTE 494 약정',    price:'592,800원(월 49,400원)', voice:'기본제공(영상·부가 300분)', sms:'기본제공', data:'11GB + 매일 2GB + 3Mbps', group:'약정'}
 ];
 
 // 요금제 설명 앵글 (매번 다른 톤·구성으로 풀어쓰게)
@@ -2577,31 +2597,35 @@ function pickPlans(catalog,n){
   for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
   return a.slice(0,Math.min(n,a.length));
 }
+// 일반 추천용(약정형 제외): 데이터무제한 + 실속형에서 무작위 n개
+function recoPlans(catalog,n){
+  return pickPlans(catalog.filter(function(p){return p.group!=='약정';}),n);
+}
 function planLines(plans){
   return plans.map(function(p,i){
-    return (i+1)+'. '+p.name+' ('+p.price+'): '+p.data+(p.after&&p.after!=='-'?' / '+p.after:'')+' → '+p.tag;
+    return (i+1)+'. '+p.name+' ('+p.price+') — 데이터 '+p.data+' · 음성 '+p.voice+' · 문자 '+p.sms;
   }).join('\n');
 }
 // KT망/LG망을 명확히 구분해, 매번 다른 조합으로 추천하는 요금제 섹션 생성
 function buildPlanSection(){
-  var kt=pickPlans(KT_PLAN_CATALOG,getRandomInt(3,4)); // KT 3~4개 랜덤
-  var lg=pickPlans(LG_PLAN_CATALOG,getRandomInt(3,4)); // LG 3~4개 랜덤
+  var kt=recoPlans(KT_PLAN_CATALOG,getRandomInt(3,4)); // KT 3~4개 랜덤
+  var lg=recoPlans(LG_PLAN_CATALOG,getRandomInt(3,4)); // LG 3~4개 랜덤
   var angle=getRandom(PLAN_DESC_ANGLES);
-  return '★★ KT망과 LG U+망은 서로 다른 통신망입니다. 절대 "동일하다/같다/비슷하다"고 표현하지 말 것. '
+  return '★★ KT망과 LG U+망은 서로 다른 통신망이고, 요금제 이름·구성도 서로 다릅니다. 절대 "동일하다/같다/비슷하다"고 표현하지 말 것. '
     +'두 망을 각각 단락(또는 소제목)으로 나눠 구분해서 설명할 것. ★★\n\n'
     +'[망 선택 기준 - 설명에 자연스럽게 녹일 것]\n'
     +'· KT망: KT 통신망 사용. KT에 미납/연체 이력이 있으면 KT망 개통이 막힘. KT가 잘 터지는 지역이거나 기존 KT 사용자에게 적합.\n'
     +'· LG U+망: LG 통신망 사용. KT 미납이 있어도 가입 가능(망이 달라 KT 연체 영향 없음). SK·KT·LG 3사 연체가 있어도 가입돼 조건이 가장 넓음. LG U+가 잘 터지는 지역에 적합.\n'
     +'→ "본인 생활 지역에서 잘 터지는 망 + 미납 이력 없는 망"으로 고르라고 안내.\n\n'
-    +'[이번 글에서 추천할 KT망 요금제 ('+kt.length+'개) — 이 요금제들 중심으로]\n'+planLines(kt)+'\n\n'
-    +'[이번 글에서 추천할 LG U+망 요금제 ('+lg.length+'개) — 이 요금제들 중심으로]\n'+planLines(lg)+'\n\n'
+    +'[이번 글에서 추천할 KT망 요금제 ('+kt.length+'개) — 아래 항목만 사용]\n'+planLines(kt)+'\n\n'
+    +'[이번 글에서 추천할 LG U+망 요금제 ('+lg.length+'개) — 아래 항목만 사용]\n'+planLines(lg)+'\n\n'
     +'[표현 지침]\n'
     +'- '+angle+' 매번 다른 문장/구성으로 풀어쓰기 (이전 글과 다르게)\n'
-    +'- 속도 보충: 3Mbps=유튜브 SD·카톡·웹서핑 OK / 5Mbps=유튜브 HD OK / 1Mbps=카톡·웹서핑 정도\n'
+    +'- 속도 보충: 3Mbps=유튜브 SD·카톡·웹서핑 OK / 5Mbps=유튜브 HD OK / 1Mbps=카톡·웹서핑 정도 / 400Kbps=메신저·웹 정도\n'
     +'- KT망 추천 요금제와 LG망 추천 요금제를 섞지 말고 망별로 분리해서 제시\n'
-    +'- 각 망의 요금제는 반드시 1, 2, 3… 번호를 매겨 항목별로 정리(가독성). 줄바꿈해서 한 줄에 하나씩, 요금제명·월요금·데이터·소진 후 속도가 한눈에 보이게\n'
-    +'- 위 목록에 없는 요금제는 절대 지어내지 말 것 (특히 LG U+망에는 LTE459 요금제 없음)\n'
-    +'- 요금/데이터 수치는 위 값 그대로 쓰되 문장 표현만 새롭게';
+    +'- 각 망의 요금제는 반드시 1, 2, 3… 번호를 매겨 한 줄에 하나씩 정리(가독성). 요금제명·월요금·데이터·음성·문자가 한눈에 보이게\n'
+    +'- ★ 위에 제시된 요금제 이름·가격만 사용하고, 목록에 없는 요금제나 가격은 절대 지어내지 말 것. KT망과 LG망은 요금제명이 다르니 서로 섞지 말 것\n'
+    +'- (참고) 두 망 모두 약정형 요금제(신용카드 할부 가능·중도해지 불가)도 별도로 있으나, 위 추천 목록 중심으로 설명';
 }
 
 var PHONE_WEB_STEPS = "\n[웹 플랫폼 셀프 개통 절차] - 매출자코드 없을 때 적용\n접수 가능 시간: 오전 8시~오후 9시 50분 / 평일·주말·공휴일 365일\n\n① 홈페이지 이동\n앤플랫폼 사이트에 접속한 후, 구입한 유심 종류에 맞게 KT 또는 LG 개통하기를 클릭해 접수를 시작합니다.\n\n② 유형 체크\n신규 → 내국인 순서대로 클릭하고, 기존에 사용하던 번호를 입력한 후 다음으로 넘어갑니다.\n\n③ 안면 인증\n7월 1일 의무화 이전까지는 안면 인증 건너뛰기를 클릭하면 됩니다.\n\n④ 간편 인증서 본인확인\n카카오·토스·PASS·신한·국민 중 보유하고 있는 수단으로 본인 확인을 진행합니다.\n\n⑤ 유심 정보 등록\nKT망: 8982로 시작하는 19자리 숫자 입력 (영문 F 제외)\nLG U+망: 모델명(U8680, K3630 등 5자리) + 일련번호(8자리 숫자)\n\n⑥ 요금제 선택\n사용량과 이용 목적에 맞춰 화면에서 요금제를 선택합니다.\n\n⑦ 사전 체크\n온라인 신청 가능 여부 확인을 위해 사전 체크를 진행합니다.\n\n⑧ 번호 예약\n원하는 뒷번호 4자리를 조회하고 채번된 번호 중 하나를 선택해 예약합니다.\n\n⑨ 개통 신청 완료\n가입 정보를 기입하고 '개통 신청' 버튼을 클릭합니다. 평균 3~5분 이내로 단말기 활성화 처리가 완료됩니다.\n";
