@@ -792,17 +792,28 @@ async function streamClaude(sys,messages,onText,baseText){
   clearTimeout(idle);
   return {text:out, stop:stop};
 }
-// 토큰 상한으로 잘리면 assistant 프리필로 자동 이어쓰기 → 항상 끝까지 완성
+// 토큰 상한으로 잘리면 자동 이어쓰기 → 항상 끝까지 완성.
+// ★assistant 프리필 미지원 모델 호환★: 대화를 'user 메시지(계속 요청)'로 끝내 이어받는다.
+function trimToBoundary(t){
+  // 마지막 미완성 줄(끊긴 문장)을 잘라 깔끔한 지점부터 이어가도록
+  const nl=t.lastIndexOf('\n');
+  if(nl>80)return t.slice(0,nl).replace(/[ \t]+$/,'');
+  return t.replace(/\s+$/,'');
+}
 async function callClaude(sys,user,onText){
   let messages=[{role:'user',content:user}];
   let full='';
-  for(let turn=0;turn<6;turn++){
+  for(let turn=0;turn<8;turn++){
     const res=await streamClaude(sys,messages,onText,full);
     full+=res.text;
     if(res.stop!=='max_tokens'||!res.text.trim())break; // 완료
-    const prefill=full.replace(/\s+$/,''); // 프리필 끝 공백 금지(400 방지)
-    full=prefill;
-    messages=[{role:'user',content:user},{role:'assistant',content:prefill}];
+    full=trimToBoundary(full);
+    // 마지막을 user 메시지로 끝내 '이어쓰기' 요청(모든 모델 호환)
+    messages=[
+      {role:'user',content:user},
+      {role:'assistant',content:full},
+      {role:'user',content:'위 내용에 곧바로 이어서 계속 작성해 주세요. 이미 쓴 내용은 다시 반복하지 말고, 끊긴 다음 내용부터 자연스럽게 이어가면 됩니다. 인사말·머리말 없이 본문만 이어서 작성하세요.'}
+    ];
   }
   if(!full.trim())throw new Error('빈 응답 — 「다시 생성」으로 재시도하세요.');
   return full;
