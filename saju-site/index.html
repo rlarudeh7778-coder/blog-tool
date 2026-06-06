@@ -109,11 +109,7 @@
   .reviews .stitle{margin-bottom:26px}
   .rev-rows{display:flex;flex-direction:column;gap:16px}
   .rev-row{display:flex;gap:16px;width:max-content;will-change:transform}
-  .rev-row.r1{animation:revLeft 64s linear infinite}
-  .rev-row.r2{animation:revRight 72s linear infinite}
-  .reviews:hover .rev-row{animation-play-state:paused}
-  @keyframes revLeft{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-  @keyframes revRight{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+  /* 캐러셀 이동은 JS(requestAnimationFrame)로 구동 → 모든 기기/설정에서 확실히 움직임 */
   .rev{flex:0 0 322px;width:322px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(8px);border-radius:16px;padding:17px 19px;box-shadow:0 10px 30px rgba(8,4,22,.4)}
   .rev .stars{color:var(--gold);font-size:13px;letter-spacing:3px}
   .rev .rtext{color:#e9e4fb;font-size:14px;font-weight:300;line-height:1.72;margin:8px 0 13px;word-break:keep-all;min-height:72px}
@@ -335,9 +331,9 @@
     <div class="stat"><div class="snum" data-target="10" data-suffix="개">0</div><div class="slab">프리미엄 심층 파트</div><div class="ssub" style="color:var(--mut)">사주·재물·애정·직업·건강 등</div></div>
     <div class="stat"><div class="snum" style="font-size:clamp(24px,4vw,34px)">★★★★★</div><div class="slab">고객 후기 평점</div><div class="ssub" style="color:var(--mut)">후기 기준</div></div>
     <div class="stat"><div class="snum" id="liveVisitors">0</div><div class="slab">오늘 방문</div><div class="ssub live"><span class="dotlive"></span>LIVE</div></div>
-    <div class="stat"><div class="snum" data-target="19000" data-suffix="원~">0</div><div class="slab">지금 신청가</div><div class="ssub warn">가격은 추후 변동될 수 있어요</div></div>
+    <div class="stat"><div class="snum" data-target="19000" data-suffix="원~">0</div><div class="slab">지금 신청가</div><div class="ssub warn">📈 매년 상승 중 · 지금이 최저가</div></div>
   </div>
-  <div class="urg-line">🌙 지금 신청가로 만나보세요 — <b>가격은 추후 변동될 수 있습니다.</b></div>
+  <div class="urg-line">📈 사주 서비스 가격은 <b>매년 상승하고 있습니다</b> — <b>지금이 가장 저렴한 시점</b>입니다.</div>
 </div></section>
 
 <section class="reviews" id="reviews">
@@ -734,8 +730,34 @@
 <script>
 document.getElementById('yr').textContent=new Date().getFullYear();
 
-/* ── 리뷰 캐러셀: 각 줄을 2배 복제해 끊김 없는 무한 흐름 ── */
-document.querySelectorAll('.rev-row').forEach(r=>{r.innerHTML+=r.innerHTML;});
+/* ── 리뷰 캐러셀: JS requestAnimationFrame 마퀴 (1열 왼쪽·2열 오른쪽, 모든 기기에서 동작) ── */
+(function(){
+  const rows=[].slice.call(document.querySelectorAll('.rev-row'));
+  if(!rows.length)return;
+  rows.forEach(function(r){ r.innerHTML+=r.innerHTML; }); // 끊김 없는 루프용 2배 복제
+  rows.forEach(function(row){
+    const dir = row.classList.contains('r2') ? 1 : -1;  // r1=왼쪽(-), r2=오른쪽(+)
+    const speed = 0.55;                                  // px/frame ≈ 33px/s
+    let setW=0, x=0, paused=false, started=false;
+    function measure(){ setW=row.scrollWidth/2 || 1; x = dir<0 ? 0 : -setW; row.style.transform='translateX('+x+'px)'; }
+    row.addEventListener('mouseenter',function(){paused=true;});
+    row.addEventListener('mouseleave',function(){paused=false;});
+    function tick(){
+      if(started && !paused && setW>1){
+        x += dir*speed;
+        if(dir<0 && x <= -setW) x += setW;
+        else if(dir>0 && x >= 0) x -= setW;
+        row.style.transform='translateX('+x.toFixed(2)+'px)';
+      }
+      requestAnimationFrame(tick);
+    }
+    measure();
+    setTimeout(function(){ measure(); started=true; }, 500);          // 레이아웃 안정 후 시작
+    if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){measure();started=true;});}
+    window.addEventListener('resize',measure);
+    requestAnimationFrame(tick);
+  });
+})();
 
 /* ── 통계 카운트업(화면 진입 시 1회) ── */
 (function(){
