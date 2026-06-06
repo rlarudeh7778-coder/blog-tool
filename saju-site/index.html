@@ -238,6 +238,16 @@
   .acct .acct-bank{font-family:var(--serif);font-size:clamp(18px,4.4vw,22px);font-weight:800;color:var(--gold);letter-spacing:.5px}
   .acct .acct-owner{font-size:13px;color:var(--mist);font-weight:300}
   .acct .acct-copy{font-size:12px;color:var(--lav);margin-top:4px}
+  /* 선택 상품·금액 표시 */
+  .pricebox{margin-top:10px;background:rgba(236,206,134,.08);border:1px solid rgba(236,206,134,.4);border-radius:11px;padding:11px 14px;font-size:13.5px;color:var(--mist);text-align:center;font-weight:300}
+  .pricebox b{color:var(--lav);font-weight:700}
+  .pricebox b.amt{color:var(--gold);font-size:16px}
+  .paysum{margin:18px 0 4px;background:rgba(18,12,38,.55);border:1px solid rgba(236,206,134,.4);border-radius:13px;padding:6px 16px}
+  .paysum .ps-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;font-size:14px;color:var(--mist);font-weight:300}
+  .paysum .ps-row b{color:var(--lav);font-weight:700}
+  .paysum .ps-total{border-top:1px dashed rgba(205,188,255,.2)}
+  .paysum .ps-total span{color:var(--tx);font-weight:600}
+  .paysum .ps-total b.amt{color:var(--gold);font-family:var(--serif);font-size:clamp(20px,5vw,26px);font-weight:800}
 
   /* ── 등장 애니메이션 ── */
   .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
@@ -545,6 +555,7 @@
           <option value="작명">작명·개명 (59,000원)</option>
         </select>
         <div class="inline-chk" style="color:var(--mist)">※ <b style="color:var(--lav);margin:0 3px">프리미엄</b> 추가 질문 1회는 아래 「특히 궁금한 점」에 적어주세요.</div>
+        <div class="pricebox" id="priceBox" style="display:none">선택하신 상품 <b id="priceName"></b> · 결제 금액 <b class="amt" id="priceAmt"></b></div>
       </div>
 
       <!-- 상대방 (궁합 전용) -->
@@ -669,6 +680,10 @@
     <div class="band" style="margin:0">
       <h2 style="font-size:22px">입금 확인 후 24시간 이내 발송</h2>
       <p>아직 결제 시스템이 구축되지 않은 관계로 <b class="gold">계좌이체</b>만 받고 있습니다.<br>아래 계좌로 입금해 주시면, 확인 후 <b class="gold">24시간 이내</b>에 적어주신 이메일로 리포트를 보내드립니다.</p>
+      <div class="paysum" id="paySum">
+        <div class="ps-row"><span>선택하신 상품</span><b id="paySumName">-</b></div>
+        <div class="ps-row ps-total"><span>입금하실 금액</span><b class="amt" id="paySumAmt">-</b></div>
+      </div>
       <button type="button" class="acct" id="acctBtn" onclick="copyAccount()" aria-label="계좌번호 복사">
         <span class="acct-bank">국민은행 816901-04-308126</span>
         <span class="acct-owner">예금주 : 김경도</span>
@@ -859,7 +874,12 @@ noTime.addEventListener('change',()=>{
   ['bH','bMin'].forEach(id=>{const el=document.getElementById(id);el.disabled=noTime.checked;if(noTime.checked)el.value='';});
 });
 
-/* 패키지 선택 → 궁합이면 상대방 정보 표시 */
+/* 상품별 가격 */
+const PRICES={'기본':19000,'프리미엄':39000,'궁합':49000,'작명':59000};
+const PKG_LABEL={'기본':'기본','프리미엄':'프리미엄 10파트','궁합':'궁합','작명':'작명·개명'};
+function won(n){return (n||0).toLocaleString('ko-KR')+'원';}
+
+/* 패키지 선택 → 궁합이면 상대방 정보 표시 + 선택 금액 표시 */
 function onPkgChange(){
   const v=document.getElementById('pkgSel').value;
   const isG=v==='궁합', isN=v==='작명';
@@ -868,6 +888,12 @@ function onPkgChange(){
   // 신생아 작명은 성함이 없을 수 있으므로 필수 해제
   const nameEl=f.elements['성함']; if(nameEl)nameEl.required=!isN;
   if(isN)onNameType(); else updateNameHint(false);
+  // 선택 상품·금액 실시간 표시
+  const box=document.getElementById('priceBox');
+  if(box){
+    if(v&&PRICES[v]){ document.getElementById('priceName').textContent=PKG_LABEL[v]; document.getElementById('priceAmt').textContent=won(PRICES[v]); box.style.display='block'; }
+    else box.style.display='none';
+  }
 }
 function onNameType(){
   const t=(f.elements['작명종류']||{}).value;
@@ -964,6 +990,9 @@ f.addEventListener('submit',async(e)=>{
     document.getElementById('formCard').style.display='none';
     const s=document.getElementById('successCard');
     document.getElementById('successEmail').textContent=email||'입력하신 이메일';
+    // 선택 상품·입금 금액 표시
+    const selPkg=g('패키지');
+    if(PRICES[selPkg]){ document.getElementById('paySumName').textContent=PKG_LABEL[selPkg]; document.getElementById('paySumAmt').textContent=won(PRICES[selPkg]); }
     s.style.display='block';s.scrollIntoView({behavior:'smooth'});
   }catch(err){
     alert('전송 중 문제가 발생했습니다: '+err.message+'\n잠시 후 다시 시도하시거나 직접 이메일로 신청해 주세요.');
