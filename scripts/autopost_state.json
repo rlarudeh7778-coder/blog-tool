@@ -1,7 +1,14 @@
 {
   "it_idx": 0,
-  "phone_idx": 0,
+  "phone_idx": 1,
   "ref_idx": 2,
-  "counter": 2,
-  "log": []
+  "counter": 3,
+  "log": [
+    {
+      "t": "2026-06-07T17:00:56.300997",
+      "kind": "phone",
+      "label": "[선불폰] 파주 선불폰",
+      "title": "파주 선불폰, 5분이면 개통 완료되는 이유"
+    }
+  ]
 }
