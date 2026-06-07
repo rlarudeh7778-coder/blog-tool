@@ -338,7 +338,8 @@ def main():
         return
 
     cfg = load_json(CONFIG_PATH, {})
-    state = load_json(STATE_PATH, {"it_idx": 0, "phone_idx": 0, "counter": 0, "log": []})
+    state = load_json(STATE_PATH, {"it_idx": 0, "phone_idx": 0, "ref_idx": 0, "counter": 0, "log": []})
+    state.setdefault("ref_idx", 0)
     contact = cfg.get("contact", {})
     model = cfg.get("model", "claude-sonnet-4-6")
     it_topics = cfg.get("it_topics", [])
@@ -366,15 +367,22 @@ def main():
                 kind = "phone"
                 label = f"[선불폰] {kw}"
             else:
-                if not it_topics:
-                    print("⚠ IT 주제가 없습니다. autopost_config.json의 it_topics를 채우세요.")
-                    break
-                topic = it_topics[state["it_idx"] % len(it_topics)]
-                state["it_idx"] += 1
-                ref = references[(state["it_idx"] - 1) % len(references)].get("text", "") if references else ""
-                post = gen_it(topic, ref, model)
                 kind = "it"
-                label = f"[IT] {topic}"
+                # 사용자가 준 참고자료가 남아있으면 그걸 우선 각색(1자료=1글), 소진되면 주제 뱅크로
+                if references and state["ref_idx"] < len(references):
+                    rf = references[state["ref_idx"]]
+                    state["ref_idx"] += 1
+                    topic = (rf.get("title") or "IT 정보").strip()
+                    post = gen_it(topic, rf.get("text", ""), model)
+                    label = f"[IT/각색] {topic}"
+                elif it_topics:
+                    topic = it_topics[state["it_idx"] % len(it_topics)]
+                    state["it_idx"] += 1
+                    post = gen_it(topic, "", model)
+                    label = f"[IT] {topic}"
+                else:
+                    print("⚠ IT 주제/참고자료가 없습니다. autopost_config.json을 채우세요.")
+                    break
 
             title = post.get("title", "").strip()
             excerpt = " ".join(post.get("summary", []))[:150]
