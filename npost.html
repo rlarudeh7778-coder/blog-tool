@@ -5887,6 +5887,21 @@ function adBlock(){
   }
   return '<div style="text-align:center;margin:30px 0;padding:22px;background:#fafafa;border:1px dashed #d0d0d0;border-radius:10px;color:#999;font-size:13px">＜ 여기에 구글 애드센스 광고 코드 ＞</div>';
 }
+// 상단 슬림 상담 바 (본문 시작부 빠른 연락 유도)
+function contactBlockTop(){
+  var brand=pubCfg.brand||'메이플통신';
+  var kakao=pubCfg.kakao||'#';
+  var channel=pubCfg.channel||'';
+  var tel=(pubCfg.tel||'').replace(/[^0-9+]/g,'')||'01000000000';
+  var btn='display:inline-block;padding:9px 16px;border-radius:22px;font-weight:800;font-size:13px;text-decoration:none;margin:3px';
+  var h='<div style="margin:0 0 26px;padding:14px 16px;background:#f0f9f4;border:1px solid #cfe9da;border-radius:14px;text-align:center">'
+    +'<div style="font-size:14px;font-weight:800;color:#157a44;margin-bottom:8px">📞 '+esc(brand)+' 빠른 개통 상담 (약정·미납 무관)</div>'
+    +'<a href="'+esc(kakao)+'" target="_blank" rel="noopener" style="'+btn+';background:#FEE500;color:#191600">💬 오픈채팅</a>';
+  if(channel) h+='<a href="'+esc(channel)+'" target="_blank" rel="noopener" style="'+btn+';background:#FEE500;color:#191600">📢 카톡채널</a>';
+  h+='<a href="tel:'+esc(tel)+'" style="'+btn+';background:#1f9d59;color:#fff">📱 전화</a>'
+    +'</div>';
+  return h;
+}
 function contactBlock(){
   var brand=pubCfg.brand||'메이플통신';
   var kakao=pubCfg.kakao||'#카카오톡_오픈채팅_주소';
@@ -5976,6 +5991,9 @@ function buildPublishHtml(r,platform){
   if(r.summary && r.summary.length){
     out.push('<div style="background:#fffdf5;border:1px solid #f0e0b5;border-radius:12px;padding:18px 20px;margin:0 0 28px"><div style="font-weight:800;color:#b8860b;margin-bottom:10px;font-size:15px">📌 '+r.summary.length+'줄 요약</div><div style="line-height:1.95;color:#444">'+r.summary.map(function(x){return '✅ '+esc(x);}).join('<br>')+'</div></div>');
   }
+
+  // ②-2 상단 빠른 상담 CTA (슬림 바)
+  out.push(contactBlockTop());
 
   // 광고: 워드프레스만 본문 인라인. 티스토리는 자동광고/본문광고 플러그인 사용
   var adAt={};
