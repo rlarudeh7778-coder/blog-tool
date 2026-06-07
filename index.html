@@ -2895,7 +2895,27 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
     var planExpr=buildPlanSection();
     var stepExpr=getPhoneSteps(dealer);
     var dealerNote=dealer?'태블릿소유자회원번호: '+dealer+' (본문에 반드시 포함)':'';
-    phoneInfo='\n\n[선불폰 필수 구성]\n아래 참고 내용을 절대 그대로 복사하지 말 것. 같은 정보를 완전히 다른 일상적인 문장으로 풀어서 쓸 것.\n\n섹션1 개념 참고: '+conceptExpr+'\n\n섹션2 소제목"'+getRandom(simStyles)+'" 참고: '+simExpr+'\n\n섹션3 소제목"'+getRandom(planStyles)+'" 참고: '+planExpr+'\n\n섹션4 개통절차 (아래 ①~⑨ 절차를 반드시 순서대로 포함. 각 단계 설명 후 독자가 헷갈릴 수 있는 부분엔 부연설명 자연스럽게 추가):\n'+stepExpr+'\n접수시간: 오전 8시~오후 9시50분, 365일\n★ 절차는 고정이지만 각 단계 뒤에 "처음 하시는 분들은 ~", "이 부분에서 막히는 경우가 많은데" 같은 독자 친화적 부연설명 추가 권장\n';
+    // ── 글마다 초점(앵글) 회전: 같은 개통절차가 모든 글에 통째로 들어가는 내부중복(저품질) 방지
+    var PHONE_ANGLES=[
+      {label:'종합 개통 가이드', focus:'유심 구매부터 개통 완료까지, 처음 하는 사람 기준 전체 흐름을 친절히', full:true},
+      {label:'요금제 비교 중심', focus:'KT망·LG망 요금제를 가격·데이터·통화로 깊게 비교하고, 어떤 사람에게 어떤 요금제가 맞는지', full:false},
+      {label:'유심 구매처 중심', focus:'편의점/온라인 등 유심 사는 곳과 종류·가격, 유심 고를 때 주의점 위주', full:false},
+      {label:'상황별 개통', focus:'미납·연체자 개통, 외국인 개통, 청소년/미성년 개통, 명의가 어려운 경우 등 상황별 해법 위주', full:false},
+      {label:'개통 후 실사용', focus:'데이터 다 썼을 때, 충전·기간연장, 번호이동, 해지, 다른 폰으로 유심 옮기기 등 개통 이후 실전 팁', full:false},
+      {label:'비교/선택 가이드', focus:'선불폰 vs 알뜰폰 vs 일반 약정폰 차이, 누구에게 선불폰이 유리한지 비교', full:false}
+    ];
+    var ang=getRandom(PHONE_ANGLES);
+    var stepBlock = ang.full
+      ? '섹션4 개통절차 (아래 ①~⑨ 절차를 반드시 순서대로 포함. 각 단계 설명 후 헷갈릴 수 있는 부분엔 부연설명 자연스럽게 추가):\n'+stepExpr+'\n접수시간: 오전 8시~오후 9시50분, 365일\n★ 절차는 고정이지만 각 단계 뒤에 "처음 하시는 분들은 ~" 같은 독자 친화적 부연설명 추가 권장\n'
+      : '개통절차는 이 글의 핵심이 아니므로 ①~⑨ 전체를 나열하지 말 것. "개통은 앱으로 5분이면 끝나요" 수준으로 핵심만 3~4줄 요약 언급. (참고용 전체절차: '+stepExpr.slice(0,260)+' ...)\n';
+    phoneInfo='\n\n[선불폰 글 구성]\n아래 참고 내용을 절대 그대로 복사하지 말 것. 같은 정보를 완전히 다른 일상적인 문장으로 풀어서 쓸 것.\n'
+      +(dealerNote?'\n'+dealerNote+'\n':'')
+      +'\n★★ 이번 글의 초점(앵글): 【'+ang.label+'】 → '+ang.focus+'\n  이 초점에 글 분량의 60% 이상 할애할 것. 매 글마다 초점이 다르므로, 다른 선불폰 글과 내용이 겹치지 않게 이 주제를 깊게 파고들 것.\n'
+      +'\n섹션 개념 참고: '+conceptExpr
+      +'\n유심 참고(소제목 예 "'+getRandom(simStyles)+'"): '+simExpr
+      +'\n요금제 참고(소제목 예 "'+getRandom(planStyles)+'"): '+planExpr
+      +'\n'+stepBlock
+      +'★ 지역 키워드가 있으면 그 지역만의 정보(근처 편의점, 동네 특징, 교통 등)를 1~2문장 자연스럽게 녹여 다른 지역 글과 확실히 차별화할 것.\n';
   }
 
   var engInfo='';
