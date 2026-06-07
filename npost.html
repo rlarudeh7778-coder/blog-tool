@@ -782,14 +782,14 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
       <div class="field">
         <label>버전 선택</label>
         <div style="display:flex;gap:8px;margin-top:4px">
-          <label id="ver-pc-label" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:7px 14px;border-radius:var(--rs);border:2px solid var(--green);background:var(--gl);font-size:13px;font-weight:700;color:var(--green)">
-            <input type="radio" name="postVersion" value="pc" checked onchange="setVersion('pc')" style="accent-color:var(--green)"/> &#128187; PC 버전
+          <label id="ver-pc-label" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:7px 14px;border-radius:var(--rs);border:1px solid var(--bor);background:var(--sur);font-size:13px;color:var(--txt)">
+            <input type="radio" name="postVersion" value="pc" onchange="setVersion('pc')" style="accent-color:var(--green)"/> &#128187; PC 버전
           </label>
-          <label id="ver-mobile-label" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:7px 14px;border-radius:var(--rs);border:1px solid var(--bor);background:var(--sur);font-size:13px;color:var(--txt)">
-            <input type="radio" name="postVersion" value="mobile" onchange="setVersion('mobile')" style="accent-color:var(--green)"/> &#128241; 모바일 버전
+          <label id="ver-mobile-label" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:7px 14px;border-radius:var(--rs);border:2px solid var(--green);background:var(--gl);font-size:13px;font-weight:700;color:var(--green)">
+            <input type="radio" name="postVersion" value="mobile" checked onchange="setVersion('mobile')" style="accent-color:var(--green)"/> &#128241; 모바일 버전
           </label>
         </div>
-        <div id="ver-desc" style="font-size:11px;color:var(--t3);margin-top:5px;padding:6px 10px;background:#f0f4f2;border-radius:var(--rs)">긴 문단, 연속적인 흐름으로 작성됩니다.</div>
+        <div id="ver-desc" style="font-size:11px;color:var(--t3);margin-top:5px;padding:6px 10px;background:#f0f4f2;border-radius:var(--rs)">짧은 문단·줄바꿈 자주로 모바일 가독성 최적화 (추천).</div>
       </div>
       <div class="field" id="normal-tone-field"><label>글 톤 <span style="font-size:10px;color:var(--t3);font-weight:400">(버튼에 마우스 올리면 설명)</span></label>
         <div class="tonegrp">
@@ -3089,7 +3089,7 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
   }
 
   var versionGuide=postVersion==='mobile'
-    ?'\n[모바일 버전 필수 규칙]\n한 문장 쓰고 무조건 줄바꿈. 문장 20자 이하. 3줄 연속 금지. 정보전달형 제외 이모지 적극 활용(👉 ✅ 💡 등). 선불폰은 각 절차 단계마다 줄바꿈 필수.\n'
+    ?'\n[모바일 가독성 규칙]\n- 한 문단은 2~3문장으로 짧게(모바일에서 4줄 넘지 않게). 문단 사이 빈 줄 1개.\n- 한 문장은 60자 이내로 너무 길게 늘이지 말 것.\n- 소제목으로 자주 끊어 스크롤이 편하게. 핵심 수치·혜택은 문장을 따로 떼어 강조.\n- 단, 한 문장씩 토막내듯 줄바꿈하지는 말 것(문단 단위 유지). 이모지는 과하지 않게 1~2개.\n'
     :'\n[PC 버전] 긴 문단, 연속적인 흐름.\n';
   var titleGuide;
   if(isPhone){
@@ -4321,7 +4321,7 @@ function copyCafeAll(){
 
 
 // ── PC/모바일 버전
-var postVersion='pc';
+var postVersion='mobile';
 function setVersion(v){
   postVersion=v;
   var pcL=document.getElementById('ver-pc-label');
@@ -5905,12 +5905,12 @@ function contactBlock(){
 // 요금제 비교 표 (AI가 table 데이터를 줄 때만)
 function tableBlock(t){
   if(!t||!t.rows||!t.rows.length)return'';
-  var h='<table style="width:100%;border-collapse:collapse;margin:6px 0 24px;font-size:14px">';
+  var h='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin:6px 0 24px"><table style="width:100%;min-width:300px;border-collapse:collapse;font-size:15px">';
   h+='<thead><tr style="background:#2f7de1;color:#fff"><th style="padding:10px;text-align:left">요금제</th><th style="padding:10px">월 요금</th><th style="padding:10px">데이터</th></tr></thead><tbody>';
   t.rows.forEach(function(rw,idx){
     h+='<tr style="border-bottom:1px solid #eee;'+(idx%2?'background:#f6f9ff':'')+'"><td style="padding:10px">'+esc(rw.name||'')+'</td><td style="padding:10px;text-align:center;font-weight:700">'+esc(rw.price||'')+'</td><td style="padding:10px;text-align:center">'+esc(rw.data||'')+'</td></tr>';
   });
-  h+='</tbody></table>';
+  h+='</tbody></table></div>';
   return h;
 }
 // 티스토리는 본문 <script>가 저장 시 삭제됨 → FAQ를 눈에 보이는 Q&A 섹션으로 (AEO에도 도움)
@@ -5964,7 +5964,7 @@ function buildPublishHtml(r,platform){
   var isWp=platform==='wordpress';
   var W=isWp?'760':'720';
   var out=[];
-  out.push('<div style="max-width:'+W+'px;margin:0 auto;font-size:16px;line-height:1.9;color:#2b2b2b;word-break:keep-all">');
+  out.push('<div style="max-width:'+W+'px;margin:0 auto;font-size:17px;line-height:1.8;color:#2b2b2b;word-break:keep-all;overflow-wrap:break-word">');
 
   // ① 리드 박스: 첫 소제목 이전 문단
   var firstH = headingIdx.length? headingIdx[0] : blocks.length;
