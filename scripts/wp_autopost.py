@@ -295,18 +295,11 @@ def build_html(post, kind, cfg):
                    '<div style="line-height:1.95;color:#444">' +
                    "<br>".join("✅ " + esc(x) for x in summary) + "</div></div>")
 
-    # 본문 중간 애드센스 위치: 2번째 소제목 앞 + 중간 소제목 앞
-    ad_before = set()
-    if len(heading_idx) >= 2:
-        ad_before.add(heading_idx[1])
-    if len(heading_idx) >= 4:
-        ad_before.add(heading_idx[len(heading_idx) // 2])
-
+    # 광고: 본문에 <script>를 넣으면 보안 플러그인(NinjaFirewall)이 403 차단함.
+    #       → 인-콘텐츠 광고 코드 미삽입. 애드센스 '자동 광고'(헤더 로더)가 본문에 알아서 노출.
     hi = 0
     for i in range(first_h, len(blocks)):
         typ, txt = blocks[i]
-        if i in ad_before:
-            out.append(adsense_block(cfg))
         if typ == "h":
             hi += 1
             c = PALETTE[(hi - 1) % len(PALETTE)]
@@ -337,14 +330,8 @@ def build_html(post, kind, cfg):
         out.append(contact_block(cfg))
     out.append("</div>")
 
-    # 구조화데이터 (워드프레스는 본문 script 유지)
-    if faqs:
-        ld = {"@context": "https://schema.org", "@type": "FAQPage",
-              "mainEntity": [{"@type": "Question", "name": q,
-                              "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faqs]}
-        out.append('<script type="application/ld+json">' + json.dumps(ld, ensure_ascii=False) + "</script>")
-    if kind == "phone":
-        out.append('<script type="application/ld+json">' + json.dumps(org_ld(cfg), ensure_ascii=False) + "</script>")
+    # ※ JSON-LD 구조화데이터는 본문에 넣지 않음 — 보안 플러그인(NinjaFirewall)이 <script>를 XSS로 차단(403).
+    #    스키마는 Rank Math가 자동 생성하고, FAQ/업체정보는 위의 보이는 FAQ + 연락 CTA로 제공.
 
     return "\n".join(out)
 
