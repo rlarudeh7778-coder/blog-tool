@@ -5,6 +5,8 @@
   "phone_every": 5,
   "wp_status": "publish",
   "platform_url": "https://www.n-telecom.co.kr/junda",
+  "adsense_client": "",
+  "adsense_slot": "",
   "contact": {
     "brand": "메이플통신",
     "kakao": "https://open.kakao.com/o/sM3nlTPg",

@@ -196,6 +196,20 @@ def platform_btn(url):
             '🖥️ 앤플랫폼 개통 홈페이지 접속 →</a></div>')
 
 
+def adsense_block(cfg):
+    client = cfg.get("adsense_client", "")
+    slot = cfg.get("adsense_slot", "")
+    if client and slot:
+        return ('<div style="text-align:center;margin:30px 0">'
+                f'<ins class="adsbygoogle" style="display:block;text-align:center" '
+                f'data-ad-layout="in-article" data-ad-format="fluid" '
+                f'data-ad-client="{esc(client)}" data-ad-slot="{esc(slot)}"></ins>'
+                '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>')
+    return ('<div style="text-align:center;margin:30px 0;padding:22px;background:#fafafa;'
+            'border:1px dashed #d0d0d0;border-radius:10px;color:#999;font-size:13px">'
+            '＜ 구글 애드센스 광고 자리 ＞</div>')
+
+
 def contact_block(cfg):
     brand = cfg.get("brand", "메이플통신")
     kakao = cfg.get("kakao", "#")
@@ -274,9 +288,18 @@ def build_html(post, kind, cfg):
                    '<div style="line-height:1.95;color:#444">' +
                    "<br>".join("✅ " + esc(x) for x in summary) + "</div></div>")
 
+    # 본문 중간 애드센스 위치: 2번째 소제목 앞 + 중간 소제목 앞
+    ad_before = set()
+    if len(heading_idx) >= 2:
+        ad_before.add(heading_idx[1])
+    if len(heading_idx) >= 4:
+        ad_before.add(heading_idx[len(heading_idx) // 2])
+
     hi = 0
     for i in range(first_h, len(blocks)):
         typ, txt = blocks[i]
+        if i in ad_before:
+            out.append(adsense_block(cfg))
         if typ == "h":
             hi += 1
             c = PALETTE[(hi - 1) % len(PALETTE)]
@@ -386,7 +409,9 @@ def main():
 
             title = post.get("title", "").strip()
             excerpt = " ".join(post.get("summary", []))[:150]
-            content_html = build_html(post, kind, {**contact, "platform_url": cfg.get("platform_url")})
+            content_html = build_html(post, kind, {**contact, "platform_url": cfg.get("platform_url"),
+                                                   "adsense_client": cfg.get("adsense_client", ""),
+                                                   "adsense_slot": cfg.get("adsense_slot", "")})
 
             if DRY_RUN:
                 fn = os.path.join(PREVIEW_DIR, f"{datetime.date.today()}_{state['counter']}.html")
