@@ -316,6 +316,9 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
 <!-- 메인 탭 -->
 <div class="maintabs" id="maintabs-bar">
   <div class="maintab on" id="mt-write" data-tab="write">✏ 글쓰기</div>
+  <div class="maintab" id="mt-batch" data-tab="batch" style="position:relative">📅 양산 플래너
+    <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
+  </div>
   <div class="maintab" id="mt-analyze" data-tab="analyze">📊 글 분석기</div>
   <div class="maintab" id="mt-center" data-tab="center">📍 센터 찾기</div>
   <div class="maintab" id="mt-cafe" data-tab="cafe">☕ 카페자동화</div>
@@ -423,6 +426,7 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
           <select id="cat" onchange="onCatChange()">
             <option value="phone">선불폰/알뜰폰</option>
             <option value="english">영어회화/학원</option>
+            <option value="it">IT/컴퓨터 정보</option>
             <option value="food">음식/맛집</option>
             <option value="product">제품 리뷰</option>
             <option value="travel">여행/카페</option>
@@ -1015,7 +1019,67 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
 </div>
 </div>
 
+<!-- ② 양산 플래너 -->
+<div class="mainpanel" id="mp-batch">
+<div style="max-width:960px;margin:0 auto;padding-bottom:2rem">
+  <div class="card" style="margin-bottom:1rem">
+    <div class="ctitle">📅 키워드 양산 + 발행 캘린더</div>
+    <div style="font-size:12px;color:var(--t2);line-height:1.7;background:#fff7ed;border:1px solid #f0d9b5;border-radius:var(--rs);padding:10px 12px;margin-bottom:14px">
+      ⚠️ <b>지역만 바꾼 똑같은 글 양산은 저품질 1순위 원인</b>이에요. 이 플래너는 글마다 각도가 달라지게(패턴교란) + <b>선불폰 사이에 IT정보글을 끼워</b> 안전하게 발행 순서를 짜줍니다. 캘린더의 각 글은 <b>[✍ 글쓰기로 보내기]</b>로 하나씩 생성하세요.
+    </div>
 
+    <div class="field">
+      <label>① 타겟 지역 <small style="color:var(--t3)">(한 줄에 하나씩)</small></label>
+      <textarea id="bt-regions" rows="4" placeholder="파주&#10;고양 일산&#10;김포&#10;..." style="width:100%;box-sizing:border-box;font-size:13px;padding:8px;border:1px solid var(--bor);border-radius:var(--rs)"></textarea>
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+        <button class="cpbtn" onclick="btLoadAllRegions()">전체 지역 불러오기</button>
+        <button class="cpbtn" onclick="btPreset('capital')">수도권 주요</button>
+        <button class="cpbtn" onclick="document.getElementById('bt-regions').value=''">비우기</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>② 선불폰 키워드 유형 <small style="color:var(--t3)">(지역과 조합)</small></label>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--t2)">
+        <label style="display:flex;align-items:center;gap:5px"><input type="checkbox" class="bt-ptype" value="선불폰" checked> 지역+선불폰</label>
+        <label style="display:flex;align-items:center;gap:5px"><input type="checkbox" class="bt-ptype" value="알뜰폰" checked> 지역+알뜰폰</label>
+        <label style="display:flex;align-items:center;gap:5px"><input type="checkbox" class="bt-ptype" value="선불유심"> 지역+선불유심</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>③ 브랜드·공통 키워드 <small style="color:var(--t3)">(지역 없이 단독 글, 한 줄에 하나)</small></label>
+      <textarea id="bt-brand" rows="3" style="width:100%;box-sizing:border-box;font-size:13px;padding:8px;border:1px solid var(--bor);border-radius:var(--rs)"></textarea>
+    </div>
+
+    <div class="field">
+      <label>④ IT 정보글 주제 <small style="color:var(--t3)">(희석용, 한 줄에 하나)</small></label>
+      <textarea id="bt-it" rows="4" style="width:100%;box-sizing:border-box;font-size:13px;padding:8px;border:1px solid var(--bor);border-radius:var(--rs)"></textarea>
+      <div style="margin-top:6px"><button class="cpbtn" onclick="btFillItBank()">추천 IT 주제 불러오기</button></div>
+    </div>
+
+    <div class="frow field" style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="flex:1;min-width:120px"><label>하루 선불폰 글</label><input type="number" id="bt-perphone" value="1" min="0" max="5" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--bor);border-radius:var(--rs)"></div>
+      <div style="flex:1;min-width:120px"><label>하루 IT 글</label><input type="number" id="bt-perit" value="1" min="0" max="5" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--bor);border-radius:var(--rs)"></div>
+      <div style="flex:1;min-width:140px"><label>시작일</label><input type="date" id="bt-start" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--bor);border-radius:var(--rs)"></div>
+    </div>
+
+    <button class="savebtn" style="width:100%;margin-top:6px" onclick="buildBatchPlan()">📅 발행 캘린더 생성</button>
+  </div>
+
+  <div class="card" id="bt-result-card" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <div class="ctitle" style="margin:0">🗓 발행 캘린더 <span id="bt-summary" style="font-weight:400;color:var(--t3);font-size:12px"></span></div>
+      <div style="display:flex;gap:6px">
+        <button class="cpbtn" onclick="copyBatchKeywords()">키워드 전체 복사</button>
+        <button class="cpbtn" onclick="copyBatchCsv()">캘린더 CSV</button>
+        <button class="cpbtn" onclick="resetBatchPlan()">초기화</button>
+      </div>
+    </div>
+    <div id="bt-calendar"></div>
+  </div>
+</div>
+</div>
 
 <!-- ③ 글 분석기 -->
 <div class="mainpanel" id="mp-analyze">
@@ -2100,7 +2164,7 @@ function init(){
 }
 
 function setMainTab(n){
-  ['write','analyze','center','cafe','crawl','guide','video','homepage','care'].forEach(function(x){
+  ['write','batch','analyze','center','cafe','crawl','guide','video','homepage','care'].forEach(function(x){
     var mt=document.getElementById('mt-'+x);
     var mp=document.getElementById('mp-'+x);
     if(mt)mt.className='maintab'+(x===n?' on':'');
@@ -2120,6 +2184,9 @@ function setMainTab(n){
       }).join('');
     }
     crRender();
+  }
+  if(n==='batch'){
+    setTimeout(initBatch, 30);
   }
   if(n==='cafe'){
     setTimeout(initCafe, 50);
@@ -2190,8 +2257,9 @@ function onCatChange(){
   kwSuggestReqId++;                                // 진행중 비동기 응답 무효화
 
 
-  // 지역 필드 표시/숨김
-  if(regionField) regionField.style.display = isReview ? 'none' : '';
+  // 지역 필드 표시/숨김 (체험단·IT정보는 지역 무관)
+  var noRegion = isReview || cat==='it';
+  if(regionField) regionField.style.display = noRegion ? 'none' : '';
   // 체험단 입력 표시/숨김
   if(reviewInputs) reviewInputs.style.display = isReview ? 'block' : 'none';
 
@@ -2780,10 +2848,10 @@ if(document.readyState === 'loading'){
 }
 
 function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,reviewData){
-  var catLabel={phone:'선불폰/알뜰폰',english:'영어회화/학원',food:'음식/맛집',product:'제품리뷰',travel:'여행/카페',custom:'일반'}[cat]||'일반';
+  var catLabel={phone:'선불폰/알뜰폰',english:'영어회화/학원',it:'IT/컴퓨터 정보',food:'음식/맛집',product:'제품리뷰',travel:'여행/카페',custom:'일반'}[cat]||'일반';
   var subList=subkw?subkw.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
   if(suggestKws&&suggestKws.length)suggestKws.forEach(function(k){if(subList.indexOf(k)<0)subList.push(k);});
-  var isPhone=cat==='phone', isEnglish=cat==='english';
+  var isPhone=cat==='phone', isEnglish=cat==='english', isIt=cat==='it';
 
   var introStyle=getRandom(OPENING_STYLES);
   var randomIntro=getRandom(INTROS);
@@ -2833,6 +2901,19 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
   var engInfo='';
   if(isEnglish){
     engInfo='\n\n[영어회화 필수구성]\n2:1 관리시스템(원어민강사+한국인플래너) 자연스럽게 소개. 영어예문+해석 3개 이상. 강한 CTA 마무리. 소제목 최소 4개 이상 필수.\n';
+  }
+
+  var itInfo='';
+  if(isIt){
+    itInfo='\n\n[IT/컴퓨터 정보글 필수구성]\n'
+      +'독자가 검색한 증상(예: "삼성 노트북 화면이 안 나와요")을 바로 해결해주는 문제해결형 정보글로 작성.\n'
+      +'- 도입: 그 증상 상황에 공감 (1~2문장, "갑자기 ~되면 당황스럽죠")\n'
+      +'- 원인을 2~3가지로 먼저 짚어주기\n'
+      +'- 해결방법은 번호 소제목(1. 2. 3.)으로, 제일 쉽고 빠른 방법부터 → 안 될 때 다음 방법 순서로\n'
+      +'- 각 단계는 따라 하기 쉽게 구체적으로 (메뉴 경로, 버튼 이름, 단축키 등 실제 명칭)\n'
+      +'- 전문용어는 초보자도 알게 쉽게 풀어서 설명\n'
+      +'- 마지막: 그래도 안 되면 A/S센터·전문가 점검 안내로 마무리\n'
+      +'- 광고/홍보 느낌 절대 금지. 순수 정보 제공 톤(블로그 신뢰도 보호용 글).\n';
   }
 
   // ── 체험단 (음식/제품/여행) 프롬프트
@@ -2984,7 +3065,7 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
   var versionGuide=postVersion==='mobile'
     ?'\n[모바일 버전 필수 규칙]\n한 문장 쓰고 무조건 줄바꿈. 문장 20자 이하. 3줄 연속 금지. 정보전달형 제외 이모지 적극 활용(👉 ✅ 💡 등). 선불폰은 각 절차 단계마다 줄바꿈 필수.\n'
     :'\n[PC 버전] 긴 문단, 연속적인 흐름.\n';
-  var user='아래 조건으로 네이버 블로그 글 작성. JSON만 출력.\n\n카테고리: '+catLabel+'\n메인키워드: '+kw+'\n서브키워드: '+(subList.join(', ')||'없음')+'\n지역: '+(region||'없음')+'\n글 톤: '+tone+'\n특이사항: '+(dir||'없음')+'\n'+usedNote+patternNote+versionGuide+'\n'+toneGuide+'\n글 스타일:\n'+introGuide+'\n맺음말: "'+randomEnding+'" 느낌으로\n목표 글자수: 공백포함 '+charTarget+'자 내외\n'+phoneInfo+engInfo+reviewInfo+'\n절대 준수 규칙:\n1. 제목: "'+kw+'" 반드시 포함 + 35자 이내 (SEO 필수)\n2. 메인키워드 "'+kw+'" 본문에서 정확히 3회만 사용 - 2회도 안되고 4회도 절대 금지\n3. 서브키워드 각각 1~5회 이내 (0회도 안됨 - 반드시 본문에 자연스럽게 포함)\n4. ## ** 마크다운 절대 금지\n5. '+forbiddenWords+'6. 단락 사이 빈줄 1개\n7. 숫자/수치 최소 3개 이상 (요금, 날짜, 시간, 거리 등 구체적 수치)\n8. 공백포함 반드시 1,500자 이상 2,000자 미만 - 작성 후 스스로 글자 세어서 부족하면 보충\n9. 소제목 구조화 필수 (숫자 or 이모지 or ■ 소제목으로 단락 구분)\n10. AI 티 나는 표현 절대 금지\n11. 참고 내용 그대로 복사 금지\n'+synonymGuide+'\n출력(JSON만, 첫글자{, content 내 큰따옴표 반드시 \\" 이스케이프): {"title":"제목","content":"본문('+charTarget+'자내외)","hashtags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8","태그9","태그10"]}';
+  var user='아래 조건으로 네이버 블로그 글 작성. JSON만 출력.\n\n카테고리: '+catLabel+'\n메인키워드: '+kw+'\n서브키워드: '+(subList.join(', ')||'없음')+'\n지역: '+(region||'없음')+'\n글 톤: '+tone+'\n특이사항: '+(dir||'없음')+'\n'+usedNote+patternNote+versionGuide+'\n'+toneGuide+'\n글 스타일:\n'+introGuide+'\n맺음말: "'+randomEnding+'" 느낌으로\n목표 글자수: 공백포함 '+charTarget+'자 내외\n'+phoneInfo+engInfo+itInfo+reviewInfo+'\n절대 준수 규칙:\n1. 제목: "'+kw+'" 반드시 포함 + 35자 이내 (SEO 필수)\n2. 메인키워드 "'+kw+'" 본문에서 정확히 3회만 사용 - 2회도 안되고 4회도 절대 금지\n3. 서브키워드 각각 1~5회 이내 (0회도 안됨 - 반드시 본문에 자연스럽게 포함)\n4. ## ** 마크다운 절대 금지\n5. '+forbiddenWords+'6. 단락 사이 빈줄 1개\n7. 숫자/수치 최소 3개 이상 (요금, 날짜, 시간, 거리 등 구체적 수치)\n8. 공백포함 반드시 1,500자 이상 2,000자 미만 - 작성 후 스스로 글자 세어서 부족하면 보충\n9. 소제목 구조화 필수 (숫자 or 이모지 or ■ 소제목으로 단락 구분)\n10. AI 티 나는 표현 절대 금지\n11. 참고 내용 그대로 복사 금지\n'+synonymGuide+'\n출력(JSON만, 첫글자{, content 내 큰따옴표 반드시 \\" 이스케이프): {"title":"제목","content":"본문('+charTarget+'자내외)","hashtags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8","태그9","태그10"]}';
 
   return{sys:sys,user:user};
 }
@@ -5869,6 +5950,136 @@ function togglePubPreview(){
   pv.style.display=on?'block':'none';
   if(on)pv.innerHTML=buildPublishHtml(cur,pubPlatform);
 }
+
+/* ─────────── 양산 플래너 (배치 + 발행 캘린더) ─────────── */
+var IT_TOPIC_BANK=[
+  '삼성 노트북 화면이 안 나올 때 해결방법',
+  '노트북 화면 깜빡임 원인과 해결방법',
+  '윈도우11 와이파이 안 잡힐 때 해결',
+  '블루투스 연결 안 될 때 해결방법',
+  '카카오톡 PC버전 로그인 안 될 때',
+  '프린터 오프라인 표시 해결방법',
+  '핸드폰 저장공간 부족 정리하는 법',
+  '유심 인식 안 될 때 해결방법',
+  'USB 인식 안 됨 해결방법',
+  '외장하드가 안 열릴 때 해결방법',
+  '컴퓨터 부팅 안 될 때 점검 순서',
+  '윈도우 업데이트 멈춤 해결방법',
+  '크롬 브라우저 느려졌을 때 빠르게 하는 법',
+  '모니터 신호 없음 해결방법',
+  '노트북 배터리 빨리 닳을 때 점검법'
+];
+var BRAND_KW_DEFAULT=['앤텔레콤','엔텔레콤','앤텔레콤 요금제','선불폰 요금제','선불폰 개통 방법'];
+var _batchInited=false;
+function initBatch(){
+  if(!_batchInited){
+    _batchInited=true;
+    var brand=document.getElementById('bt-brand'); if(brand&&!brand.value.trim())brand.value=BRAND_KW_DEFAULT.join('\n');
+    var it=document.getElementById('bt-it'); if(it&&!it.value.trim())it.value=IT_TOPIC_BANK.slice(0,10).join('\n');
+    var d=document.getElementById('bt-start'); if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);
+  }
+  var p=loadBatchPlan(); if(p)renderBatchPlan(p);
+}
+function btFillItBank(){ document.getElementById('bt-it').value=IT_TOPIC_BANK.join('\n'); showToast('추천 IT 주제 '+IT_TOPIC_BANK.length+'개','ok'); }
+function btLoadAllRegions(){
+  var list=[]; document.querySelectorAll('#region-select option').forEach(function(o){ if(o.value)list.push(o.value); });
+  document.getElementById('bt-regions').value=list.join('\n');
+  showToast('전체 '+list.length+'개 지역 불러옴','ok');
+}
+function btPreset(type){
+  var cap=['파주','고양 일산','김포','부천','인천','수원','성남','안양','안산','용인 수지','남양주','의정부','광명','시흥','하남 미사','화성 동탄','구리','강남','노원','목동'];
+  document.getElementById('bt-regions').value=cap.join('\n');
+}
+function _btLines(id){ return (document.getElementById(id).value||'').split('\n').map(function(s){return s.trim();}).filter(Boolean); }
+function addDays(iso,n){ var d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function _dow(iso){ return ['일','월','화','수','목','금','토'][new Date(iso+'T00:00:00').getDay()]; }
+function buildBatchPlan(){
+  var regions=_btLines('bt-regions');
+  var ptypes=[]; document.querySelectorAll('.bt-ptype:checked').forEach(function(c){ptypes.push(c.value);});
+  var brand=_btLines('bt-brand');
+  var itTopics=_btLines('bt-it');
+  var perPhone=Math.max(0,parseInt(document.getElementById('bt-perphone').value)||0);
+  var perIt=Math.max(0,parseInt(document.getElementById('bt-perit').value)||0);
+  var start=document.getElementById('bt-start').value||new Date().toISOString().slice(0,10);
+  if(perPhone===0&&perIt===0){showToast('하루 발행 개수를 1개 이상으로','err');return;}
+
+  // 선불폰 풀: 유형별로 묶어서(같은 지역끼리 인접 중복 방지) + 브랜드 단독글
+  var phonePool=[];
+  ptypes.forEach(function(t){ regions.forEach(function(r){ phonePool.push(r+' '+t); }); });
+  brand.forEach(function(b){ phonePool.push(b); });
+  if(phonePool.length===0&&itTopics.length===0){showToast('지역/브랜드/IT 주제 중 하나는 입력해주세요','err');return;}
+
+  var phoneDays = perPhone>0 ? Math.ceil(phonePool.length/perPhone) : 0;
+  var itDays    = perIt>0    ? Math.ceil(itTopics.length/perIt)   : 0;
+  var numDays = Math.max(phoneDays, itDays);
+  if(numDays===0){showToast('발행할 글이 없어요','err');return;}
+
+  var pIdx=0, itIdx=0, id=0, days=[];
+  for(var dn=0; dn<numDays; dn++){
+    var items=[];
+    for(var a=0;a<perPhone && pIdx<phonePool.length;a++) items.push({id:id++,cat:'phone',kw:phonePool[pIdx++],done:false,sent:false});
+    for(var b=0;b<perIt && itTopics.length>0;b++){
+      var reuse=itIdx>=itTopics.length;
+      items.push({id:id++,cat:'it',kw:itTopics[itIdx%itTopics.length],reuse:reuse,done:false,sent:false});
+      itIdx++;
+    }
+    if(items.length) days.push({date:addDays(start,dn),items:items});
+  }
+  var plan={start:start,perPhone:perPhone,perIt:perIt,phoneTotal:phonePool.length,itTotal:itTopics.length,days:days};
+  saveBatchPlan(plan);
+  renderBatchPlan(plan);
+  showToast('캘린더 생성! 선불폰 '+phonePool.length+'개 · '+days.length+'일치','ok');
+}
+function renderBatchPlan(plan){
+  document.getElementById('bt-result-card').style.display='block';
+  var doneCnt=0,total=0;
+  plan.days.forEach(function(d){d.items.forEach(function(it){total++;if(it.done)doneCnt++;});});
+  document.getElementById('bt-summary').textContent='· 총 '+total+'글 ('+plan.days.length+'일) · 완료 '+doneCnt+'/'+total;
+  var html='';
+  plan.days.forEach(function(d,di){
+    html+='<div style="border:1px solid var(--bor);border-radius:var(--rs);margin-bottom:8px;overflow:hidden">';
+    html+='<div style="background:#f0f4f2;padding:7px 12px;font-size:12px;font-weight:700;color:var(--t2)">Day '+(di+1)+' · '+d.date+' ('+_dow(d.date)+')</div>';
+    html+='<div style="padding:8px 12px">';
+    d.items.forEach(function(it){
+      var badge=it.cat==='phone'
+        ?'<span style="background:#e8f5ee;color:#1f9d59;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px">선불폰</span>'
+        :'<span style="background:#eef2ff;color:#3a5fd0;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px">IT</span>';
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:5px 0">'
+        +'<input type="checkbox" '+(it.done?'checked':'')+' onchange="batchToggleDone('+it.id+')">'
+        +badge
+        +'<span style="flex:1;font-size:13px;color:var(--txt);'+(it.done?'text-decoration:line-through;opacity:.5':'')+'">'+esc(it.kw)+(it.reuse?' <span style="color:#BA7517;font-size:10px">⚠주제재활용-각도 다르게</span>':'')+(it.sent?' <span style="color:var(--green);font-size:10px">✓보냄</span>':'')+'</span>'
+        +'<button class="cpbtn" onclick="batchSend('+it.id+')">✍ 글쓰기로</button>'
+        +'</div>';
+    });
+    html+='</div></div>';
+  });
+  document.getElementById('bt-calendar').innerHTML=html;
+}
+function _btFind(plan,id){ for(var i=0;i<plan.days.length;i++){var it=plan.days[i].items.find(function(x){return x.id===id;}); if(it)return it;} return null; }
+function batchToggleDone(id){ var p=loadBatchPlan(); if(!p)return; var it=_btFind(p,id); if(it){it.done=!it.done; saveBatchPlan(p); renderBatchPlan(p);} }
+function batchSend(id){
+  var p=loadBatchPlan(); if(!p)return; var it=_btFind(p,id); if(!it)return;
+  setMainTab('write');
+  var catEl=document.getElementById('cat'); catEl.value=it.cat; onCatChange();
+  document.getElementById('kw').value=it.kw;
+  it.sent=true; saveBatchPlan(p); renderBatchPlan(p);
+  window.scrollTo({top:0,behavior:'smooth'});
+  showToast('"'+it.kw+'" 적용됨 → [글 생성하기]를 누르세요','ok');
+}
+function copyBatchKeywords(){
+  var p=loadBatchPlan(); if(!p)return;
+  var lines=[]; p.days.forEach(function(d){d.items.forEach(function(it){lines.push((it.cat==='phone'?'[선불폰] ':'[IT] ')+it.kw);});});
+  navigator.clipboard.writeText(lines.join('\n')); showToast('[v] 키워드 '+lines.length+'개 복사','ok');
+}
+function copyBatchCsv(){
+  var p=loadBatchPlan(); if(!p)return;
+  var rows=['날짜,요일,분류,키워드'];
+  p.days.forEach(function(d){d.items.forEach(function(it){rows.push(d.date+','+_dow(d.date)+','+(it.cat==='phone'?'선불폰':'IT')+',"'+it.kw.replace(/"/g,'""')+'"');});});
+  navigator.clipboard.writeText(rows.join('\n')); showToast('[v] 캘린더 CSV 복사','ok');
+}
+function resetBatchPlan(){ if(!confirm('캘린더를 초기화할까요? (진행 체크도 사라집니다)'))return; localStorage.removeItem('batch_plan'); document.getElementById('bt-result-card').style.display='none'; showToast('캘린더 초기화됨',''); }
+function saveBatchPlan(p){ localStorage.setItem('batch_plan',JSON.stringify(p)); }
+function loadBatchPlan(){ try{return JSON.parse(localStorage.getItem('batch_plan')||'null');}catch(e){return null;} }
 
 function loadHist(i){cur=hist[i];renderResult(cur);setRTab('result');showState('result');}
 function renderGuides(){document.getElementById('glist').innerHTML=GUIDES.map(function(g){return'<div class="gitem"><div class="gicon '+(g.ok?'ok':'ng')+'">'+(g.ok?'v':'x')+'</div><span style="font-size:13px;color:var(--txt)">'+g.t+'</span></div>';}).join('');}
