@@ -948,8 +948,10 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
               </div>
               <div style="display:flex;gap:6px;flex-wrap:wrap">
                 <button class="cpbtn" style="flex:1" onclick="copyPublishHtml()">📋 발행용 HTML 복사</button>
+                <button class="cpbtn" onclick="copyFaqJsonLd()">FAQ 구조화데이터</button>
                 <button class="cpbtn" onclick="togglePubPreview()">👁 미리보기</button>
               </div>
+              <div id="pub-tip" style="font-size:11px;color:var(--t2);background:#f7faf9;border:1px solid var(--bor);border-radius:var(--rs);padding:10px 12px;margin-top:10px;line-height:1.7"></div>
               <div id="pub-warn" style="display:none;font-size:11px;color:#BA7517;margin-top:8px;line-height:1.6"></div>
               <textarea id="pub-html" readonly style="display:none;width:100%;height:160px;margin-top:10px;font-size:11px;font-family:monospace;border:1px solid var(--bor);border-radius:var(--rs);padding:8px;box-sizing:border-box"></textarea>
               <div id="pub-preview" style="display:none;margin-top:10px;border:1px dashed var(--bor);border-radius:var(--rs);padding:12px;max-height:360px;overflow:auto;background:#fff"></div>
@@ -2094,6 +2096,7 @@ function init(){
   // 센터 찾기 미리 초기화
   crInitMap();
   loadPubCfg();
+  updatePubTip();
 }
 
 function setMainTab(n){
@@ -5716,8 +5719,20 @@ function setPubPlatform(p){
   document.getElementById('pp-tistory').className='pubplat'+(p==='tistory'?' on':'');
   document.getElementById('pp-wordpress').className='pubplat'+(p==='wordpress'?' on':'');
   var pv=document.getElementById('pub-preview'), ta=document.getElementById('pub-html');
-  if(pv&&pv.style.display!=='none')pv.innerHTML=buildPublishHtml(cur,pubPlatform);
-  if(ta&&ta.style.display!=='none')ta.value=buildPublishHtml(cur,pubPlatform);
+  if(pv&&pv.style.display!=='none'&&cur)pv.innerHTML=buildPublishHtml(cur,pubPlatform);
+  if(ta&&ta.style.display!=='none'&&cur)ta.value=buildPublishHtml(cur,pubPlatform);
+  updatePubTip();
+}
+function updatePubTip(){
+  var el=document.getElementById('pub-tip'); if(!el)return;
+  if(pubPlatform==='tistory'){
+    el.innerHTML='💡 <b>티스토리는 본문 광고/구조화데이터를 코드로 못 박아요</b> (저장 시 &lt;script&gt; 삭제).<br>'
+      +'· <b>애드센스</b>: [관리 › 수익 › 애드센스]에서 <b>자동광고 ON</b> 또는 [관리 › 플러그인 › <b>본문 광고</b>] 켜면 글 중간에 자동 노출돼요.<br>'
+      +'· <b>FAQ(AEO)</b>: 본문엔 보이는 Q&A 섹션으로 들어가요. 구조화데이터까지 원하면 아래 <b>FAQ 구조화데이터 복사</b> → [꾸미기 › 스킨편집 › html] &lt;head&gt;에 붙여넣기.';
+  } else {
+    el.innerHTML='💡 <b>워드프레스</b>는 본문에 애드센스 코드 + FAQ 구조화데이터가 그대로 들어가요. (설정에 애드센스 ID 입력 시 실제 광고 코드 삽입)<br>'
+      +'· 같은 글을 티스토리에도 올렸다면 워드프레스 쪽에 <b>canonical(원본 주소)</b>을 꼭 지정하세요.';
+  }
 }
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 // 한 줄이 소제목인지 판별
@@ -5755,26 +5770,28 @@ function contactBlock(){
     +'<a href="tel:'+esc(tel)+'" style="display:inline-block;background:#1f9d59;color:#ffffff;padding:15px 30px;border-radius:12px;font-weight:800;font-size:15px;text-decoration:none;margin:5px">📱 '+esc(telLabel)+'</a>\n'
     +'</div>';
 }
-function buildPublishHtml(r,platform){
-  if(!r)return '';
+// 티스토리는 본문 <script>가 저장 시 삭제됨 → FAQ를 눈에 보이는 Q&A 섹션으로 (AEO에도 도움)
+function faqVisibleBlock(faqs){
+  if(!faqs.length)return'';
+  var h='<h2 style="font-size:20px;font-weight:800;color:#1c1c1c;margin:34px 0 14px;padding:10px 16px;background:#f4f6f5;border-left:5px solid #e23d6e;border-radius:0 8px 8px 0">자주 묻는 질문 (FAQ)</h2>\n';
+  faqs.forEach(function(f){
+    h+='<div style="margin:0 0 12px;padding:16px 18px;background:#fafbfb;border:1px solid #eee;border-radius:10px">'
+      +'<div style="font-weight:700;color:#1c1c1c;margin-bottom:6px">Q. '+esc(f.q)+'</div>'
+      +'<div style="color:#444;line-height:1.85">A. '+esc(f.a)+'</div></div>\n';
+  });
+  return h;
+}
+function faqLd(faqs){return{"@context":"https://schema.org","@type":"FAQPage","mainEntity":faqs.map(function(f){return{"@type":"Question","name":f.q,"acceptedAnswer":{"@type":"Answer","text":f.a}};})};}
+// 본문 → 소제목/문단 블록 + 질문형 FAQ 파싱 (공용)
+function pubParse(r){
   var body=(r._clean||r.content||'');
-  var palette=['#1f9d59','#2f7de1','#e8841a','#9d4edd','#e23d6e'];
-  // 문단/소제목 블록 파싱
-  var lines=body.split(/\n/);
   var blocks=[];
-  lines.forEach(function(ln){
-    var t=ln.trim();
-    if(!t)return;
-    if(isHeadingLine(t)) blocks.push({type:'h',text:cleanHeadingText(t)});
+  body.split(/\n/).forEach(function(ln){
+    var t=ln.trim(); if(!t)return;
+    if(isHeadingLine(t))blocks.push({type:'h',text:cleanHeadingText(t)});
     else blocks.push({type:'p',text:t});
   });
-  var headingIdx=[];
-  blocks.forEach(function(b,i){if(b.type==='h')headingIdx.push(i);});
-  // 광고 위치: 첫 소제목 직전(도입부 뒤) + 중간 소제목 직전
-  var adAt={};
-  if(headingIdx.length>=1) adAt[headingIdx[0]]=true;
-  if(headingIdx.length>=3) adAt[headingIdx[Math.floor(headingIdx.length/2)]]=true;
-  // FAQ(AEO) 추출: 질문형 소제목 + 바로 뒤 문단
+  var headingIdx=[]; blocks.forEach(function(b,i){if(b.type==='h')headingIdx.push(i);});
   var faqs=[];
   blocks.forEach(function(b,i){
     if(b.type==='h'&&/[?？]$/.test(b.text)){
@@ -5782,8 +5799,21 @@ function buildPublishHtml(r,platform){
       if(ans)faqs.push({q:b.text,a:ans});
     }
   });
+  return{blocks:blocks,headingIdx:headingIdx,faqs:faqs};
+}
+function buildPublishHtml(r,platform){
+  if(!r)return '';
+  var palette=['#1f9d59','#2f7de1','#e8841a','#9d4edd','#e23d6e'];
+  var p=pubParse(r), blocks=p.blocks, headingIdx=p.headingIdx, faqs=p.faqs;
+  var isWp=platform==='wordpress';
+  // 광고: 워드프레스만 본문 인라인 삽입. 티스토리는 본문 script가 삭제되므로 자동광고/본문광고 플러그인 사용
+  var adAt={};
+  if(isWp){
+    if(headingIdx.length>=1) adAt[headingIdx[0]]=true;
+    if(headingIdx.length>=3) adAt[headingIdx[Math.floor(headingIdx.length/2)]]=true;
+  }
   var hi=0, out=[];
-  out.push('<div style="max-width:'+(platform==='wordpress'?'760':'720')+'px;margin:0 auto;font-size:16px;line-height:1.9;color:#2b2b2b;word-break:keep-all">');
+  out.push('<div style="max-width:'+(isWp?'760':'720')+'px;margin:0 auto;font-size:16px;line-height:1.9;color:#2b2b2b;word-break:keep-all">');
   blocks.forEach(function(b,i){
     if(adAt[i]) out.push(adBlock());
     if(b.type==='h'){
@@ -5793,24 +5823,26 @@ function buildPublishHtml(r,platform){
       out.push('<p style="margin:0 0 18px">'+esc(b.text)+'</p>');
     }
   });
+  // FAQ: 티스토리=보이는 섹션(script 미적용), 워드프레스=JSON-LD 구조화데이터
+  if(!isWp && faqs.length) out.push(faqVisibleBlock(faqs));
   out.push(contactBlock());
   out.push('</div>');
-  // FAQ 구조화 데이터 (AEO/구글 리치결과)
-  if(faqs.length>0){
-    var ld={"@context":"https://schema.org","@type":"FAQPage","mainEntity":faqs.map(function(f){return{"@type":"Question","name":f.q,"acceptedAnswer":{"@type":"Answer","text":f.a}};})};
-    out.push('<script type="application/ld+json">'+JSON.stringify(ld)+'<\/script>');
-  }
+  if(isWp && faqs.length) out.push('<script type="application/ld+json">'+JSON.stringify(faqLd(faqs))+'<\/script>');
   var html=out.join('\n');
-  if(platform==='wordpress'){
-    html='<!-- 워드프레스: 같은 글을 티스토리에도 올렸다면, 원본 글 주소를 canonical로 지정하세요 (Yoast/RankMath의 Canonical URL 칸) -->\n'+html;
-  }
+  if(isWp) html='<!-- 워드프레스: 같은 글을 티스토리에도 올렸다면, 원본 글 주소를 canonical로 지정하세요 (Yoast/RankMath의 Canonical URL 칸) -->\n'+html;
   return html;
 }
 function buildPubWarnings(){
   var w=[];
-  if(!pubCfg.adclient||!pubCfg.adslot) w.push('· 애드센스 ID 미설정 → 광고 자리표시로 들어갑니다 (⚙ 설정에서 입력)');
-  if(!pubCfg.kakao) w.push('· 카카오 오픈채팅 URL 미설정 → 임시 주소로 들어갑니다');
-  if(!pubCfg.tel) w.push('· 전화번호 미설정 → 임시 번호로 들어갑니다');
+  if(pubPlatform==='tistory'){
+    w.push('· 티스토리는 본문 &lt;script&gt;를 저장 시 삭제해요 → 애드센스는 [관리 › 수익 › 애드센스] 자동광고 ON, 또는 [관리 › 플러그인 › 본문 광고]로 켜세요');
+    if(!pubCfg.kakao) w.push('· 카카오 오픈채팅 URL 미설정 → 임시 주소로 들어갑니다 (⚙ 설정)');
+    if(!pubCfg.tel) w.push('· 전화번호 미설정 → 임시 번호로 들어갑니다 (⚙ 설정)');
+  } else {
+    if(!pubCfg.adclient||!pubCfg.adslot) w.push('· 애드센스 ID 미설정 → 광고 자리표시로 들어갑니다 (⚙ 설정)');
+    if(!pubCfg.kakao) w.push('· 카카오 오픈채팅 URL 미설정 → 임시 주소로 들어갑니다');
+    if(!pubCfg.tel) w.push('· 전화번호 미설정 → 임시 번호로 들어갑니다');
+  }
   return w;
 }
 function copyPublishHtml(){
@@ -5822,6 +5854,13 @@ function copyPublishHtml(){
   if(warns.length){wEl.style.display='block';wEl.innerHTML=warns.join('<br>');}
   else{wEl.style.display='none';}
   showToast('[v] '+(pubPlatform==='tistory'?'티스토리':'워드프레스')+' 발행용 HTML 복사 완료!','ok');
+}
+function copyFaqJsonLd(){
+  if(!cur){showToast('먼저 글을 생성해주세요','err');return;}
+  var faqs=pubParse(cur).faqs;
+  if(!faqs.length){showToast('질문형 소제목이 없어 FAQ를 만들 수 없어요','err');return;}
+  navigator.clipboard.writeText('<script type="application/ld+json">'+JSON.stringify(faqLd(faqs))+'<\/script>');
+  showToast('[v] FAQ 구조화데이터 복사! 티스토리 [꾸미기 › 스킨편집 › html] <head> 안에 붙여넣으세요','ok');
 }
 function togglePubPreview(){
   if(!cur){showToast('먼저 글을 생성해주세요','err');return;}
