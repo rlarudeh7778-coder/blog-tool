@@ -3089,7 +3089,7 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
   }
 
   var versionGuide=postVersion==='mobile'
-    ?'\n[모바일 가독성 규칙]\n- 한 문단은 2~3문장으로 짧게(모바일에서 4줄 넘지 않게). 문단 사이 빈 줄 1개.\n- 한 문장은 60자 이내로 너무 길게 늘이지 말 것.\n- 소제목으로 자주 끊어 스크롤이 편하게. 핵심 수치·혜택은 문장을 따로 떼어 강조.\n- 단, 한 문장씩 토막내듯 줄바꿈하지는 말 것(문단 단위 유지). 이모지는 과하지 않게 1~2개.\n'
+    ?'\n[모바일 가독성 규칙]\n- 한 문단은 1~2문장으로 짧게(모바일에서 3~4줄 넘지 않게). 문단마다 빈 줄로 구분.\n- 모든 문장은 마침표(.)나 물음표(?)로 또박또박 끝맺을 것(문단 자동 분리에 필요).\n- 한 문장은 60자 이내. 소제목으로 자주 끊어 스크롤이 편하게.\n- 핵심 수치·혜택은 문장을 따로 떼어 강조. 이모지는 과하지 않게 1~2개.\n'
     :'\n[PC 버전] 긴 문단, 연속적인 흐름.\n';
   var titleGuide;
   if(isPhone){
@@ -5917,6 +5917,18 @@ function contactBlock(){
     +'</div>';
   return h;
 }
+// 긴 문단을 2문장 단위로 끊어 가독성 확보 (모바일에서 벽처럼 붙는 것 방지)
+function paragraphize(text){
+  var MK="@@SPLIT@@";
+  var marked=text.replace(/([.!?])\s+/g,"$1"+MK);   // 마침표/물음표 뒤 공백에서만 분리(10.3GB 등은 안전)
+  var sents=marked.split(MK).map(function(s){return s.trim();}).filter(Boolean);
+  var ps="margin:0 0 20px";
+  if(sents.length<=1) return "<p style=\""+ps+"\">"+esc(text)+"</p>";
+  var out="",buf=[];
+  for(var i=0;i<sents.length;i++){ buf.push(sents[i]); if(buf.length>=2){ out+="<p style=\""+ps+"\">"+esc(buf.join(" "))+"</p>"; buf=[]; } }
+  if(buf.length) out+="<p style=\""+ps+"\">"+esc(buf.join(" "))+"</p>";
+  return out;
+}
 // 요금제 비교 표 (AI가 table 데이터를 줄 때만)
 function tableBlock(t){
   if(!t||!t.rows||!t.rows.length)return'';
@@ -5979,7 +5991,7 @@ function buildPublishHtml(r,platform){
   var isWp=platform==='wordpress';
   var W=isWp?'760':'720';
   var out=[];
-  out.push('<div style="max-width:'+W+'px;margin:0 auto;font-size:17px;line-height:1.8;color:#2b2b2b;word-break:keep-all;overflow-wrap:break-word">');
+  out.push('<div style="max-width:'+W+'px;margin:0 auto;font-size:17px;line-height:1.85;color:#2b2b2b;word-break:keep-all;overflow-wrap:break-word">');
 
   // ① 리드 박스: 첫 소제목 이전 문단
   var firstH = headingIdx.length? headingIdx[0] : blocks.length;
@@ -6013,7 +6025,7 @@ function buildPublishHtml(r,platform){
     } else if(b.type==='caution'){
       out.push('<div style="background:#fdf2f4;border-left:4px solid #e23d6e;border-radius:8px;padding:12px 16px;margin:0 0 22px"><b>⚠️ 주의</b> &nbsp;'+esc(b.text)+'</div>');
     } else {
-      out.push('<p style="margin:0 0 16px">'+esc(b.text)+'</p>');
+      out.push(paragraphize(b.text));
       if(planSection && !tableDone && r.table){ var tb=tableBlock(r.table); if(tb){out.push(tb);tableDone=true;planSection=false;} }
     }
   }
