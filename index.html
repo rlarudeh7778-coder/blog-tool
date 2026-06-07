@@ -100,6 +100,8 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
 .restime{font-size:11px;color:var(--t3)}
 .copys{display:flex;gap:6px}
 .cpbtn{padding:5px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-size:12px;font-family:inherit;cursor:pointer;background:var(--sur);color:var(--t2)}
+.pubplat{flex:1;padding:7px 10px;border:1px solid var(--bor);border-radius:var(--rs);font-size:12px;font-family:inherit;cursor:pointer;background:var(--sur);color:var(--t2)}
+.pubplat.on{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
 .cpbtn:hover{border-color:var(--green);color:var(--green)}
 .titlebox{background:var(--gl);border-radius:var(--rs);padding:10px 14px;margin-bottom:.875rem}
 .titlelbl{font-size:11px;color:var(--green);font-weight:700;margin-bottom:3px}
@@ -359,6 +361,29 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
         ✓ 서브키워드 각 <b>5회 이내</b><br>
         ✓ 마크다운(## **) 없음
       </div>
+    </div>
+    <div class="msec">
+      <div class="msectitle">🌐 티스토리/워드프레스 발행 설정</div>
+      <div style="font-size:11px;color:var(--t3);line-height:1.7;margin-bottom:10px">
+        아래 값을 저장하면 생성된 글을 <b>발행용 HTML</b>(소제목 꾸미기 + 애드센스 + 연락 버튼)로 바로 복사할 수 있어요. 빈칸이면 해당 부분은 안내용 자리표시로 들어갑니다.
+      </div>
+      <div class="field">
+        <label>구글 애드센스 게시자 ID <small style="color:var(--t3)">(ca-pub-...)</small></label>
+        <input type="text" id="cfg-adclient" placeholder="ca-pub-0000000000000000"/>
+      </div>
+      <div class="field">
+        <label>애드센스 광고 슬롯 ID <small style="color:var(--t3)">(인아티클 단위)</small></label>
+        <input type="text" id="cfg-adslot" placeholder="예: 1234567890"/>
+      </div>
+      <div class="field">
+        <label>카카오톡 오픈채팅 URL</label>
+        <input type="text" id="cfg-kakao" placeholder="https://open.kakao.com/o/..."/>
+      </div>
+      <div class="field">
+        <label>전화번호 <small style="color:var(--t3)">(tel: 버튼)</small></label>
+        <input type="text" id="cfg-tel" placeholder="010-0000-0000"/>
+      </div>
+      <button class="savebtn" style="width:100%" onclick="savePubCfg()">발행 설정 저장</button>
     </div>
   </div>
 </div>
@@ -907,6 +932,28 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
               <span style="font-size:11px;color:var(--t3)">편집 시 자동 업데이트</span>
             </div>
             <div id="qr-list" style="padding:4px 0"></div>
+          </div>
+          <!-- 발행용 HTML 내보내기 -->
+          <div id="pub-export" style="margin-top:1.25rem;border:1px solid var(--bor);border-radius:var(--r);overflow:hidden">
+            <div style="background:#eef4ff;padding:10px 14px">
+              <span style="font-size:13px;font-weight:700;color:var(--t2)">🌐 티스토리·워드프레스 발행용 HTML</span>
+            </div>
+            <div style="padding:14px">
+              <div style="font-size:11px;color:var(--t3);line-height:1.7;margin-bottom:10px">
+                소제목 꾸미기 + 애드센스 광고자리 + 연락 버튼(카톡·전화) + AEO용 FAQ 구조화데이터가 자동으로 들어갑니다. 복사 후 <b>티스토리 'HTML' 모드</b> 또는 <b>워드프레스 '커스텀 HTML' 블록</b>에 붙여넣으세요.
+              </div>
+              <div style="display:flex;gap:6px;margin-bottom:10px">
+                <button class="pubplat on" id="pp-tistory" onclick="setPubPlatform('tistory')">티스토리</button>
+                <button class="pubplat" id="pp-wordpress" onclick="setPubPlatform('wordpress')">워드프레스</button>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="cpbtn" style="flex:1" onclick="copyPublishHtml()">📋 발행용 HTML 복사</button>
+                <button class="cpbtn" onclick="togglePubPreview()">👁 미리보기</button>
+              </div>
+              <div id="pub-warn" style="display:none;font-size:11px;color:#BA7517;margin-top:8px;line-height:1.6"></div>
+              <textarea id="pub-html" readonly style="display:none;width:100%;height:160px;margin-top:10px;font-size:11px;font-family:monospace;border:1px solid var(--bor);border-radius:var(--rs);padding:8px;box-sizing:border-box"></textarea>
+              <div id="pub-preview" style="display:none;margin-top:10px;border:1px dashed var(--bor);border-radius:var(--rs);padding:12px;max-height:360px;overflow:auto;background:#fff"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -2046,6 +2093,7 @@ function init(){
   if(existKey) loadHistory();
   // 센터 찾기 미리 초기화
   crInitMap();
+  loadPubCfg();
 }
 
 function setMainTab(n){
@@ -5645,6 +5693,142 @@ function copyTitle(){
   var title=_editMode?(document.getElementById('edit-title').value||cur._cleanTitle||cur.title):(cur._cleanTitle||cur.title);
   navigator.clipboard.writeText(title);
   showToast('[v] 제목 복사 완료!','ok');
+}
+
+/* ─────────── 티스토리/워드프레스 발행용 HTML ─────────── */
+var pubCfg={adclient:'',adslot:'',kakao:'',tel:''};
+var pubPlatform='tistory';
+function loadPubCfg(){
+  try{var s=JSON.parse(localStorage.getItem('pub_cfg')||'{}');pubCfg.adclient=s.adclient||'';pubCfg.adslot=s.adslot||'';pubCfg.kakao=s.kakao||'';pubCfg.tel=s.tel||'';}catch(e){}
+  var m={adclient:'cfg-adclient',adslot:'cfg-adslot',kakao:'cfg-kakao',tel:'cfg-tel'};
+  Object.keys(m).forEach(function(k){var el=document.getElementById(m[k]);if(el)el.value=pubCfg[k];});
+}
+function savePubCfg(){
+  pubCfg.adclient=(document.getElementById('cfg-adclient').value||'').trim();
+  pubCfg.adslot=(document.getElementById('cfg-adslot').value||'').trim();
+  pubCfg.kakao=(document.getElementById('cfg-kakao').value||'').trim();
+  pubCfg.tel=(document.getElementById('cfg-tel').value||'').trim();
+  localStorage.setItem('pub_cfg',JSON.stringify(pubCfg));
+  showToast('[v] 발행 설정이 저장됐어요','ok');
+}
+function setPubPlatform(p){
+  pubPlatform=p;
+  document.getElementById('pp-tistory').className='pubplat'+(p==='tistory'?' on':'');
+  document.getElementById('pp-wordpress').className='pubplat'+(p==='wordpress'?' on':'');
+  var pv=document.getElementById('pub-preview'), ta=document.getElementById('pub-html');
+  if(pv&&pv.style.display!=='none')pv.innerHTML=buildPublishHtml(cur,pubPlatform);
+  if(ta&&ta.style.display!=='none')ta.value=buildPublishHtml(cur,pubPlatform);
+}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// 한 줄이 소제목인지 판별
+function isHeadingLine(line){
+  var t=line.trim();
+  if(!t)return false;
+  if(t.length>34)return false;
+  if(/^\s*\d{1,2}[.)]\s*/.test(t))return true;       // 1. 2. 3.
+  if(/^\s*[①②③④⑤⑥⑦⑧⑨⑩]/.test(t))return true;        // 원문자
+  if(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(t))return true; // 이모지 시작
+  if(/[?？]$/.test(t)&&t.length<=30)return true;       // 질문형 소제목
+  if(t.length<=20&&!/[.…!~]$/.test(t)&&!/[,，]/.test(t))return true; // 짧은 키워드형
+  return false;
+}
+function cleanHeadingText(t){
+  return t.trim().replace(/^\s*\d{1,2}[.)]\s*/,'').replace(/^\s*[①②③④⑤⑥⑦⑧⑨⑩]\s*/,'').trim();
+}
+function adBlock(){
+  if(pubCfg.adclient&&pubCfg.adslot){
+    return '<div style="text-align:center;margin:30px 0">\n'
+      +'<ins class="adsbygoogle" style="display:block;text-align:center" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="'+esc(pubCfg.adclient)+'" data-ad-slot="'+esc(pubCfg.adslot)+'"></ins>\n'
+      +'<script>(adsbygoogle = window.adsbygoogle || []).push({});<\/script>\n'
+      +'</div>';
+  }
+  return '<div style="text-align:center;margin:30px 0;padding:22px;background:#fafafa;border:1px dashed #d0d0d0;border-radius:10px;color:#999;font-size:13px">＜ 여기에 구글 애드센스 광고 코드 ＞</div>';
+}
+function contactBlock(){
+  var kakao=pubCfg.kakao||'#카카오톡_오픈채팅_주소';
+  var tel=(pubCfg.tel||'').replace(/[^0-9+]/g,'')||'01000000000';
+  var telLabel=pubCfg.tel||'전화 상담';
+  return '<div style="text-align:center;margin:36px 0;padding:26px 18px;background:#f5f8f7;border-radius:16px">\n'
+    +'<div style="font-size:17px;font-weight:800;color:#1c1c1c;margin-bottom:6px">📞 더 궁금한 점이 있으신가요?</div>\n'
+    +'<div style="font-size:13px;color:#666;margin-bottom:16px">아래 버튼으로 바로 문의주시면 빠르게 안내해 드릴게요.</div>\n'
+    +'<a href="'+esc(kakao)+'" target="_blank" rel="noopener" style="display:inline-block;background:#FEE500;color:#191600;padding:15px 30px;border-radius:12px;font-weight:800;font-size:15px;text-decoration:none;margin:5px">💬 카카오톡 상담하기</a>\n'
+    +'<a href="tel:'+esc(tel)+'" style="display:inline-block;background:#1f9d59;color:#ffffff;padding:15px 30px;border-radius:12px;font-weight:800;font-size:15px;text-decoration:none;margin:5px">📱 '+esc(telLabel)+'</a>\n'
+    +'</div>';
+}
+function buildPublishHtml(r,platform){
+  if(!r)return '';
+  var body=(r._clean||r.content||'');
+  var palette=['#1f9d59','#2f7de1','#e8841a','#9d4edd','#e23d6e'];
+  // 문단/소제목 블록 파싱
+  var lines=body.split(/\n/);
+  var blocks=[];
+  lines.forEach(function(ln){
+    var t=ln.trim();
+    if(!t)return;
+    if(isHeadingLine(t)) blocks.push({type:'h',text:cleanHeadingText(t)});
+    else blocks.push({type:'p',text:t});
+  });
+  var headingIdx=[];
+  blocks.forEach(function(b,i){if(b.type==='h')headingIdx.push(i);});
+  // 광고 위치: 첫 소제목 직전(도입부 뒤) + 중간 소제목 직전
+  var adAt={};
+  if(headingIdx.length>=1) adAt[headingIdx[0]]=true;
+  if(headingIdx.length>=3) adAt[headingIdx[Math.floor(headingIdx.length/2)]]=true;
+  // FAQ(AEO) 추출: 질문형 소제목 + 바로 뒤 문단
+  var faqs=[];
+  blocks.forEach(function(b,i){
+    if(b.type==='h'&&/[?？]$/.test(b.text)){
+      var ans=blocks[i+1]&&blocks[i+1].type==='p'?blocks[i+1].text:'';
+      if(ans)faqs.push({q:b.text,a:ans});
+    }
+  });
+  var hi=0, out=[];
+  out.push('<div style="max-width:'+(platform==='wordpress'?'760':'720')+'px;margin:0 auto;font-size:16px;line-height:1.9;color:#2b2b2b;word-break:keep-all">');
+  blocks.forEach(function(b,i){
+    if(adAt[i]) out.push(adBlock());
+    if(b.type==='h'){
+      var c=palette[hi%palette.length]; hi++;
+      out.push('<h2 style="font-size:20px;font-weight:800;color:#1c1c1c;margin:34px 0 14px;padding:10px 16px;background:#f4f6f5;border-left:5px solid '+c+';border-radius:0 8px 8px 0">'+esc(b.text)+'</h2>');
+    } else {
+      out.push('<p style="margin:0 0 18px">'+esc(b.text)+'</p>');
+    }
+  });
+  out.push(contactBlock());
+  out.push('</div>');
+  // FAQ 구조화 데이터 (AEO/구글 리치결과)
+  if(faqs.length>0){
+    var ld={"@context":"https://schema.org","@type":"FAQPage","mainEntity":faqs.map(function(f){return{"@type":"Question","name":f.q,"acceptedAnswer":{"@type":"Answer","text":f.a}};})};
+    out.push('<script type="application/ld+json">'+JSON.stringify(ld)+'<\/script>');
+  }
+  var html=out.join('\n');
+  if(platform==='wordpress'){
+    html='<!-- 워드프레스: 같은 글을 티스토리에도 올렸다면, 원본 글 주소를 canonical로 지정하세요 (Yoast/RankMath의 Canonical URL 칸) -->\n'+html;
+  }
+  return html;
+}
+function buildPubWarnings(){
+  var w=[];
+  if(!pubCfg.adclient||!pubCfg.adslot) w.push('· 애드센스 ID 미설정 → 광고 자리표시로 들어갑니다 (⚙ 설정에서 입력)');
+  if(!pubCfg.kakao) w.push('· 카카오 오픈채팅 URL 미설정 → 임시 주소로 들어갑니다');
+  if(!pubCfg.tel) w.push('· 전화번호 미설정 → 임시 번호로 들어갑니다');
+  return w;
+}
+function copyPublishHtml(){
+  if(!cur){showToast('먼저 글을 생성해주세요','err');return;}
+  var html=buildPublishHtml(cur,pubPlatform);
+  navigator.clipboard.writeText(html);
+  var warns=buildPubWarnings();
+  var wEl=document.getElementById('pub-warn');
+  if(warns.length){wEl.style.display='block';wEl.innerHTML=warns.join('<br>');}
+  else{wEl.style.display='none';}
+  showToast('[v] '+(pubPlatform==='tistory'?'티스토리':'워드프레스')+' 발행용 HTML 복사 완료!','ok');
+}
+function togglePubPreview(){
+  if(!cur){showToast('먼저 글을 생성해주세요','err');return;}
+  var pv=document.getElementById('pub-preview');
+  var on=pv.style.display==='none';
+  pv.style.display=on?'block':'none';
+  if(on)pv.innerHTML=buildPublishHtml(cur,pubPlatform);
 }
 
 function loadHist(i){cur=hist[i];renderResult(cur);setRTab('result');showState('result');}
