@@ -386,6 +386,10 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
         <label>전화번호 <small style="color:var(--t3)">(tel: 버튼)</small></label>
         <input type="text" id="cfg-tel" placeholder="010-0000-0000"/>
       </div>
+      <div class="field">
+        <label>앤플랫폼 개통 사이트 URL <small style="color:var(--t3)">(본문 '접속 버튼' 링크)</small></label>
+        <input type="text" id="cfg-platform" placeholder="https://www.n-telecom.co.kr/..."/>
+      </div>
       <button class="savebtn" style="width:100%" onclick="savePubCfg()">발행 설정 저장</button>
     </div>
   </div>
@@ -2910,7 +2914,7 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
       {label:'비교/선택 가이드', focus:'선불폰 vs 알뜰폰 vs 일반 약정폰 차이, 누구에게 선불폰이 유리한지 비교', full:false}
     ];
     var ang=getRandom(PHONE_ANGLES);
-    var stepBlock='[개통 절차 - 모든 글에 반드시 순서대로 포함] 아래 ①~⑨ 절차를 빠짐없이 순서대로 넣되, 표현은 매번 완전히 다른 문장으로 풀어서 설명할 것. 각 단계 뒤 헷갈리기 쉬운 부분은 부연설명 추가:\n'+stepExpr+'\n접수시간: 오전 8시~오후 9시50분, 365일\n';
+    var stepBlock='[개통 절차 - 모든 글에 반드시 순서대로 포함] 아래 ①~⑨ 절차를 빠짐없이 순서대로 넣되, 표현은 매번 완전히 다른 문장으로 풀어서 설명할 것. 각 단계 뒤 헷갈리기 쉬운 부분은 부연설명 추가:\n'+stepExpr+'\n접수시간: 오전 8시~오후 9시50분, 365일\n★ "앤플랫폼 홈페이지(사이트) 접속" 단계에서는 URL 주소를 본문에 직접 쓰지 말고, 그 자리에 한 줄로 [앤플랫폼접속] 이라고만 적을 것. (이 자리에 접속 버튼이 자동으로 생성됨)\n';
     phoneInfo='\n\n[선불폰 글 구성]\n아래 참고 내용을 절대 그대로 복사하지 말 것. 같은 정보를 완전히 다른 일상적인 문장으로 풀어서 쓸 것.\n'
       +(dealerNote?'\n'+dealerNote+'\n':'')
       +'\n[모든 선불폰 글에 반드시 들어갈 핵심 섹션 3가지 — 절대 생략 금지]\n'
@@ -5823,15 +5827,16 @@ function copyTitle(){
 }
 
 /* ─────────── 티스토리/워드프레스 발행용 HTML ─────────── */
-var pubCfg={adclient:'',adslot:'',brand:'메이플통신',kakao:'https://open.kakao.com/o/sM3nlTPg',channel:'http://pf.kakao.com/_qxnVQC',tel:'01074180705'};
+var pubCfg={adclient:'',adslot:'',brand:'메이플통신',kakao:'https://open.kakao.com/o/sM3nlTPg',channel:'http://pf.kakao.com/_qxnVQC',tel:'01074180705',platformUrl:'https://www.n-telecom.co.kr/junda'};
 var pubPlatform='tistory';
 function loadPubCfg(){
   try{var s=JSON.parse(localStorage.getItem('pub_cfg')||'{}');
     pubCfg.adclient=s.adclient||'';pubCfg.adslot=s.adslot||'';
     pubCfg.brand=s.brand||pubCfg.brand;pubCfg.kakao=s.kakao||pubCfg.kakao;
     pubCfg.channel=s.channel||pubCfg.channel;pubCfg.tel=s.tel||pubCfg.tel;
+    pubCfg.platformUrl=s.platformUrl||pubCfg.platformUrl;
   }catch(e){}
-  var m={adclient:'cfg-adclient',adslot:'cfg-adslot',brand:'cfg-brand',kakao:'cfg-kakao',channel:'cfg-channel',tel:'cfg-tel'};
+  var m={adclient:'cfg-adclient',adslot:'cfg-adslot',brand:'cfg-brand',kakao:'cfg-kakao',channel:'cfg-channel',tel:'cfg-tel',platformUrl:'cfg-platform'};
   Object.keys(m).forEach(function(k){var el=document.getElementById(m[k]);if(el)el.value=pubCfg[k];});
 }
 function savePubCfg(){
@@ -5841,6 +5846,7 @@ function savePubCfg(){
   pubCfg.kakao=(document.getElementById('cfg-kakao').value||'').trim();
   pubCfg.channel=(document.getElementById('cfg-channel').value||'').trim();
   pubCfg.tel=(document.getElementById('cfg-tel').value||'').trim();
+  pubCfg.platformUrl=(document.getElementById('cfg-platform').value||'').trim();
   localStorage.setItem('pub_cfg',JSON.stringify(pubCfg));
   showToast('[v] 발행 설정이 저장됐어요','ok');
 }
@@ -5919,6 +5925,11 @@ function contactBlock(){
     +'</div>';
   return h;
 }
+// 앤플랫폼 개통 사이트 접속 버튼 (개통절차 '접속' 단계 자리)
+function platformBtn(){
+  var url=pubCfg.platformUrl||'https://www.n-telecom.co.kr/junda';
+  return '<div style="text-align:center;margin:18px 0 24px"><a href="'+esc(url)+'" target="_blank" rel="noopener" style="display:inline-block;background:#2f7de1;color:#fff;padding:14px 28px;border-radius:12px;font-weight:800;font-size:15px;text-decoration:none;box-shadow:0 3px 10px rgba(47,125,225,.3)">🖥️ 앤플랫폼 개통 홈페이지 접속 →</a></div>';
+}
 // 긴 문단을 2문장 단위로 끊어 가독성 확보 (모바일에서 벽처럼 붙는 것 방지)
 function paragraphize(text){
   var MK="@@SPLIT@@";
@@ -5971,6 +5982,7 @@ function pubParse(r){
   var blocks=[];
   body.split(/\n/).forEach(function(ln){
     var t=ln.trim(); if(!t)return;
+    if(/\[앤플랫폼접속\]/.test(t)||/n-telecom\.co\.kr/.test(t)){blocks.push({type:'platbtn',text:''});return;}
     if(/^\[?\s*팁\s*\]/.test(t)||/^\[팁\]/.test(t)){blocks.push({type:'tip',text:t.replace(/^\[?\s*팁\s*\]\s*/,'')});return;}
     if(/^\[?\s*주의\s*\]/.test(t)){blocks.push({type:'caution',text:t.replace(/^\[?\s*주의\s*\]\s*/,'')});return;}
     if(isHeadingLine(t))blocks.push({type:'h',text:cleanHeadingText(t)});
@@ -6026,6 +6038,8 @@ function buildPublishHtml(r,platform){
       out.push('<div style="background:#f0f9f4;border-left:4px solid #1f9d59;border-radius:8px;padding:12px 16px;margin:0 0 22px"><b>💡 꿀팁</b> &nbsp;'+esc(b.text)+'</div>');
     } else if(b.type==='caution'){
       out.push('<div style="background:#fdf2f4;border-left:4px solid #e23d6e;border-radius:8px;padding:12px 16px;margin:0 0 22px"><b>⚠️ 주의</b> &nbsp;'+esc(b.text)+'</div>');
+    } else if(b.type==='platbtn'){
+      out.push(platformBtn());
     } else {
       out.push(paragraphize(b.text));
       if(planSection && !tableDone && r.table){ var tb=tableBlock(r.table); if(tb){out.push(tb);tableDone=true;planSection=false;} }
