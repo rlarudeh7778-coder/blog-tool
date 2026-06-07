@@ -371,8 +371,16 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
         <input type="text" id="cfg-adslot" placeholder="예: 1234567890"/>
       </div>
       <div class="field">
+        <label>브랜드(업체)명 <small style="color:var(--t3)">(개통 문의 = 이 이름으로 노출)</small></label>
+        <input type="text" id="cfg-brand" placeholder="예: 메이플통신"/>
+      </div>
+      <div class="field">
         <label>카카오톡 오픈채팅 URL</label>
         <input type="text" id="cfg-kakao" placeholder="https://open.kakao.com/o/..."/>
+      </div>
+      <div class="field">
+        <label>카카오톡 채널 URL <small style="color:var(--t3)">(pf.kakao.com)</small></label>
+        <input type="text" id="cfg-channel" placeholder="http://pf.kakao.com/_..."/>
       </div>
       <div class="field">
         <label>전화번호 <small style="color:var(--t3)">(tel: 버튼)</small></label>
@@ -2912,7 +2920,8 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
       +'\n유심 참고(소제목 예 "'+getRandom(simStyles)+'"): '+simExpr
       +'\n요금제 참고(소제목 예 "'+getRandom(planStyles)+'"): '+planExpr
       +'\n'+stepBlock
-      +'★ 지역 키워드가 있으면 그 지역만의 정보(근처 편의점, 동네 특징, 교통 등)를 1~2문장 자연스럽게 녹여 다른 지역 글과 확실히 차별화할 것.\n';
+      +'★ 지역 키워드가 있으면 그 지역만의 정보(근처 편의점, 동네 특징, 교통 등)를 1~2문장 자연스럽게 녹여 다른 지역 글과 확실히 차별화할 것.\n'
+      +'★ 글 마무리에 "앤텔레콤 개통이나 선불폰 개통 문의는 '+((typeof pubCfg!=='undefined'&&pubCfg.brand)||'메이플통신')+'에서 도와드린다"는 점을 1~2회 자연스럽게 언급(과한 광고 톤 금지, 신뢰감 있게). 어려운 상황(미납·신용·외국인 등)도 '+((typeof pubCfg!=='undefined'&&pubCfg.brand)||'메이플통신')+'에 문의하면 상담 가능하다고 안내.\n';
   }
 
   var engInfo='';
@@ -5812,17 +5821,23 @@ function copyTitle(){
 }
 
 /* ─────────── 티스토리/워드프레스 발행용 HTML ─────────── */
-var pubCfg={adclient:'',adslot:'',kakao:'',tel:''};
+var pubCfg={adclient:'',adslot:'',brand:'메이플통신',kakao:'https://open.kakao.com/o/sM3nlTPg',channel:'http://pf.kakao.com/_qxnVQC',tel:'01074180705'};
 var pubPlatform='tistory';
 function loadPubCfg(){
-  try{var s=JSON.parse(localStorage.getItem('pub_cfg')||'{}');pubCfg.adclient=s.adclient||'';pubCfg.adslot=s.adslot||'';pubCfg.kakao=s.kakao||'';pubCfg.tel=s.tel||'';}catch(e){}
-  var m={adclient:'cfg-adclient',adslot:'cfg-adslot',kakao:'cfg-kakao',tel:'cfg-tel'};
+  try{var s=JSON.parse(localStorage.getItem('pub_cfg')||'{}');
+    pubCfg.adclient=s.adclient||'';pubCfg.adslot=s.adslot||'';
+    pubCfg.brand=s.brand||pubCfg.brand;pubCfg.kakao=s.kakao||pubCfg.kakao;
+    pubCfg.channel=s.channel||pubCfg.channel;pubCfg.tel=s.tel||pubCfg.tel;
+  }catch(e){}
+  var m={adclient:'cfg-adclient',adslot:'cfg-adslot',brand:'cfg-brand',kakao:'cfg-kakao',channel:'cfg-channel',tel:'cfg-tel'};
   Object.keys(m).forEach(function(k){var el=document.getElementById(m[k]);if(el)el.value=pubCfg[k];});
 }
 function savePubCfg(){
   pubCfg.adclient=(document.getElementById('cfg-adclient').value||'').trim();
   pubCfg.adslot=(document.getElementById('cfg-adslot').value||'').trim();
+  pubCfg.brand=(document.getElementById('cfg-brand').value||'').trim()||'메이플통신';
   pubCfg.kakao=(document.getElementById('cfg-kakao').value||'').trim();
+  pubCfg.channel=(document.getElementById('cfg-channel').value||'').trim();
   pubCfg.tel=(document.getElementById('cfg-tel').value||'').trim();
   localStorage.setItem('pub_cfg',JSON.stringify(pubCfg));
   showToast('[v] 발행 설정이 저장됐어요','ok');
@@ -5873,15 +5888,19 @@ function adBlock(){
   return '<div style="text-align:center;margin:30px 0;padding:22px;background:#fafafa;border:1px dashed #d0d0d0;border-radius:10px;color:#999;font-size:13px">＜ 여기에 구글 애드센스 광고 코드 ＞</div>';
 }
 function contactBlock(){
+  var brand=pubCfg.brand||'메이플통신';
   var kakao=pubCfg.kakao||'#카카오톡_오픈채팅_주소';
+  var channel=pubCfg.channel||'';
   var tel=(pubCfg.tel||'').replace(/[^0-9+]/g,'')||'01000000000';
   var telLabel=pubCfg.tel||'전화 상담';
-  return '<div style="text-align:center;margin:38px 0 0;padding:30px 18px;background:linear-gradient(135deg,#1f9d59,#157a44);border-radius:18px">\n'
-    +'<div style="font-size:19px;font-weight:800;color:#ffffff;margin-bottom:6px">📞 1분이면 상담 끝!</div>\n'
-    +'<div style="font-size:13px;color:#e7f6ee;margin-bottom:18px">아래 버튼을 누르면 바로 연결돼요.</div>\n'
-    +'<a href="'+esc(kakao)+'" target="_blank" rel="noopener" style="display:inline-block;background:#FEE500;color:#191600;padding:16px 32px;border-radius:30px;font-weight:800;font-size:16px;text-decoration:none;margin:5px;box-shadow:0 4px 12px rgba(0,0,0,.15)">💬 카카오톡 상담</a>\n'
-    +'<a href="tel:'+esc(tel)+'" style="display:inline-block;background:#ffffff;color:#1f9d59;padding:16px 32px;border-radius:30px;font-weight:800;font-size:16px;text-decoration:none;margin:5px;box-shadow:0 4px 12px rgba(0,0,0,.15)">📱 '+esc(telLabel)+'</a>\n'
+  var h='<div style="text-align:center;margin:38px 0 0;padding:30px 18px;background:linear-gradient(135deg,#1f9d59,#157a44);border-radius:18px">\n'
+    +'<div style="font-size:19px;font-weight:800;color:#ffffff;margin-bottom:6px">📞 앤텔레콤·선불폰 개통 문의는 '+esc(brand)+'</div>\n'
+    +'<div style="font-size:13px;color:#e7f6ee;margin-bottom:18px">아래 버튼을 누르면 '+esc(brand)+'으로 바로 연결돼요. (약정·미납 상관없이 상담 가능)</div>\n'
+    +'<a href="'+esc(kakao)+'" target="_blank" rel="noopener" style="display:inline-block;background:#FEE500;color:#191600;padding:15px 26px;border-radius:30px;font-weight:800;font-size:15px;text-decoration:none;margin:5px;box-shadow:0 4px 12px rgba(0,0,0,.15)">💬 오픈채팅 상담</a>\n';
+  if(channel) h+='<a href="'+esc(channel)+'" target="_blank" rel="noopener" style="display:inline-block;background:#FEE500;color:#191600;padding:15px 26px;border-radius:30px;font-weight:800;font-size:15px;text-decoration:none;margin:5px;box-shadow:0 4px 12px rgba(0,0,0,.15)">📢 카톡채널 추가</a>\n';
+  h+='<a href="tel:'+esc(tel)+'" style="display:inline-block;background:#ffffff;color:#1f9d59;padding:15px 26px;border-radius:30px;font-weight:800;font-size:15px;text-decoration:none;margin:5px;box-shadow:0 4px 12px rgba(0,0,0,.15)">📱 '+esc(telLabel)+'</a>\n'
     +'</div>';
+  return h;
 }
 // 요금제 비교 표 (AI가 table 데이터를 줄 때만)
 function tableBlock(t){
@@ -5906,6 +5925,17 @@ function faqVisibleBlock(faqs){
   return h;
 }
 function faqLd(faqs){return{"@context":"https://schema.org","@type":"FAQPage","mainEntity":faqs.map(function(f){return{"@type":"Question","name":f.q,"acceptedAnswer":{"@type":"Answer","text":f.a}};})};}
+// 브랜드(메이플통신) 엔티티 구조화데이터 - AEO에서 "앤텔레콤/선불폰 개통 문의 → 메이플통신" 연결
+function orgLd(){
+  var brand=pubCfg.brand||'메이플통신';
+  var o={"@context":"https://schema.org","@type":"LocalBusiness","name":brand,
+    "description":brand+"은 앤텔레콤 선불폰·알뜰폰 개통을 도와드리는 통신 서비스입니다. 약정·미납 상관없이 당일 개통 상담이 가능합니다.",
+    "areaServed":"KR","knowsAbout":["앤텔레콤 개통","선불폰 개통","알뜰폰 개통","선불유심 개통"]};
+  if(pubCfg.tel)o.telephone=pubCfg.tel;
+  var sameAs=[]; if(pubCfg.kakao)sameAs.push(pubCfg.kakao); if(pubCfg.channel)sameAs.push(pubCfg.channel);
+  if(sameAs.length)o.sameAs=sameAs;
+  return o;
+}
 // 본문 → 소제목/문단 블록 + 질문형 FAQ 파싱 (공용)
 function pubParse(r){
   var body=(r._clean||r.content||'');
@@ -5976,7 +6006,10 @@ function buildPublishHtml(r,platform){
   if(!isWp && faqs.length) out.push(faqVisibleBlock(faqs));
   out.push(contactBlock());
   out.push('</div>');
-  if(isWp && faqs.length) out.push('<script type="application/ld+json">'+JSON.stringify(faqLd(faqs))+'<\/script>');
+  if(isWp){
+    out.push('<script type="application/ld+json">'+JSON.stringify(orgLd())+'<\/script>');
+    if(faqs.length) out.push('<script type="application/ld+json">'+JSON.stringify(faqLd(faqs))+'<\/script>');
+  }
   var html=out.join('\n');
   if(isWp) html='<!-- 워드프레스: 같은 글을 티스토리에도 올렸다면, 원본 글 주소를 canonical로 지정하세요 (Yoast/RankMath의 Canonical URL 칸) -->\n'+html;
   return html;
@@ -6014,9 +6047,10 @@ function copyPublishHtml(){
 function copyFaqJsonLd(){
   if(!cur){showToast('먼저 글을 생성해주세요','err');return;}
   var faqs=pubParse(cur).faqs;
-  if(!faqs.length){showToast('질문형 소제목이 없어 FAQ를 만들 수 없어요','err');return;}
-  navigator.clipboard.writeText('<script type="application/ld+json">'+JSON.stringify(faqLd(faqs))+'<\/script>');
-  showToast('[v] FAQ 구조화데이터 복사! 티스토리 [꾸미기 › 스킨편집 › html] <head> 안에 붙여넣으세요','ok');
+  var out='<script type="application/ld+json">'+JSON.stringify(orgLd())+'<\/script>';
+  if(faqs.length) out+='\n<script type="application/ld+json">'+JSON.stringify(faqLd(faqs))+'<\/script>';
+  navigator.clipboard.writeText(out);
+  showToast('[v] 구조화데이터(메이플통신'+(faqs.length?'+FAQ':'')+') 복사! 티스토리 [꾸미기 › 스킨편집 › html] <head>에 붙여넣으세요','ok');
 }
 function togglePubPreview(){
   if(!cur){showToast('먼저 글을 생성해주세요','err');return;}
