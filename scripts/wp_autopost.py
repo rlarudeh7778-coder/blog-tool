@@ -424,16 +424,25 @@ def _slug(title):
 
 
 # ───────────────────────── 워드프레스 발행 ─────────────────────────
+# 일부 보안 플러그인(NinjaFirewall 등)이 기본 python-requests UA를 차단 → 브라우저형 UA 사용
+WP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+
+
 def upload_media(img_bytes, filename, alt=""):
     url = WP_URL + "/wp-json/wp/v2/media"
-    headers = {"Content-Disposition": f'attachment; filename="{filename}"', "Content-Type": "image/png"}
+    # HTTP 헤더는 latin-1만 가능 → 파일명은 ASCII로 강제(한글 제거)
+    safe = re.sub(r"[^A-Za-z0-9._-]", "", filename) or "thumbnail.png"
+    if not safe.lower().endswith(".png"):
+        safe += ".png"
+    headers = {"Content-Disposition": f'attachment; filename="{safe}"',
+               "Content-Type": "image/png", "User-Agent": WP_UA}
     r = requests.post(url, headers=headers, data=img_bytes, auth=(WP_USER, WP_APP_PW), timeout=120)
     r.raise_for_status()
     mid = r.json().get("id")
     if mid and alt:  # 대체텍스트(키워드) 설정 — SEO
         try:
-            requests.post(url + f"/{mid}", json={"alt_text": alt, "caption": alt},
-                          auth=(WP_USER, WP_APP_PW), timeout=60)
+            requests.post(url + f"/{mid}", json={"alt_text": alt, "caption": alt, "title": alt},
+                          headers={"User-Agent": WP_UA}, auth=(WP_USER, WP_APP_PW), timeout=60)
         except Exception:
             pass
     return mid
@@ -446,7 +455,8 @@ def publish_wp(title, content_html, excerpt, status, featured_media=None):
         payload["excerpt"] = excerpt
     if featured_media:
         payload["featured_media"] = featured_media
-    r = requests.post(url, json=payload, auth=(WP_USER, WP_APP_PW), timeout=90)
+    r = requests.post(url, json=payload, headers={"User-Agent": WP_UA},
+                      auth=(WP_USER, WP_APP_PW), timeout=90)
     r.raise_for_status()
     return r.json()
 
@@ -550,7 +560,7 @@ def main():
                 fmedia = None
                 if thumb:
                     try:
-                        fmedia = upload_media(thumb, _slug(title) + ".png", alt=title)
+                        fmedia = upload_media(thumb, f"mt-{datetime.date.today()}-{state['counter']}.png", alt=title)
                     except Exception as e:
                         print(f"  (썸네일 업로드 실패 — 본문만 발행) {e}")
                 res = publish_wp(title, content_html, excerpt, status, featured_media=fmedia)
