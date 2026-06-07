@@ -1,7 +1,7 @@
 {
   "_설명": "워드프레스 자동 발행 설정. it_topics/phone_keywords/references를 채우면 됩니다.",
   "model": "claude-sonnet-4-6",
-  "posts_per_run": 1,
+  "posts_per_run": 2,
   "phone_every": 5,
   "wp_status": "publish",
   "platform_url": "https://www.n-telecom.co.kr/junda",
