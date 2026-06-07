@@ -1,9 +1,11 @@
 name: 워드프레스 자동 발행
 
 on:
-  schedule:
-    # 매일 01:00 UTC = 10:00 KST. (워드프레스는 발행 시간 무관 — 원하면 분/시 조정)
-    - cron: "0 1 * * *"
+  # ⚠️ 자동(cron) 발행은 중복발행 방지를 위해 꺼둠.
+  #    선불폰 워드프레스는 prepaidphone 저장소에서 운영합니다.
+  #    blog-tool 자동발행을 다시 쓰려면 아래 schedule 주석을 풀면 됩니다.
+  # schedule:
+  #   - cron: "0 1 * * *"
   workflow_dispatch:
     inputs:
       posts_per_run:
