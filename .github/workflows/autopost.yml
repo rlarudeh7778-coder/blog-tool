@@ -34,6 +34,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: 한글 폰트 설치 (썸네일용)
+        run: sudo apt-get update && sudo apt-get install -y fonts-nanum
+
       - name: 의존성 설치
         run: pip install -r scripts/requirements.txt
 

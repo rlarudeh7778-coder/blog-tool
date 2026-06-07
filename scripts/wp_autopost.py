@@ -20,6 +20,7 @@
 """
 import os
 import re
+import io
 import sys
 import json
 import html
@@ -348,12 +349,103 @@ def build_html(post, kind, cfg):
     return "\n".join(out)
 
 
+# ───────────────────────── 대표 썸네일 자동 생성 (A 방식) ─────────────────────────
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    _PIL = True
+except Exception:
+    _PIL = False
+
+
+def _font(size, bold=True):
+    cands = [
+        "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf" if bold else "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+        "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    ]
+    for p in cands:
+        if os.path.exists(p):
+            try:
+                return ImageFont.truetype(p, size)
+            except Exception:
+                pass
+    return ImageFont.load_default()
+
+
+def _wrap(draw, text, font, maxw):
+    lines, cur = [], ""
+    for ch in text:
+        if draw.textlength(cur + ch, font=font) <= maxw:
+            cur += ch
+        else:
+            lines.append(cur)
+            cur = ch
+    if cur:
+        lines.append(cur)
+    return lines
+
+
+def make_thumbnail(title, kind, cfg):
+    """제목·카테고리·브랜드가 들어간 1200x630 카드형 대표이미지(PNG bytes)."""
+    if not _PIL:
+        return None
+    W, H = 1200, 630
+    top = (31, 157, 89) if kind == "phone" else (47, 93, 162)
+    bot = (21, 122, 68) if kind == "phone" else (31, 64, 120)
+    img = Image.new("RGB", (W, H), top)
+    px = img.load()
+    for y in range(H):  # 세로 그라데이션
+        t = y / H
+        px_row = tuple(int(top[i] + (bot[i] - top[i]) * t) for i in range(3))
+        for x in range(W):
+            px[x, y] = px_row
+    d = ImageDraw.Draw(img)
+    d.rectangle([36, 36, W - 36, H - 36], outline=(255, 255, 255), width=3)
+    tag = "선불폰 · 통신" if kind == "phone" else "IT 정보"
+    d.text((72, 70), tag, font=_font(36), fill=(255, 255, 255))
+    f = _font(66)
+    lines = _wrap(d, title, f, W - 150)[:4]
+    y = H // 2 - (len(lines) * 44)
+    for ln in lines:
+        d.text((74, y), ln, font=f, fill=(255, 255, 255))
+        y += 88
+    brand = cfg.get("brand", "메이플통신")
+    tel = cfg.get("tel", "")
+    d.text((72, H - 92), f"문의 {brand}  {tel}", font=_font(38), fill=(235, 246, 240))
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    return buf.getvalue()
+
+
+def _slug(title):
+    s = re.sub(r"[^\w가-힣]+", "-", title).strip("-")
+    return (s or "post")[:50]
+
+
 # ───────────────────────── 워드프레스 발행 ─────────────────────────
-def publish_wp(title, content_html, excerpt, status):
+def upload_media(img_bytes, filename, alt=""):
+    url = WP_URL + "/wp-json/wp/v2/media"
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"', "Content-Type": "image/png"}
+    r = requests.post(url, headers=headers, data=img_bytes, auth=(WP_USER, WP_APP_PW), timeout=120)
+    r.raise_for_status()
+    mid = r.json().get("id")
+    if mid and alt:  # 대체텍스트(키워드) 설정 — SEO
+        try:
+            requests.post(url + f"/{mid}", json={"alt_text": alt, "caption": alt},
+                          auth=(WP_USER, WP_APP_PW), timeout=60)
+        except Exception:
+            pass
+    return mid
+
+
+def publish_wp(title, content_html, excerpt, status, featured_media=None):
     url = WP_URL + "/wp-json/wp/v2/posts"
     payload = {"title": title, "content": content_html, "status": status}
     if excerpt:
         payload["excerpt"] = excerpt
+    if featured_media:
+        payload["featured_media"] = featured_media
     r = requests.post(url, json=payload, auth=(WP_USER, WP_APP_PW), timeout=90)
     r.raise_for_status()
     return r.json()
@@ -439,17 +531,30 @@ def main():
             content_html = build_html(post, kind, {**contact, "platform_url": cfg.get("platform_url"),
                                                    "adsense_client": cfg.get("adsense_client", ""),
                                                    "adsense_slot": cfg.get("adsense_slot", "")})
+            thumb = make_thumbnail(title, kind, contact)  # 대표 썸네일(A) — 무료 자동생성
 
             if DRY_RUN:
                 fn = os.path.join(PREVIEW_DIR, f"{datetime.date.today()}_{state['counter']}.html")
+                imgtag = ""
+                if thumb:
+                    pn = os.path.join(PREVIEW_DIR, f"{datetime.date.today()}_{state['counter']}.png")
+                    with open(pn, "wb") as pf:
+                        pf.write(thumb)
+                    imgtag = f"<img src='{os.path.basename(pn)}' style='max-width:100%;border-radius:10px;margin-bottom:16px'>"
                 with open(fn, "w", encoding="utf-8") as f:
                     f.write(f"<!doctype html><meta charset=utf-8><title>{esc(title)}</title>"
                             f"<body style='background:#eee;padding:20px'><div style='max-width:820px;margin:auto;"
-                            f"background:#fff;padding:30px;border-radius:12px'><h1>{esc(title)}</h1>{content_html}</div>")
-                print(f"  ✓ (DRY_RUN) 생성: {label} → {title}  [{fn}]")
+                            f"background:#fff;padding:30px;border-radius:12px'>{imgtag}<h1>{esc(title)}</h1>{content_html}</div>")
+                print(f"  ✓ (DRY_RUN) 생성: {label} → {title}  [{fn}]{' +썸네일' if thumb else ''}")
             else:
-                res = publish_wp(title, content_html, excerpt, status)
-                print(f"  ✓ 발행: {label} → {title}  (id={res.get('id')}, {res.get('link')})")
+                fmedia = None
+                if thumb:
+                    try:
+                        fmedia = upload_media(thumb, _slug(title) + ".png", alt=title)
+                    except Exception as e:
+                        print(f"  (썸네일 업로드 실패 — 본문만 발행) {e}")
+                res = publish_wp(title, content_html, excerpt, status, featured_media=fmedia)
+                print(f"  ✓ 발행: {label} → {title}  (id={res.get('id')}, 썸네일={fmedia}, {res.get('link')})")
 
             state["log"].append({"t": datetime.datetime.utcnow().isoformat(), "kind": kind,
                                  "label": label, "title": title})
