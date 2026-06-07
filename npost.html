@@ -100,6 +100,9 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
 .restime{font-size:11px;color:var(--t3)}
 .copys{display:flex;gap:6px}
 .cpbtn{padding:5px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-size:12px;font-family:inherit;cursor:pointer;background:var(--sur);color:var(--t2)}
+.btchip{padding:5px 11px;border:1px solid var(--bor);border-radius:16px;font-size:12px;font-family:inherit;cursor:pointer;background:#fff;color:var(--t2);margin:2px}
+.btchip.on{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
+.btchip-brand.on{background:#3a5fd0;border-color:#3a5fd0}
 .pubplat{flex:1;padding:7px 10px;border:1px solid var(--bor);border-radius:var(--rs);font-size:12px;font-family:inherit;cursor:pointer;background:var(--sur);color:var(--t2)}
 .pubplat.on{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
 .cpbtn:hover{border-color:var(--green);color:var(--green)}
@@ -1018,13 +1021,13 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
     </div>
 
     <div class="field">
-      <label>① 타겟 지역 <small style="color:var(--t3)">(한 줄에 하나씩)</small></label>
-      <textarea id="bt-regions" rows="4" placeholder="파주&#10;고양 일산&#10;김포&#10;..." style="width:100%;box-sizing:border-box;font-size:13px;padding:8px;border:1px solid var(--bor);border-radius:var(--rs)"></textarea>
-      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-        <button class="cpbtn" onclick="btLoadAllRegions()">전체 지역 불러오기</button>
-        <button class="cpbtn" onclick="btPreset('capital')">수도권 주요</button>
-        <button class="cpbtn" onclick="document.getElementById('bt-regions').value=''">비우기</button>
+      <label>① 타겟 지역 <small style="color:var(--t3)">(클릭해서 선택)</small> · <b id="bt-region-count" style="color:var(--green)">0개 선택</b></label>
+      <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+        <button class="cpbtn" onclick="btRegionAll(true)">전체 선택</button>
+        <button class="cpbtn" onclick="btRegionAll(false)">전체 해제</button>
+        <button class="cpbtn" onclick="btRegionPreset()">수도권 추천</button>
       </div>
+      <div id="bt-region-chips" style="max-height:240px;overflow:auto;border:1px solid var(--bor);border-radius:var(--rs);padding:10px;background:#fafbfb"></div>
     </div>
 
     <div class="field">
@@ -1037,14 +1040,18 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
     </div>
 
     <div class="field">
-      <label>③ 브랜드·공통 키워드 <small style="color:var(--t3)">(지역 없이 단독 글, 한 줄에 하나)</small></label>
-      <textarea id="bt-brand" rows="3" style="width:100%;box-sizing:border-box;font-size:13px;padding:8px;border:1px solid var(--bor);border-radius:var(--rs)"></textarea>
+      <label>③ 브랜드·공통 키워드 <small style="color:var(--t3)">(클릭 선택, 지역 없이 단독 글)</small></label>
+      <div id="bt-brand-chips" style="margin-bottom:6px"></div>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="bt-brand-custom" placeholder="직접 추가 후 Enter 또는 추가" onkeypress="if(event.key==='Enter'){btBrandAdd();return false;}" style="flex:1;box-sizing:border-box;font-size:13px;padding:8px;border:1px solid var(--bor);border-radius:var(--rs)">
+        <button class="cpbtn" onclick="btBrandAdd()">추가</button>
+      </div>
     </div>
 
     <div class="field">
-      <label>④ IT 정보글 주제 <small style="color:var(--t3)">(희석용, 한 줄에 하나)</small></label>
-      <textarea id="bt-it" rows="4" style="width:100%;box-sizing:border-box;font-size:13px;padding:8px;border:1px solid var(--bor);border-radius:var(--rs)"></textarea>
-      <div style="margin-top:6px"><button class="cpbtn" onclick="btFillItBank()">추천 IT 주제 불러오기</button></div>
+      <label>④ IT 정보글 주제 <small style="color:var(--t3)">(한 줄에 하나, 서로 다르게 · 재활용 안 함)</small> · <b id="bt-it-count" style="color:#3a5fd0">0개</b></label>
+      <textarea id="bt-it" rows="5" oninput="updateBtItCount()" style="width:100%;box-sizing:border-box;font-size:13px;padding:8px;border:1px solid var(--bor);border-radius:var(--rs)"></textarea>
+      <div style="margin-top:6px;font-size:11px;color:var(--t3)">⚠️ IT 글은 절대 주제가 겹치지 않게 각각 1번씩만 배정돼요. 선불폰 글 수보다 IT 주제가 적으면, 부족한 날은 IT 없이 선불폰만 들어갑니다. <button class="cpbtn" onclick="btFillItBank()" style="margin-left:4px">추천 IT 주제 불러오기</button></div>
     </div>
 
     <div class="frow field" style="display:flex;gap:10px;flex-wrap:wrap">
@@ -5962,51 +5969,99 @@ function togglePubPreview(){
 
 /* ─────────── 양산 플래너 (배치 + 발행 캘린더) ─────────── */
 var IT_TOPIC_BANK=[
-  '삼성 노트북 화면이 안 나올 때 해결방법',
-  '노트북 화면 깜빡임 원인과 해결방법',
-  '윈도우11 와이파이 안 잡힐 때 해결',
-  '블루투스 연결 안 될 때 해결방법',
-  '카카오톡 PC버전 로그인 안 될 때',
-  '프린터 오프라인 표시 해결방법',
-  '핸드폰 저장공간 부족 정리하는 법',
-  '유심 인식 안 될 때 해결방법',
-  'USB 인식 안 됨 해결방법',
-  '외장하드가 안 열릴 때 해결방법',
-  '컴퓨터 부팅 안 될 때 점검 순서',
-  '윈도우 업데이트 멈춤 해결방법',
-  '크롬 브라우저 느려졌을 때 빠르게 하는 법',
-  '모니터 신호 없음 해결방법',
-  '노트북 배터리 빨리 닳을 때 점검법'
+  '삼성 노트북 화면이 안 나올 때 해결방법','LG 그램 노트북 충전 안 될 때','노트북 화면 깜빡임 원인과 해결','노트북 팬 소음 심할 때 잡는 법','노트북 발열 줄이는 방법','노트북 키보드 일부 키가 안 눌릴 때','노트북 터치패드 안 될 때','노트북 부팅 느릴 때 빠르게 하는 법','노트북 와이파이 안 잡힐 때','노트북 배터리 빨리 닳을 때 점검법',
+  '컴퓨터 갑자기 꺼짐 원인 점검','컴퓨터 부팅 안 될 때 점검 순서','컴퓨터 블루스크린 뜰 때 해결','데스크탑 전원 안 켜질 때','컴퓨터 소리 안 나올 때 해결','컴퓨터 시간 자꾸 틀어질 때','CPU 사용률 100% 해결방법','컴퓨터 느려졌을 때 빠르게 하는 법','메모리 부족 경고 뜰 때','컴퓨터 자동 재부팅 반복될 때',
+  '윈도우11 와이파이 안 잡힐 때','윈도우 업데이트 멈춤 해결방법','윈도우 정품 인증 안 될 때','윈도우10에서 11로 업그레이드 방법','윈도우 시작프로그램 정리법','윈도우 디스크 100% 사용 해결','윈도우 검색 안 될 때','윈도우 작업표시줄 멈춤 해결','윈도우 안전모드 부팅 방법','윈도우 로그인 비밀번호 잊었을 때','바탕화면 아이콘 사라졌을 때','윈도우 화면 캡처 단축키 정리','윈도우 글자 깨질 때 해결','윈도우 알림 끄는 방법',
+  '와이파이 비밀번호 확인하는 법','공유기 재설정 방법','인터넷 자주 끊길 때 점검','인터넷 속도 느릴 때 해결','와이파이는 되는데 인터넷 안 될 때','내 IP 주소 확인하는 법','DNS 변경으로 인터넷 빠르게','노트북 랜선 인식 안 될 때','공유기 비밀번호 바꾸는 법',
+  '핸드폰 저장공간 부족 정리법','유심 인식 안 될 때 해결방법','핸드폰 발열 심할 때','핸드폰 배터리 빨리 닳을 때','핸드폰 화면 안 켜질 때','핸드폰 와이파이 안 잡힐 때','안드로이드폰 초기화 방법','아이폰 저장공간 정리법','핸드폰 데이터 안 터질 때','핸드폰 문자 안 올 때','폰 사진 컴퓨터로 옮기는 법','공기계 활용하는 방법','중고폰 초기화 전 체크리스트','핸드폰 분실 시 대처법','핸드폰 액정 깨졌을 때 대처',
+  '카카오톡 PC버전 로그인 안 될 때','카카오톡 사진 전송 안 될 때','카카오톡 백업·복원 방법','카카오톡 알림 안 올 때','카카오톡 용량 정리하는 법','카카오톡 채팅방 숨기기/나가기',
+  '프린터 오프라인 표시 해결','프린터 인쇄 안 될 때','프린터 용지 걸림 해결','무선 프린터 연결 방법','스캔 문서 PDF로 저장하기','모니터 신호 없음 해결방법','듀얼 모니터 설정 방법','모니터 색상 이상할 때','키보드 한영 전환 안 될 때','마우스 안 움직일 때 해결','블루투스 연결 안 될 때','블루투스 이어폰 끊김 해결','웹캠 인식 안 될 때',
+  'USB 인식 안 됨 해결방법','외장하드 안 열릴 때','USB 포맷하는 방법','SD카드 인식 안 될 때','USB 안전하게 제거 안 될 때','하드디스크 용량 정리법',
+  '크롬 느려졌을 때 빠르게 하는 법','크롬 북마크 백업·복원','크롬 광고 차단하는 법','크롬 비밀번호 관리하기','엣지 브라우저로 갈아타는 법','브라우저 쿠키·캐시 삭제법','특정 사이트 접속 안 될 때 점검',
+  '엑셀 자동 저장 설정하는 법','엑셀 셀 합치기와 나누기','엑셀 중복값 제거하는 법','한글 PDF로 저장하는 법','워드에서 표 만들기','PDF 합치기와 나누기','PPT 용량 줄이는 법','파일 압축과 압축풀기 방법',
+  '컴퓨터 바이러스 검사하는 법','랜섬웨어 예방 방법','윈도우 디펜더 사용법','의심 메일 구분하는 법','비밀번호 안전하게 관리하기',
+  '유튜브 영상 화질 안 좋을 때','넷플릭스 화면 끊김 해결','줌(Zoom) 화면 공유 안 될 때','컴퓨터 화면 녹화하는 법','폰 화면 TV로 미러링하는 법','사진 용량 줄이는 법','동영상 파일 변환하는 법','클라우드 백업 설정하는 법'
 ];
-var BRAND_KW_DEFAULT=['앤텔레콤','엔텔레콤','앤텔레콤 요금제','선불폰 요금제','선불폰 개통 방법'];
+// 지역/브랜드 선택 상태
+var btRegions=[], btBrands=[];
+var BRAND_KW_BANK=['앤텔레콤','엔텔레콤','앤텔레콤 요금제','엔텔레콤 요금제','선불폰 요금제','선불폰 개통 방법','선불유심','알뜰폰 요금제','무약정 선불폰','미납자 선불폰','외국인 선불폰','선불폰 추천','선불폰 vs 알뜰폰'];
 var _batchInited=false;
 function initBatch(){
   if(!_batchInited){
     _batchInited=true;
-    var brand=document.getElementById('bt-brand'); if(brand&&!brand.value.trim())brand.value=BRAND_KW_DEFAULT.join('\n');
-    var it=document.getElementById('bt-it'); if(it&&!it.value.trim())it.value=IT_TOPIC_BANK.slice(0,10).join('\n');
+    btRenderRegionChips();
+    btRenderBrandChips();
+    var it=document.getElementById('bt-it'); if(it&&!it.value.trim())it.value=IT_TOPIC_BANK.join('\n');
+    updateBtItCount();
     var d=document.getElementById('bt-start'); if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);
   }
   var p=loadBatchPlan(); if(p)renderBatchPlan(p);
 }
-function btFillItBank(){ document.getElementById('bt-it').value=IT_TOPIC_BANK.join('\n'); showToast('추천 IT 주제 '+IT_TOPIC_BANK.length+'개','ok'); }
-function btLoadAllRegions(){
-  var list=[]; document.querySelectorAll('#region-select option').forEach(function(o){ if(o.value)list.push(o.value); });
-  document.getElementById('bt-regions').value=list.join('\n');
-  showToast('전체 '+list.length+'개 지역 불러옴','ok');
-}
-function btPreset(type){
-  var cap=['파주','고양 일산','김포','부천','인천','수원','성남','안양','안산','용인 수지','남양주','의정부','광명','시흥','하남 미사','화성 동탄','구리','강남','노원','목동'];
-  document.getElementById('bt-regions').value=cap.join('\n');
-}
 function _btLines(id){ return (document.getElementById(id).value||'').split('\n').map(function(s){return s.trim();}).filter(Boolean); }
+function _dedup(a){ var seen={},out=[]; a.forEach(function(x){if(x&&!seen[x]){seen[x]=1;out.push(x);}}); return out; }
+function updateBtItCount(){ var el=document.getElementById('bt-it-count'); if(el)el.textContent=_dedup(_btLines('bt-it')).length+'개'; }
+function btFillItBank(){ document.getElementById('bt-it').value=IT_TOPIC_BANK.join('\n'); updateBtItCount(); showToast('추천 IT 주제 '+IT_TOPIC_BANK.length+'개','ok'); }
+// ── 지역 칩
+function btRenderRegionChips(){
+  var box=document.getElementById('bt-region-chips'); if(!box)return;
+  var html='';
+  document.querySelectorAll('#region-select optgroup').forEach(function(g,gi){
+    html+='<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:3px">'+esc(g.getAttribute('label'))+' <a onclick="btGroupAll('+gi+')" style="color:var(--green);cursor:pointer;font-weight:400;font-size:10px">[전체]</a></div><div style="display:flex;flex-wrap:wrap">';
+    g.querySelectorAll('option').forEach(function(o){
+      if(!o.value)return;
+      var on=btRegions.indexOf(o.value)>=0;
+      html+='<button type="button" class="btchip'+(on?' on':'')+'" data-region="'+esc(o.value)+'" onclick="btToggleRegion(this)">'+esc(o.value)+'</button>';
+    });
+    html+='</div></div>';
+  });
+  box.innerHTML=html; updateBtRegionCount();
+}
+function updateBtRegionCount(){ var el=document.getElementById('bt-region-count'); if(el)el.textContent=btRegions.length+'개 선택'; }
+function btToggleRegion(btn){
+  var v=btn.getAttribute('data-region'); var i=btRegions.indexOf(v);
+  if(i>=0){btRegions.splice(i,1);btn.classList.remove('on');} else {btRegions.push(v);btn.classList.add('on');}
+  updateBtRegionCount();
+}
+function btRegionAll(on){
+  btRegions=[];
+  if(on) document.querySelectorAll('#region-select option').forEach(function(o){ if(o.value)btRegions.push(o.value); });
+  btRenderRegionChips();
+}
+function btGroupAll(gi){
+  var g=document.querySelectorAll('#region-select optgroup')[gi]; if(!g)return;
+  var vals=[]; g.querySelectorAll('option').forEach(function(o){ if(o.value)vals.push(o.value); });
+  var allOn=vals.every(function(v){return btRegions.indexOf(v)>=0;});
+  vals.forEach(function(v){ var i=btRegions.indexOf(v);
+    if(allOn){ if(i>=0)btRegions.splice(i,1); } else { if(i<0)btRegions.push(v); }
+  });
+  btRenderRegionChips();
+}
+function btRegionPreset(){
+  btRegions=['파주','고양 일산','김포','부천','수원','성남','안양','안산','의정부','남양주','구리','광명','시흥','화성 동탄','하남 미사','용인 수지','강남','홍대','노원','신림'];
+  btRenderRegionChips();
+}
+// ── 브랜드 칩
+function btRenderBrandChips(){
+  var box=document.getElementById('bt-brand-chips'); if(!box)return;
+  box.innerHTML=BRAND_KW_BANK.map(function(k){var on=btBrands.indexOf(k)>=0;return '<button type="button" class="btchip btchip-brand'+(on?' on':'')+'" data-brand="'+esc(k)+'" onclick="btToggleBrand(this)">'+esc(k)+'</button>';}).join('');
+}
+function btToggleBrand(btn){
+  var v=btn.getAttribute('data-brand'); var i=btBrands.indexOf(v);
+  if(i>=0){btBrands.splice(i,1);btn.classList.remove('on');} else {btBrands.push(v);btn.classList.add('on');}
+}
+function btBrandAdd(){
+  var el=document.getElementById('bt-brand-custom'); var v=(el.value||'').trim(); if(!v)return;
+  if(BRAND_KW_BANK.indexOf(v)<0)BRAND_KW_BANK.push(v);
+  if(btBrands.indexOf(v)<0)btBrands.push(v);
+  el.value=''; btRenderBrandChips();
+}
 function addDays(iso,n){ var d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
 function _dow(iso){ return ['일','월','화','수','목','금','토'][new Date(iso+'T00:00:00').getDay()]; }
 function buildBatchPlan(){
-  var regions=_btLines('bt-regions');
+  var regions=btRegions.slice();
   var ptypes=[]; document.querySelectorAll('.bt-ptype:checked').forEach(function(c){ptypes.push(c.value);});
-  var brand=_btLines('bt-brand');
-  var itTopics=_btLines('bt-it');
+  var brand=btBrands.slice();
+  var itTopics=_dedup(_btLines('bt-it'));   // IT는 중복 제거 → 재활용 안 함
   var perPhone=Math.max(0,parseInt(document.getElementById('bt-perphone').value)||0);
   var perIt=Math.max(0,parseInt(document.getElementById('bt-perit').value)||0);
   var start=document.getElementById('bt-start').value||new Date().toISOString().slice(0,10);
@@ -6016,7 +6071,8 @@ function buildBatchPlan(){
   var phonePool=[];
   ptypes.forEach(function(t){ regions.forEach(function(r){ phonePool.push(r+' '+t); }); });
   brand.forEach(function(b){ phonePool.push(b); });
-  if(phonePool.length===0&&itTopics.length===0){showToast('지역/브랜드/IT 주제 중 하나는 입력해주세요','err');return;}
+  phonePool=_dedup(phonePool);
+  if(phonePool.length===0&&itTopics.length===0){showToast('지역/브랜드/IT 주제 중 하나는 선택해주세요','err');return;}
 
   var phoneDays = perPhone>0 ? Math.ceil(phonePool.length/perPhone) : 0;
   var itDays    = perIt>0    ? Math.ceil(itTopics.length/perIt)   : 0;
@@ -6027,23 +6083,23 @@ function buildBatchPlan(){
   for(var dn=0; dn<numDays; dn++){
     var items=[];
     for(var a=0;a<perPhone && pIdx<phonePool.length;a++) items.push({id:id++,cat:'phone',kw:phonePool[pIdx++],done:false,sent:false});
-    for(var b=0;b<perIt && itTopics.length>0;b++){
-      var reuse=itIdx>=itTopics.length;
-      items.push({id:id++,cat:'it',kw:itTopics[itIdx%itTopics.length],reuse:reuse,done:false,sent:false});
-      itIdx++;
+    // ★ IT는 절대 재활용/중복 없이 1번씩만 배정. 남은 게 없으면 그날은 IT 생략
+    for(var b=0;b<perIt && itIdx<itTopics.length;b++){
+      items.push({id:id++,cat:'it',kw:itTopics[itIdx++],done:false,sent:false});
     }
     if(items.length) days.push({date:addDays(start,dn),items:items});
   }
-  var plan={start:start,perPhone:perPhone,perIt:perIt,phoneTotal:phonePool.length,itTotal:itTopics.length,days:days};
+  var itShort = (perIt>0 && itIdx < phoneDays*perIt);   // IT 주제가 모자라 일부 날 IT 없음
+  var plan={start:start,perPhone:perPhone,perIt:perIt,phoneTotal:phonePool.length,itTotal:itTopics.length,itUsed:itIdx,itShort:itShort,days:days};
   saveBatchPlan(plan);
   renderBatchPlan(plan);
-  showToast('캘린더 생성! 선불폰 '+phonePool.length+'개 · '+days.length+'일치','ok');
+  showToast('캘린더 생성! 선불폰 '+phonePool.length+'개 · IT '+itIdx+'개 · '+days.length+'일치','ok');
 }
 function renderBatchPlan(plan){
   document.getElementById('bt-result-card').style.display='block';
   var doneCnt=0,total=0;
   plan.days.forEach(function(d){d.items.forEach(function(it){total++;if(it.done)doneCnt++;});});
-  document.getElementById('bt-summary').textContent='· 총 '+total+'글 ('+plan.days.length+'일) · 완료 '+doneCnt+'/'+total;
+  document.getElementById('bt-summary').textContent='· 총 '+total+'글 ('+plan.days.length+'일) · 완료 '+doneCnt+'/'+total+(plan.itShort?' · ⚠IT 주제 부족(부족한 날은 선불폰만)':'');
   var html='';
   plan.days.forEach(function(d,di){
     html+='<div style="border:1px solid var(--bor);border-radius:var(--rs);margin-bottom:8px;overflow:hidden">';
@@ -6056,7 +6112,7 @@ function renderBatchPlan(plan){
       html+='<div style="display:flex;align-items:center;gap:8px;padding:5px 0">'
         +'<input type="checkbox" '+(it.done?'checked':'')+' onchange="batchToggleDone('+it.id+')">'
         +badge
-        +'<span style="flex:1;font-size:13px;color:var(--txt);'+(it.done?'text-decoration:line-through;opacity:.5':'')+'">'+esc(it.kw)+(it.reuse?' <span style="color:#BA7517;font-size:10px">⚠주제재활용-각도 다르게</span>':'')+(it.sent?' <span style="color:var(--green);font-size:10px">✓보냄</span>':'')+'</span>'
+        +'<span style="flex:1;font-size:13px;color:var(--txt);'+(it.done?'text-decoration:line-through;opacity:.5':'')+'">'+esc(it.kw)+(it.sent?' <span style="color:var(--green);font-size:10px">✓보냄</span>':'')+'</span>'
         +'<button class="cpbtn" onclick="batchSend('+it.id+')">✍ 글쓰기로</button>'
         +'</div>';
     });
