@@ -55,6 +55,24 @@ def save_json(path, data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def _to_int(value, default):
+    """''·None·숫자아님을 default로 안전하게 폴백.
+    GitHub Actions가 schedule(cron) 실행 시 inputs를 ''로 넘겨도
+    int('')에서 죽지 않도록 한다. value가 비거나 잘못되면 default,
+    default마저 잘못되면 최후수단 1."""
+    if value is not None:
+        try:
+            s = str(value).strip()
+            if s:
+                return int(s)
+        except (TypeError, ValueError):
+            pass
+    try:
+        return int(default)
+    except (TypeError, ValueError):
+        return 1
+
+
 # ───────────────────────── Claude 호출 ─────────────────────────
 def claude(system, user, model, max_tokens=4000):
     r = requests.post(
@@ -474,7 +492,7 @@ def main():
     it_topics = [t for t in _dedup(cfg.get("it_topics", [])) if t not in _ref_titles]
     phone_kws = _dedup(phone_kws)
     phone_every = max(0, int(cfg.get("phone_every", 5)))
-    posts = int(os.environ.get("POSTS_PER_RUN", cfg.get("posts_per_run", 1)))
+    posts = _to_int(os.environ.get("POSTS_PER_RUN"), cfg.get("posts_per_run", 1))
     status = cfg.get("wp_status", "publish")
 
     os.makedirs(PREVIEW_DIR, exist_ok=True)
