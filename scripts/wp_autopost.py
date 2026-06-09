@@ -546,7 +546,8 @@ def main():
             content_html = build_html(post, kind, {**contact, "platform_url": cfg.get("platform_url"),
                                                    "adsense_client": cfg.get("adsense_client", ""),
                                                    "adsense_slot": cfg.get("adsense_slot", "")})
-            thumb = make_thumbnail(title, kind, contact)  # 대표 썸네일(A) — 무료 자동생성
+            # 대표 썸네일: config의 make_thumbnail이 true일 때만 생성(기본 off — 자동카드 품질이 낮아 꺼둠)
+            thumb = make_thumbnail(title, kind, contact) if cfg.get("make_thumbnail", False) else None
 
             if DRY_RUN:
                 fn = os.path.join(PREVIEW_DIR, f"{datetime.date.today()}_{state['counter']}.html")

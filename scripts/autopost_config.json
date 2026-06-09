@@ -1,9 +1,11 @@
 {
   "_설명": "워드프레스 자동발행 설정. 모든 주제는 1회씩만 발행(중복 금지). 소진되면 추가하세요.",
   "model": "claude-sonnet-4-6",
-  "posts_per_run": 2,
+  "posts_per_run": 1,
   "phone_every": 3,
   "wp_status": "publish",
+  "make_thumbnail": false,
+  "_make_thumbnail_안내": "false면 대표 이미지(썸네일) 없이 본문만 발행. PIL 자동카드 썸네일이 별로라 꺼둠.",
   "platform_url": "https://www.n-telecom.co.kr/junda",
   "adsense_client": "ca-pub-7112474818685128",
   "adsense_slot": "",
