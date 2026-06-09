@@ -21,6 +21,7 @@
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=86e83ad78e7c0c9d926f99da49a6c332&libraries=services"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="keywords.js"></script>
 <style>
 :root{--green:#1B8F5E;--gl:#e8f7f1;--gd:#136b46;--red:#E24B4A;--rl:#fdeaea;--bg:#f6f8f7;--sur:#fff;--bor:#e2e8e5;--txt:#1a2520;--t2:#4a6058;--t3:#8aaa9e;--r:12px;--rs:8px}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -169,7 +170,12 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
 .kw-suggest-chips{display:flex;flex-wrap:wrap;gap:5px}
 .kw-chip{padding:4px 10px;background:#fff;border:1px solid #9FE1CB;border-radius:20px;font-size:11px;color:#136b46;cursor:pointer;transition:all .15s}
 .kw-chip:hover{background:var(--green);color:#fff;border-color:var(--green)}
-.kw-chip.added{background:var(--green);color:#fff;border-color:var(--green)}
+.kw-chip.added,.kw-chip.on{background:var(--green);color:#fff;border-color:var(--green)}
+.kw-chip.on:hover{background:var(--gd)}
+.kw-chip .kwv{opacity:.6;margin-left:3px}
+.kw-chip .kwc{margin-left:4px;font-weight:700}
+.kw-chip .kwc.low{color:#1B8F5E}.kw-chip .kwc.mid{color:#BA7517}.kw-chip .kwc.high{color:#E24B4A}
+.kw-chip.on .kwc{color:#fff !important}.kw-chip.on .kwv{opacity:.85}
 .kw-suggest-loading{font-size:11px;color:var(--t3)}
 .mbg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center}
 .mbg.open{display:flex}
@@ -729,8 +735,10 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
         <label>메인 키워드 <span style="color:var(--red)">*</span></label>
         <input type="text" id="kw" placeholder="예: 파주선불폰" oninput="onKwInput()" onblur="onKwBlur()"/>
         <div class="kw-suggest-box" id="kw-suggest-box">
-          <div class="kw-suggest-title">🎯 SEO 최적화 키워드 추천 <span style="font-weight:400;color:var(--t3)">(클릭 시 서브키워드 자동 추가)</span></div>
-          <div class="kw-suggest-chips" id="kw-suggest-chips"><span class="kw-suggest-loading">분석 중...</span></div>
+          <div class="kw-suggest-title">🎯 서브키워드 선택 <span style="font-weight:400;color:var(--t3)">(클릭해서 추가 · 검색량 순)</span></div>
+          <input type="text" id="kw-pick-search" placeholder="키워드 검색…" oninput="renderKwPicker(this.value)" autocomplete="off"
+            style="width:100%;padding:6px 9px;margin-bottom:7px;border:1px solid #9FE1CB;border-radius:var(--rs);font-family:inherit;font-size:12px;outline:none;color:var(--txt);background:#fff"/>
+          <div class="kw-suggest-chips" id="kw-suggest-chips" style="max-height:180px;overflow-y:auto"></div>
         </div>
       </div>
 
@@ -2135,8 +2143,8 @@ function onCatChange(){
   kwSuggestLast = '';
   selectedSuggestKws = [];
   document.getElementById('kw-suggest-box').style.display = 'none';
-  if(kwSuggestTimer)clearTimeout(kwSuggestTimer); // 대기중 추천요청 취소
-  kwSuggestReqId++;                                // 진행중 비동기 응답 무효화
+  var _pks=document.getElementById('kw-pick-search'); if(_pks)_pks.value='';
+  renderKwPicker(''); // 카테고리에 맞는 서브키워드 picker 표시(풀 없으면 숨김)
 
 
   // 지역 필드 표시/숨김
@@ -2337,24 +2345,14 @@ function onRegionSelect(){
   }
 
   if(cat === 'phone' || cat === 'english'){
-    kwSuggestLast = '';
     selectedSuggestKws = [];
-    clearTimeout(kwSuggestTimer);
-    kwSuggestTimer = setTimeout(function(){
-      fetchKwSuggest(kwInput.value);
-    }, 700);
+    renderKwPicker('');
   }
 
 }
 
-function onKwInput(){
-  var kw=document.getElementById('kw').value.trim();
-  if(kwSuggestTimer)clearTimeout(kwSuggestTimer);
-  if(!kw||kw.length<2){document.getElementById('kw-suggest-box').style.display='none';kwSuggestLast='';selectedSuggestKws=[];return;}
-  if(kw===kwSuggestLast)return;
-  kwSuggestTimer=setTimeout(function(){fetchKwSuggest(kw);},700);
-}
-function onKwBlur(){setTimeout(function(){if(!document.getElementById('kw').value.trim())document.getElementById('kw-suggest-box').style.display='none';},200);}
+function onKwInput(){ /* 서브키워드 picker는 카테고리 기준으로 표시됨 (메인키워드 입력과 무관) */ }
+function onKwBlur(){}
 // 카테고리별 추천 키워드 프롬프트 생성 (선불폰/영어/일반 분리)
 function buildSuggestPrompt(kw,cat){
   if(cat==='english'){
@@ -2401,34 +2399,49 @@ function buildSuggestPrompt(kw,cat){
       +'\n응답: ["키워드1","키워드2",...,"키워드16"] 형식 JSON 배열만. 설명 없이.'
   };
 }
-async function fetchKwSuggest(kw){
-  var apiKey=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk);
+// ── 엑셀 기반 서브키워드 picker (카테고리별 KW_POOL, keywords.js) ──
+function renderKwPicker(filter){
   var box=document.getElementById('kw-suggest-box');
-  if(!apiKey){box.style.display='none';return;}
+  var chips=document.getElementById('kw-suggest-chips');
+  if(!box||!chips) return;
   var cat=document.getElementById('cat')?document.getElementById('cat').value:'';
-  var myId=++kwSuggestReqId; // 이 요청의 토큰 (이후 더 새 요청이 생기면 무효화됨)
-  kwSuggestLast=kw;selectedSuggestKws=[];
+  var pool=(window.KW_POOL&&window.KW_POOL[cat])||null;
+  if(!pool||!pool.length){ box.style.display='none'; return; } // 풀 없는 카테고리는 숨김
   box.style.display='block';
-  document.getElementById('kw-suggest-chips').innerHTML='<span class="kw-suggest-loading">✦ 키워드 분석 중...</span>';
-
-  var p=buildSuggestPrompt(kw,cat);
-  try{
-    var raw=await callClaude(apiKey,p.sys,p.user);
-    // 응답 도착 시점 검증: 더 새 요청이 있었거나, 그새 카테고리/키워드가 바뀌었으면 폐기
-    if(myId!==kwSuggestReqId) return;
-    var curCat=document.getElementById('cat')?document.getElementById('cat').value:'';
-    var curKw=document.getElementById('kw')?document.getElementById('kw').value.trim():'';
-    if(curCat!==cat||curKw!==kw) return;
-    var s=raw.indexOf('['),e=raw.lastIndexOf(']');
-    var arr=[];
-    if(s>=0&&e>s){try{arr=JSON.parse(raw.slice(s,e+1));}catch(e2){}}
-    if(!arr.length){box.style.display='none';return;}
-    document.getElementById('kw-suggest-chips').innerHTML=arr.map(function(k){
-      var esc=k.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"\'");
-      return '<span class="kw-chip" data-kw="'+esc+'" onclick="toggleSuggestKw(this)">'+k.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>';
-    }).join('');
-  }catch(e){ if(myId===kwSuggestReqId) box.style.display='none'; }
+  filter=(filter||'').trim().toLowerCase();
+  var list=filter?pool.filter(function(p){return p.k.toLowerCase().indexOf(filter)>=0;}):pool;
+  var CAP=60, shown=list.slice(0,CAP);
+  if(!shown.length){ chips.innerHTML='<span class="kw-suggest-loading">검색 결과가 없어요</span>'; return; }
+  function vfmt(v){return v>=10000?(v/10000).toFixed(1).replace(/\.0$/,'')+'만':v>=1000?(v/1000).toFixed(1).replace(/\.0$/,'')+'천':''+v;}
+  function ccls(c){return c==='낮음'?'low':c==='중간'?'mid':c==='높음'?'high':'';}
+  chips.innerHTML=shown.map(function(p){
+    var on=selectedSuggestKws.indexOf(p.k)>=0?' on':'';
+    var kEsc=p.k.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    return '<span class="kw-chip'+on+'" data-kw="'+kEsc+'" onclick="toggleKwPick(this)">'+kEsc
+      +'<span class="kwv">월'+vfmt(p.v)+'</span>'
+      +(p.c&&p.c!=='-'?'<span class="kwc '+ccls(p.c)+'">'+p.c+'</span>':'')
+      +'</span>';
+  }).join('')+(list.length>CAP?'<div style="font-size:10px;color:var(--t3);width:100%;margin-top:5px">상위 '+CAP+'개 표시 (총 '+list.length.toLocaleString()+'개) — 위 검색창으로 더 찾기</div>':'');
 }
+function toggleKwPick(el){
+  var kw=el.getAttribute('data-kw');
+  var sub=document.getElementById('subkw');
+  var arr=sub.value.trim()?sub.value.split(',').map(function(x){return x.trim();}).filter(Boolean):[];
+  var idx=selectedSuggestKws.indexOf(kw);
+  if(idx<0){
+    selectedSuggestKws.push(kw);
+    if(arr.indexOf(kw)<0)arr.push(kw);
+    el.classList.add('on');
+    showToast('[v] "'+kw+'" 추가','ok');
+  }else{
+    selectedSuggestKws.splice(idx,1);
+    arr=arr.filter(function(x){return x!==kw;});
+    el.classList.remove('on');
+  }
+  sub.value=arr.join(', ');
+}
+// (구) AI 추천 호출 자리 → 엑셀 picker로 대체된 하위호환 스텁
+function fetchKwSuggest(){ renderKwPicker(''); }
 
 
 function toggleSuggestKw(el){
@@ -2721,6 +2734,8 @@ function initRefPasteCleaners(){
       try { this.selectionStart = this.selectionEnd = pos; } catch(_){}
     });
   });
+  // 초기 카테고리(기본 선불폰)에 맞춰 서브키워드 picker 표시
+  try { renderKwPicker(''); } catch(_){}
 }
 if(document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', initRefPasteCleaners);
