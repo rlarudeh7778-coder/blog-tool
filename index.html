@@ -3340,10 +3340,12 @@ function renderQrItem(idx){
 
 var QR_FIX_MAP={
   char:function(body,r){
-    var cc=body.replace(/\s/g,'').length;
-    return cc<1500
-      ?'아래 블로그 본문이 '+cc+'자로 부족합니다. 1,800~2,000자로 자연스럽게 보충해주세요. 키워드("'+r.kw+'") 3회 유지. 마크다운 금지. 본문만 출력.'
-      :'아래 블로그 본문이 '+cc+'자로 초과합니다. 1,800~2,000자로 줄여주세요. 키워드("'+r.kw+'") 3회 유지. 마크다운 금지. 본문만 출력.';
+    var g=charGoal(r&&r.cat);
+    var cc=(body||'').length; // 공백포함
+    var tgt=Math.round((g.min+g.max)/2);
+    return cc<g.min
+      ?'아래 블로그 본문이 공백포함 '+cc+'자로 부족합니다. 공백포함 '+g.min.toLocaleString()+'~'+g.max.toLocaleString()+'자(약 '+tgt.toLocaleString()+'자)로 자연스럽게 내용을 보충해주세요. 키워드("'+r.kw+'") 3회 유지. 마크다운 금지. 본문만 출력.'
+      :'아래 블로그 본문이 공백포함 '+cc+'자로 깁니다. 공백포함 '+g.min.toLocaleString()+'~'+g.max.toLocaleString()+'자(약 '+tgt.toLocaleString()+'자)로 핵심만 남겨 줄여주세요. 키워드("'+r.kw+'") 3회 유지. 마크다운 금지. 본문만 출력.';
   },
   title_kw:function(body,r,title){return '아래 제목에 메인키워드 "'+r.kw+'"가 없습니다. 키워드 포함 35자 이내 새 제목 만들어주세요. 제목만 출력.';},
   title_len:function(body,r,title){return '아래 제목이 35자 초과입니다. 메인키워드 "'+r.kw+'" 유지하면서 35자 이내로 줄여주세요. 제목만 출력.';},
@@ -3572,9 +3574,47 @@ function copyHighlightedText(){
   showToast('[v] 복사 완료! (하이라이트 없이)','ok');
 }
 
-// autoFixItem은 이제 호버 팝업으로 대체 - 하위 호환용으로 유지
-async function autoFixItem(checkId){
-  applyFixTooltip(checkId);
+// 품질 리포트 'AI 자동 수정': 해당 항목을 AI로 고쳐 결과(cur)에 바로 반영
+async function autoFixItem(i){
+  var checks=window._qrChecks||[];
+  var c=checks[i];
+  if(!c){return;}
+  var fixFn=QR_FIX_MAP[c.id];
+  if(!fixFn){showToast('이 항목은 자동 수정을 지원하지 않아요','');return;}
+  if(!cur){showToast('수정할 글이 없어요','err');return;}
+  var apiKey=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk);
+  if(!apiKey){showToast('API 키를 먼저 저장해주세요','err');return;}
+
+  // 현재 제목/본문 (편집모드면 입력칸, 아니면 표시 텍스트)
+  var titleEl=_editMode?document.getElementById('edit-title'):document.getElementById('restitle');
+  var bodyEl =_editMode?document.getElementById('edit-body') :document.getElementById('resbody');
+  var title=titleEl?(titleEl.value!==undefined?titleEl.value:titleEl.textContent):(cur._cleanTitle||cur.title||'');
+  var body =bodyEl ?(bodyEl.value !==undefined?bodyEl.value :bodyEl.textContent ):(cur._clean||cur.content||'');
+
+  var isTitleFix=(c.id==='title_kw'||c.id==='title_len');
+  var prompt=fixFn(body,cur,title)+'\n\n[현재 '+(isTitleFix?'제목':'본문')+']\n'+(isTitleFix?title:body);
+
+  var btn=document.getElementById('fix-btn-'+i);
+  if(btn){btn.textContent='수정 중...';btn.disabled=true;}
+  try{
+    var result=(await callClaude(apiKey,'너는 한국어 블로그 글 교정 전문가야. 지시한 부분만 자연스럽게 고치고, 마크다운(##, **) 없이 결과물(제목 또는 본문)만 출력해. 설명·따옴표 금지.',prompt)).trim();
+    result=result.replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim(); // 혹시 모를 코드블록 제거
+    if(!result){throw new Error('빈 응답');}
+    if(isTitleFix){ cur.title=result; cur._cleanTitle=result; }
+    else { cur.content=result; cur._clean=result; }
+
+    if(_editMode){
+      if(isTitleFix && titleEl) titleEl.value=result;
+      if(!isTitleFix && bodyEl) bodyEl.value=result;
+      onEditChange(); // 품질 리포트·통계 즉시 재분석
+    } else {
+      renderResult(cur); // 결과 화면·통계·품질 리포트 전체 갱신
+    }
+    showToast('[v] "'+c.label+'" 수정 완료!','ok');
+  }catch(e){
+    showToast('수정 실패: '+(e.message||e),'err');
+    if(btn){btn.innerHTML='&#10022; AI 자동 수정';btn.disabled=false;}
+  }
 }
 
 
