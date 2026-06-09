@@ -97,6 +97,12 @@ textarea{resize:vertical;min-height:56px}
           <option value="claude-opus-4-8">Claude Opus 4.8 (최고품질)</option>
           <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (저렴·빠름)</option>
         </select>
+        <label>블로그 크롤링 프록시 (선택)</label>
+        <div class="row">
+          <input type="url" id="proxyUrl" placeholder="https://내프록시.workers.dev">
+          <button class="btn btn-sm btn-gray" style="flex:0 0 auto" onclick="saveProxy()">저장</button>
+        </div>
+        <div class="hint">네이버/티스토리 글 목록을 <b>안정적으로</b> 불러오려면 무료 프록시 주소를 넣으세요. (없어도 공개 프록시로 시도)</div>
       </div>
 
       <div class="card">
@@ -168,7 +174,7 @@ textarea{resize:vertical;min-height:56px}
           <h2><span class="ic">🔎</span> IT 레퍼런스 찾기 → 각색 <span style="font-size:11px;font-weight:600;color:var(--sub)">(애드센스용 · 연락처 미포함)</span></h2>
           <label>주제 / 키워드 또는 참고 블로그 링크</label>
           <input type="text" id="it_topic" placeholder="예: 아이폰 배터리 절약 / https://블로그링크...">
-          <div class="hint">입력 주제로 <b>많이 검색되는 IT 글감</b>을 뽑아줍니다. 각 항목의 <b>[각색하기]</b>를 누르면 그 자리에서 바로 글이 써집니다.</div>
+          <div class="hint">① <b>키워드</b> 입력 → 많이 검색되는 IT 글감 추천 / ② <b>블로그 링크</b> 입력(네이버·티스토리·워드프레스) → 그 블로그 <b>최신글 목록</b>을 불러와 골라서 각색. 각 항목의 <b>[각색하기]</b>를 누르면 그 자리에서 바로 글이 써집니다.</div>
           <button class="btn btn-primary btn-sky" style="margin-top:12px;background:var(--accent)" id="findRefBtn" onclick="findReferences()">인기 IT 레퍼런스 글 찾기 🔍</button>
           <div id="refList"></div>
         </div>
@@ -196,7 +202,8 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 // ====================== API ======================
 function saveKey(){const k=$('apiKey').value.trim();if(!k){toast('키를 입력하세요');return;}localStorage.setItem('maple_key',k);updateApiState();toast('API 키 저장됨 ✅');}
 function updateApiState(){const has=!!localStorage.getItem('maple_key');$('apiState').textContent=has?'● API 연결됨':'● API 미연결';$('apiState').style.background=has?'rgba(16,185,129,.35)':'rgba(255,255,255,.2)';}
-function loadKey(){const k=localStorage.getItem('maple_key');if(k)$('apiKey').value=k;const m=localStorage.getItem('maple_model');if(m)$('model').value=m;$('model').onchange=()=>localStorage.setItem('maple_model',$('model').value);updateApiState();}
+function loadKey(){const k=localStorage.getItem('maple_key');if(k)$('apiKey').value=k;const m=localStorage.getItem('maple_model');if(m)$('model').value=m;$('model').onchange=()=>localStorage.setItem('maple_model',$('model').value);const px=localStorage.getItem('maple_proxy');if(px)$('proxyUrl').value=px;updateApiState();}
+function saveProxy(){const v=$('proxyUrl').value.trim();if(v)localStorage.setItem('maple_proxy',v);else localStorage.removeItem('maple_proxy');toast(v?'프록시 저장됨 ✅':'프록시 해제됨');}
 
 async function callClaude(prompt,maxTokens=8000){
   const key=localStorage.getItem('maple_key');
@@ -501,24 +508,90 @@ async function generatePrepaid(){
 }
 
 // ====================== IT 레퍼런스 ======================
+function looksLikeUrl(s){return /^https?:\/\//i.test(s)||/[a-z0-9-]+\.(naver|tistory|com|net|kr|io|org)/i.test(s);}
+function detectFeed(input){
+  let url=input.trim();
+  try{
+    if(/blog\.naver\.com/i.test(url)){
+      const m=url.match(/blog\.naver\.com\/([^\/?#]+)/i);
+      if(m&&m[1]) return [{name:'네이버블로그 @'+m[1],feed:'https://rss.blog.naver.com/'+m[1]+'.xml'}];
+    }
+    if(/\.tistory\.com/i.test(url)){
+      const m=url.match(/([a-z0-9-]+\.tistory\.com)/i);
+      if(m) return [{name:m[1],feed:'https://'+m[1]+'/rss'}];
+    }
+    const u=new URL(url.startsWith('http')?url:'https://'+url);
+    return [{name:u.hostname,feed:u.origin+'/feed'},{name:u.hostname,feed:u.origin+'/rss'},{name:u.hostname,feed:u.origin+'/feed/'}];
+  }catch(e){return null;}
+}
+async function fetchViaProxy(target){
+  const proxies=[];
+  const my=localStorage.getItem('maple_proxy');
+  if(my){const base=my.replace(/\/+$/,'');proxies.push(u=>base+'/?url='+encodeURIComponent(u));} // 내 전용 프록시 우선
+  proxies.push(u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u));
+  proxies.push(u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u));
+  proxies.push(u=>'https://corsproxy.io/?url='+encodeURIComponent(u));
+  for(const p of proxies){
+    try{const r=await fetch(p(target));if(r.ok){const t=await r.text();if(t&&t.length>80&&/<(item|entry)\b/i.test(t))return t;}}catch(e){}
+  }
+  return null;
+}
+function parseFeed(xml){
+  const doc=new DOMParser().parseFromString(xml,'text/xml');
+  let items=[...doc.querySelectorAll('item')];
+  if(!items.length) items=[...doc.querySelectorAll('entry')];
+  return items.slice(0,30).map(it=>{
+    const g=t=>{const e=it.querySelector(t);return e?e.textContent.trim():'';};
+    let link=g('link');
+    if(!link){const l=it.querySelector('link');link=(l&&l.getAttribute('href'))||'';}
+    const desc=(g('description')||g('summary')||g('content')).replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+    return {title:g('title'),link,date:(g('pubDate')||g('published')||g('date')||'').slice(0,16),snippet:desc.slice(0,130)};
+  }).filter(x=>x.title);
+}
 async function findReferences(){
   const topic=$('it_topic').value.trim();if(!topic){toast('주제나 링크를 입력하세요');return;}
-  const btn=$('findRefBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> 찾는 중...';
-  try{
-    const prompt=`당신은 IT 블로그 SEO 전문가입니다. 주제 "${topic}" 관련해서, 한국 사용자들이 검색엔진에서 '많이 검색하는' IT 정보 글감 12개를 제안하세요. 각 제목은 검색 수요가 실제 있을 법한 구체적 제목으로, 가능하면 수치·연도를 곁들여 후킹되게. (입력이 링크면 그 주제를 참고하되 실제 페이지 내용은 모른다고 가정)
-아래 JSON 배열만 출력: [{"title":"후킹형 제목","intent":"검색의도 한 줄","keyword":"핵심 키워드"}]`;
-    const raw=await callClaude(prompt,3000);
-    renderRefList(extractJSON(raw));
-    toast('레퍼런스 글감 준비완료 ✅');
-  }catch(e){toast('오류: '+e.message);alert('오류:\n'+e.message);}
+  const btn=$('findRefBtn');btn.disabled=true;
+  // (1) 블로그 링크면 → 그 블로그 글 목록 불러오기
+  if(looksLikeUrl(topic)){
+    btn.innerHTML='<span class="spin"></span> 블로그 글 불러오는 중...';
+    try{
+      const cands=detectFeed(topic)||[];
+      let posts=null,src='';
+      for(const c of cands){const xml=await fetchViaProxy(c.feed);if(xml){const p=parseFeed(xml);if(p.length){posts=p;src=c.name;break;}}}
+      if(posts&&posts.length){renderBlogList(posts,src);toast(`${posts.length}개 글 불러옴 ✅`);}
+      else{toast('글 목록을 못 불러왔어요 → AI 추천으로 전환');await aiSuggest(topic);}
+    }catch(e){toast('오류: '+e.message);await aiSuggest(topic);}
+    finally{btn.disabled=false;btn.innerHTML='인기 IT 레퍼런스 글 찾기 🔍';}
+    return;
+  }
+  // (2) 일반 키워드면 → AI가 인기 글감 추천
+  btn.innerHTML='<span class="spin"></span> 찾는 중...';
+  try{await aiSuggest(topic);toast('레퍼런스 글감 준비완료 ✅');}
+  catch(e){toast('오류: '+e.message);alert('오류:\n'+e.message);}
   finally{btn.disabled=false;btn.innerHTML='인기 IT 레퍼런스 글 찾기 🔍';}
+}
+async function aiSuggest(topic){
+  const prompt=`당신은 IT 블로그 SEO 전문가입니다. 주제 "${topic}" 관련해서, 한국 사용자들이 검색엔진에서 '많이 검색하는' IT 정보 글감 12개를 제안하세요. 각 제목은 검색 수요가 실제 있을 법한 구체적 제목으로, 가능하면 수치·연도를 곁들여 후킹되게.
+아래 JSON 배열만 출력: [{"title":"후킹형 제목","intent":"검색의도 한 줄","keyword":"핵심 키워드"}]`;
+  renderRefList(extractJSON(await callClaude(prompt,3000)));
 }
 function renderRefList(list){
   refCache=list;
-  $('refList').innerHTML='<div style="font-size:12px;color:var(--sub);margin:12px 0 4px">각 항목의 <b>[각색하기]</b>를 누르면 그 자리에서 바로 글이 써집니다. (선불폰과 동시 진행 가능)</div>'+
+  $('refList').innerHTML='<div style="font-size:12px;color:var(--sub);margin:12px 0 4px">💡 AI 추천 글감 — 각 항목의 <b>[각색하기]</b>를 누르면 그 자리에서 바로 글이 써집니다. (선불폰과 동시 진행 가능)</div>'+
     list.map((r,i)=>`<div class="refcard"><h4>${esc(r.title)}</h4>
       <p>🔎 ${esc(r.intent||'')} ${r.keyword?`· <b>${esc(r.keyword)}</b>`:''}</p>
       <button class="btn btn-sm btn-primary" style="width:auto;flex:0 0 auto;padding:7px 12px" id="refbtn_${i}" onclick="rewriteRef(${i})">이걸로 각색하기 ✍️</button>
+      <div id="refResult_${i}" style="margin-top:10px;display:none"></div></div>`).join('');
+}
+function renderBlogList(posts,src){
+  refCache=posts.map(p=>({title:p.title,keyword:p.title,intent:p.snippet,link:p.link}));
+  $('refList').innerHTML=`<div style="font-size:12px;color:var(--sub);margin:12px 0 6px">📰 <b>${esc(src)}</b> 최신글 ${posts.length}개 — 원문을 보고, 마음에 드는 글을 <b>[이 글로 각색하기]</b> 하면 유사하지 않게 새 글로 써집니다.</div>`+
+    posts.map((p,i)=>`<div class="refcard"><h4>${esc(p.title)}</h4>
+      <p>${p.date?`🗓️ ${esc(p.date)} · `:''}${esc(p.snippet||'')}</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${p.link?`<a class="btn btn-sm btn-ghost" style="flex:0 0 auto;padding:7px 12px;text-decoration:none" href="${esc(p.link)}" target="_blank" rel="noopener">🔗 원문 보기</a>`:''}
+        <button class="btn btn-sm btn-primary" style="width:auto;flex:0 0 auto;padding:7px 12px" id="refbtn_${i}" onclick="rewriteRef(${i})">이 글로 각색하기 ✍️</button>
+      </div>
       <div id="refResult_${i}" style="margin-top:10px;display:none"></div></div>`).join('');
 }
 function buildITPrompt(ref,avoid){
