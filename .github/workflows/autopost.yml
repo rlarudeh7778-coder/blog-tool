@@ -3,9 +3,10 @@ name: 워드프레스 자동 발행
 on:
   schedule:
     # KST = UTC+9. 하루 2번, 각 1편씩 발행 (config posts_per_run=1).
-    - cron: "0 0 * * *"    # 00:00 UTC = 오전 09:00 KST
-    - cron: "0 12 * * *"   # 12:00 UTC = 오후 09:00 KST
-    # ※ GitHub Actions cron은 부하에 따라 수~수십 분 지연될 수 있음(정시 보장 아님).
+    # ※ 정각(00분)은 GitHub Actions 부하가 가장 커 지연·누락이 잦음 → 정각을 피해
+    #    20분으로 오프셋해 신뢰도를 높임.
+    - cron: "20 0 * * *"   # 00:20 UTC = 오전 09:20 KST
+    - cron: "20 12 * * *"  # 12:20 UTC = 오후 09:20 KST
   workflow_dispatch:
     inputs:
       posts_per_run:
