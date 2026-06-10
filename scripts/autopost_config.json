@@ -2,6 +2,8 @@
   "_설명": "워드프레스 자동발행 설정. 모든 주제는 1회씩만 발행(중복 금지). 소진되면 추가하세요.",
   "model": "claude-sonnet-4-6",
   "posts_per_run": 1,
+  "min_minutes_between_posts": 360,
+  "_min_minutes_안내": "직전 발행 후 이 분(分) 이내 재실행되면 중복 방지로 건너뜀. 외부 스케줄러+GitHub cron이 같은 슬롯에 겹쳐도 1편만 발행. 슬롯 간격(12시간=720분)보다 작아 하루 2회 정상 발행은 통과. 강제 발행은 워크플로 force=1.",
   "phone_every": 3,
   "wp_status": "publish",
   "make_thumbnail": false,

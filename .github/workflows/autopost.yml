@@ -17,6 +17,10 @@ on:
         description: "1이면 발행 안 하고 미리보기만"
         required: false
         default: ""
+      force:
+        description: "1이면 중복방지(최소 발행간격) 무시하고 강제 발행 — 수동 복구용"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -52,6 +56,7 @@ jobs:
           # schedule(cron) 실행 시 inputs는 비어 있음('') → 스크립트가 설정값으로 폴백한다.
           POSTS_PER_RUN: ${{ github.event.inputs.posts_per_run }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
+          FORCE: ${{ github.event.inputs.force }}
         run: python scripts/wp_autopost.py
 
       - name: 상태/미리보기 커밋

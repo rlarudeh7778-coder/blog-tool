@@ -499,6 +499,24 @@ def main():
     print(f"▶ 시작 | DRY_RUN={DRY_RUN} | 모델={model} | 이번 발행 {posts}편 | "
           f"IT {len(it_topics)}주제 / 선불폰 {len(phone_kws)}키워드 / 참고 {len(references)}건")
 
+    # 중복 발행 방지(idempotency): 외부 스케줄러와 GitHub cron이 같은 슬롯에 겹쳐 실행돼도
+    # 직전 발행과 너무 가까우면(기본 360분 이내) 이번 실행은 건너뛴다. 두 트리거가
+    # 안전하게 공존하게 해 같은 슬롯 중복 발행을 막는다. FORCE=1이면 무시하고 강제 발행(수동 복구용).
+    # ※ 슬롯 간격(12시간=720분)보다 작게 잡아 정상적인 하루 2회 발행은 그대로 통과한다.
+    # ※ 어떤 이유로든 판단이 실패하면 '발행 진행'(fail-open)이라 글이 막히지 않는다.
+    force = os.environ.get("FORCE", "").strip() == "1"
+    min_gap = _to_int(cfg.get("min_minutes_between_posts"), 360)
+    if not DRY_RUN and not force and min_gap > 0 and state.get("log"):
+        try:
+            last_t = datetime.datetime.fromisoformat(state["log"][-1]["t"])
+            gap_min = (datetime.datetime.utcnow() - last_t).total_seconds() / 60.0
+            if 0 <= gap_min < min_gap:
+                print(f"⏭ 직전 발행 후 {gap_min:.0f}분 경과(최소 간격 {min_gap}분) — "
+                      f"중복 방지로 이번 실행 건너뜀. (강제 발행하려면 FORCE=1)")
+                return
+        except Exception as e:
+            print(f"  (중복방지 체크 건너뜀 — 발행 계속 진행) {e}")
+
     done = 0
     for _ in range(posts):
         state["counter"] += 1
