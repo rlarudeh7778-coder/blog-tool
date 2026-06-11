@@ -1155,12 +1155,17 @@ async function buildPdfDoc(scale,quality){
     while(cssY < blockHcss-0.5){
       let availMm=pageH-Mbot-y, availCss=availMm/k;
       if(availCss<24){ pdf.addPage(); y=Mtop; availMm=fullUsableMm; availCss=fullUsableCss; }
+      const fresh = y<=Mtop+0.5;                  // 페이지 맨 위에서 시작하는가
       const target=cssY+availCss;
       // 남은 공간에 들어가는 가장 큰 안전 끊김 지점
       let B=-1; for(const c of cuts){ if(c>cssY+1 && c<=target+0.5) B=c; }
       if(B<0){
-        if(y>Mtop){ pdf.addPage(); y=Mtop; continue; } // 새 페이지(공간 더 확보) 후 재시도
-        B=Math.min(blockHcss, cssY+fullUsableCss);     // 한 단위가 한 페이지보다 큼 → 부득이 분할
+        if(!fresh){ pdf.addPage(); y=Mtop; continue; } // 페이지 중간이면 새 페이지로(단위에 한 페이지 통째로 줌)
+        B=Math.min(blockHcss, cssY+availCss);          // 새 페이지인데도 안 들어감 = 한 단위가 페이지보다 큼 → 부득이 채워서 분할
+      } else if(fresh && (B-cssY) < availCss*0.30 && (cssY+availCss) < blockHcss-0.5){
+        // 새 페이지인데 안전 분할점이 너무 일러 페이지의 70% 이상이 빔(예: 헤더 뒤에 한 페이지보다 큰 문단/표)
+        // → 헤더만 덩그러니 남기지 않도록 남은 공간을 채워서 분할
+        B=Math.min(blockHcss, cssY+availCss);
       }
       const sCss=B-cssY, sPx=Math.max(1,Math.round(sCss*pxPerCss)), srcYpx=Math.round(cssY*pxPerCss);
       const tmp=document.createElement('canvas'); tmp.width=canvas.width; tmp.height=sPx;
