@@ -1,12 +1,10 @@
 name: 워드프레스 자동 발행
 
 on:
-  schedule:
-    # KST = UTC+9. 하루 2번, 각 1편씩 발행 (config posts_per_run=1).
-    # ※ 정각(00분)은 GitHub Actions 부하가 가장 커 지연·누락이 잦음 → 정각을 피해
-    #    20분으로 오프셋해 신뢰도를 높임.
-    - cron: "20 0 * * *"   # 00:20 UTC = 오전 09:20 KST
-    - cron: "20 12 * * *"  # 12:20 UTC = 오후 09:20 KST
+  # 발행 트리거는 외부 스케줄러(cron-job.org)가 매일 09:00 / 21:00 KST에
+  # workflow_dispatch API를 호출해 담당한다. GitHub 내장 schedule(cron)은
+  # 지연·누락이 잦아(예: 9시간 지연 발행) 발행 시각을 흐트러뜨리므로 제거했다.
+  # 필요 시 아래 schedule 블록을 되살려 백업으로 쓸 수 있다(중복방지 가드가 겹침을 막음).
   workflow_dispatch:
     inputs:
       posts_per_run:
