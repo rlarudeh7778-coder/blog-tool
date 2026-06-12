@@ -695,8 +695,10 @@ function ohStars(oh){
   return order.map(k=>k+' '+st(oh[k])+'('+oh[k]+'개)').join(' / ');
 }
 function sajuDataText(){
+  // ★추가 질문(cust.ask)은 여기 공용 데이터에 넣지 않는다★ → 모든 PART에 새어 들어가는 것 방지.
+  // 추가 질문은 마지막 「추가 질문 답변」 전용 섹션에서만 partPrompt가 따로 전달한다.
   if(cust.pkg==='궁합'&&cust.p2){
-    return '■ 본인\n'+personData(cust)+'\n\n■ 상대방\n'+personData(cust.p2)+(cust.ask?'\n\n■ 추가 질문: '+cust.ask:'');
+    return '■ 본인\n'+personData(cust)+'\n\n■ 상대방\n'+personData(cust.p2);
   }
   if(cust.pkg==='작명'&&cust.naming){
     const n=cust.naming;
@@ -710,7 +712,7 @@ function sajuDataText(){
       +(n.pref?'\n・피하고 싶은 글자/원하는 느낌: '+n.pref:'');
     return '■ 이름의 주인공(사주)\n'+personData(cust)+'\n・오행 강약(별점, ★ 많을수록 강함 / ☆ 빈칸은 부족): '+ohStars(cust.a.oh)+req;
   }
-  return '■ 고객\n'+personData(cust)+(cust.ask?'\n\n■ 고객이 특히 궁금해하는 점: '+cust.ask:'');
+  return '■ 고객\n'+personData(cust);
 }
 function sysPrompt(){
   if(cust&&cust.pkg==='작명') return namingSysPrompt();
@@ -913,7 +915,7 @@ function partPrompt(i,extra){
     : (cust.pkg==='기본' ? '[기본 분석] 핵심을 명료하게, 군더더기 없이 작성하세요.' : (cust.pkg==='작명' ? '[사주 작명] 이름의 주인공 사주를 근거로 보완할 오행을 정하고, 발음오행·자원오행·수리를 고려한 어울리는 이름을 추천하세요.' : '[프리미엄 심층 분석] 풍부하고 깊이 있게, 구체적 근거와 함께 작성하세요.'));
   let u=ctx+'\n\n[전체 보고서 목차] '+allTitles+'\n\n[사주 데이터]\n'+data
     +'\n\n위 데이터를 근거로 아래 PART를 '+lenGuide()+' 작성하세요.\n\n■ PART '+(i+1)+': '+PARTS[i].t+'\n▶ 다뤄야 할 내용: '+PARTS[i].g;
-  if(PARTS[i].ask && cust.ask) u+='\n\n[★이 섹션은 고객이 직접 남긴 질문에 답하는 전용 섹션입니다★]\n고객 질문 원문: 「'+cust.ask+'」\n→ 이 질문에 정면으로, 구체적으로 답하세요. 질문에서 묻는 핵심(시기·여부·방법 등)을 명확히 짚고, 사주적 근거를 들어 설명하세요.';
+  if(PARTS[i].ask && cust.ask) u+='\n\n[★이 섹션은 고객이 직접 남긴 질문에 답하는 「전용 섹션」입니다★]\n고객 질문 원문: 「'+cust.ask+'」\n→ 이 질문은 ★오직 이 섹션에서만★ 답합니다(앞의 다른 PART에서는 이미 다루지 않았습니다).\n→ 고객이 여러 가지를 물었으면 각 질문을 ## 소제목으로 나눠 하나씩 정면으로 답하세요(예: ## 1) 취업·적응 / ## 2) 재회 가능성 / ## 3) 재물 관리). 각 답변은 질문이 묻는 핵심(시기·여부·방법 등)을 분명히 짚고, 사주적 근거(일간·오행·십성·대운/세운)를 들어 구체적으로. 단정 대신 경향·가능성으로 따뜻하게.';
   if(extra&&extra.trim()) u+='\n\n[★운영자 추가 지시 — 반드시 반영★]\n'+extra.trim();
   return u;
 }
