@@ -235,8 +235,25 @@ function extractJSON(text){
   let t=text.trim();const fence=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(fence)t=fence[1];
   const ob=t.indexOf('{'),ar=t.indexOf('[');let start=-1,close='}';
   if(ob>=0&&(ar<0||ob<ar)){start=ob;close='}';}else if(ar>=0){start=ar;close=']';}
-  if(start<0)return JSON.parse(t);
-  return JSON.parse(t.slice(start,t.lastIndexOf(close)+1));
+  let s=start<0?t:t.slice(start,t.lastIndexOf(close)+1);
+  // 1) 그대로
+  try{return JSON.parse(s);}catch(_){}
+  // 2) 문자열 내 raw 제어문자(줄바꿈/탭) 제거
+  let r='';for(const _c of s){r+=(_c.charCodeAt(0)<32?' ':_c);}
+  try{return JSON.parse(r);}catch(_){}
+  // 3) 스마트따옴표 정규화 + 끝쉼표 제거
+  r=r.replace(/[‘’]/g,"'").replace(/,\s*([}\]])/g,'$1');
+  try{return JSON.parse(r);}catch(_){}
+  // 4) 최후 복구: html 등 큰 필드의 escape가 깨져도 정규식으로 직접 추출
+  const unesc=v=>String(v).replace(/\\"/g,'"').replace(/\\n/g,' ').replace(/\\t/g,' ').replace(/\\\//g,'/').replace(/\\\\/g,'\\').trim();
+  const grab=k=>{const m=r.match(new RegExp('"'+k+'"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"'));return m?unesc(m[1]):'';};
+  const obj={title:grab('title'),meta_description:grab('meta_description'),tags:[],faq:[]};
+  const tm=r.match(/"tags"\s*:\s*\[([\s\S]*?)\]/);
+  if(tm){obj.tags=(tm[1].match(/"((?:[^"\\]|\\.)*)"/g)||[]).map(x=>unesc(x.slice(1,-1))).filter(Boolean);}
+  const hm=r.match(/"html"\s*:\s*"([\s\S]*)"\s*\}?\s*$/);   // html은 마지막 필드 가정 → 끝까지
+  if(hm)obj.html=unesc(hm[1]);
+  if(obj.title||obj.html)return obj;
+  throw new Error('AI 응답을 해석하지 못했어요. 다시 시도해 주세요.');
 }
 
 // ====================== 프로필 ======================
@@ -564,6 +581,7 @@ function buildPrepaidPrompt(profile,mainKw,region,subs,angle,avoid){
 9. 본문에서 '${profile.company}'를 신뢰감 있게 2~3회 언급.
 10. 단정적 허위·과장 금지.
 11. 출력은 워드프레스 본문용 깨끗한 HTML 조각. <h2><h3><p><ul><ol><li><strong><table><thead><tbody><tr><th><td>만. 연락처 버튼/링크(<a>)·<img>·<style>·<html> 금지(버튼은 시스템이 넣음).
+12. ★JSON 안전: 모든 HTML 속성의 따옴표는 작은따옴표(')만 사용(큰따옴표 금지). html 값은 실제 줄바꿈 없이 한 줄로 출력.
 
 # 출력(JSON 하나만, 다른 텍스트 금지)
 {"title":"후킹형 제목(메인키워드 포함, 30~45자)","meta_description":"요약 80~110자(키워드 포함)","tags":["${region||mainKw}","${mainKw}","태그3","태그4","태그5"],"faq":[{"q":"","a":""}],"html":"<h2>...</h2>..."}`;
@@ -796,6 +814,7 @@ ${bodyBlock}
 5. ★중복 금지(가장 중요): 원문/기존 글과 문장·구성이 유사하면 구글·네이버에서 누락됩니다. 반드시 표현·구성·예시를 독자적으로. 기존 글: ${avoid.length?avoid.join(' / '):'(없음)'}
 6. ★애드센스용 순수 정보글. 업체명·연락처·상담유도·광고 문구 절대 금지.
 7. 출력은 워드프레스 본문용 깨끗한 HTML 조각. <h2><h3><p><ul><ol><li><strong><table><thead><tbody><tr><th><td><a>만. <img><style><html> 금지.
+8. ★JSON 안전: 모든 HTML 속성(href 등)의 따옴표는 반드시 작은따옴표(')만 사용(큰따옴표 금지). html 값은 실제 줄바꿈 없이 한 줄로 출력.
 
 # 출력(JSON 하나만)
 {"title":"후킹형 제목(키워드 포함 30~45자)","meta_description":"요약 80~110자","tags":["태그1","태그2","태그3"],"faq":[{"q":"","a":""}],"html":"<h2>...</h2>..."}`;
