@@ -21,6 +21,7 @@
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=86e83ad78e7c0c9d926f99da49a6c332&libraries=services"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="keywords.js"></script>
 <style>
 :root{--green:#1B8F5E;--gl:#e8f7f1;--gd:#136b46;--red:#E24B4A;--rl:#fdeaea;--bg:#f6f8f7;--sur:#fff;--bor:#e2e8e5;--txt:#1a2520;--t2:#4a6058;--t3:#8aaa9e;--r:12px;--rs:8px}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -169,7 +170,12 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
 .kw-suggest-chips{display:flex;flex-wrap:wrap;gap:5px}
 .kw-chip{padding:4px 10px;background:#fff;border:1px solid #9FE1CB;border-radius:20px;font-size:11px;color:#136b46;cursor:pointer;transition:all .15s}
 .kw-chip:hover{background:var(--green);color:#fff;border-color:var(--green)}
-.kw-chip.added{background:var(--green);color:#fff;border-color:var(--green)}
+.kw-chip.added,.kw-chip.on{background:var(--green);color:#fff;border-color:var(--green)}
+.kw-chip.on:hover{background:var(--gd)}
+.kw-chip .kwv{opacity:.6;margin-left:3px}
+.kw-chip .kwc{margin-left:4px;font-weight:700}
+.kw-chip .kwc.low{color:#1B8F5E}.kw-chip .kwc.mid{color:#BA7517}.kw-chip .kwc.high{color:#E24B4A}
+.kw-chip.on .kwc{color:#fff !important}.kw-chip.on .kwv{opacity:.85}
 .kw-suggest-loading{font-size:11px;color:var(--t3)}
 .mbg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center}
 .mbg.open{display:flex}
@@ -729,8 +735,16 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
         <label>메인 키워드 <span style="color:var(--red)">*</span></label>
         <input type="text" id="kw" placeholder="예: 파주선불폰" oninput="onKwInput()" onblur="onKwBlur()"/>
         <div class="kw-suggest-box" id="kw-suggest-box">
-          <div class="kw-suggest-title">🎯 SEO 최적화 키워드 추천 <span style="font-weight:400;color:var(--t3)">(클릭 시 서브키워드 자동 추가)</span></div>
-          <div class="kw-suggest-chips" id="kw-suggest-chips"><span class="kw-suggest-loading">분석 중...</span></div>
+          <!-- 섹션 A: 메인키워드 연관 추천 -->
+          <div id="kw-reco-wrap">
+            <div class="kw-suggest-title">🎯 메인키워드 연관 추천 <span style="font-weight:400;color:var(--t3)">(클릭해서 추가)</span></div>
+            <div class="kw-suggest-chips" id="kw-reco-chips" style="max-height:140px;overflow-y:auto;margin-bottom:11px"></div>
+          </div>
+          <!-- 섹션 B: 전체 서브키워드 검색 -->
+          <div class="kw-suggest-title" style="border-top:1px dashed #bfe6d6;padding-top:9px">🔎 전체 서브키워드 검색 <span style="font-weight:400;color:var(--t3)">(검색량 순)</span></div>
+          <input type="text" id="kw-pick-search" placeholder="키워드 검색…" oninput="renderKwPicker(this.value)" autocomplete="off"
+            style="width:100%;padding:6px 9px;margin-bottom:7px;border:1px solid #9FE1CB;border-radius:var(--rs);font-family:inherit;font-size:12px;outline:none;color:var(--txt);background:#fff"/>
+          <div class="kw-suggest-chips" id="kw-suggest-chips" style="max-height:160px;overflow-y:auto"></div>
         </div>
       </div>
 
@@ -2135,8 +2149,8 @@ function onCatChange(){
   kwSuggestLast = '';
   selectedSuggestKws = [];
   document.getElementById('kw-suggest-box').style.display = 'none';
-  if(kwSuggestTimer)clearTimeout(kwSuggestTimer); // 대기중 추천요청 취소
-  kwSuggestReqId++;                                // 진행중 비동기 응답 무효화
+  var _pks=document.getElementById('kw-pick-search'); if(_pks)_pks.value='';
+  refreshKwBox(); // 카테고리에 맞는 서브키워드 박스 표시(연관추천+전체검색, 풀 없으면 숨김)
 
 
   // 지역 필드 표시/숨김
@@ -2337,24 +2351,17 @@ function onRegionSelect(){
   }
 
   if(cat === 'phone' || cat === 'english'){
-    kwSuggestLast = '';
     selectedSuggestKws = [];
-    clearTimeout(kwSuggestTimer);
-    kwSuggestTimer = setTimeout(function(){
-      fetchKwSuggest(kwInput.value);
-    }, 700);
+    refreshKwBox();
   }
 
 }
 
-function onKwInput(){
-  var kw=document.getElementById('kw').value.trim();
+function onKwInput(){ // 메인키워드 입력 → 연관 서브키워드 추천 갱신(디바운스)
   if(kwSuggestTimer)clearTimeout(kwSuggestTimer);
-  if(!kw||kw.length<2){document.getElementById('kw-suggest-box').style.display='none';kwSuggestLast='';selectedSuggestKws=[];return;}
-  if(kw===kwSuggestLast)return;
-  kwSuggestTimer=setTimeout(function(){fetchKwSuggest(kw);},700);
+  kwSuggestTimer=setTimeout(renderKwReco,200);
 }
-function onKwBlur(){setTimeout(function(){if(!document.getElementById('kw').value.trim())document.getElementById('kw-suggest-box').style.display='none';},200);}
+function onKwBlur(){}
 // 카테고리별 추천 키워드 프롬프트 생성 (선불폰/영어/일반 분리)
 function buildSuggestPrompt(kw,cat){
   if(cat==='english'){
@@ -2401,34 +2408,96 @@ function buildSuggestPrompt(kw,cat){
       +'\n응답: ["키워드1","키워드2",...,"키워드16"] 형식 JSON 배열만. 설명 없이.'
   };
 }
-async function fetchKwSuggest(kw){
-  var apiKey=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk);
-  var box=document.getElementById('kw-suggest-box');
-  if(!apiKey){box.style.display='none';return;}
+// ── 엑셀 기반 서브키워드 picker (카테고리별 KW_POOL, keywords.js) ──
+function _kwPool(){
   var cat=document.getElementById('cat')?document.getElementById('cat').value:'';
-  var myId=++kwSuggestReqId; // 이 요청의 토큰 (이후 더 새 요청이 생기면 무효화됨)
-  kwSuggestLast=kw;selectedSuggestKws=[];
-  box.style.display='block';
-  document.getElementById('kw-suggest-chips').innerHTML='<span class="kw-suggest-loading">✦ 키워드 분석 중...</span>';
-
-  var p=buildSuggestPrompt(kw,cat);
-  try{
-    var raw=await callClaude(apiKey,p.sys,p.user);
-    // 응답 도착 시점 검증: 더 새 요청이 있었거나, 그새 카테고리/키워드가 바뀌었으면 폐기
-    if(myId!==kwSuggestReqId) return;
-    var curCat=document.getElementById('cat')?document.getElementById('cat').value:'';
-    var curKw=document.getElementById('kw')?document.getElementById('kw').value.trim():'';
-    if(curCat!==cat||curKw!==kw) return;
-    var s=raw.indexOf('['),e=raw.lastIndexOf(']');
-    var arr=[];
-    if(s>=0&&e>s){try{arr=JSON.parse(raw.slice(s,e+1));}catch(e2){}}
-    if(!arr.length){box.style.display='none';return;}
-    document.getElementById('kw-suggest-chips').innerHTML=arr.map(function(k){
-      var esc=k.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"\'");
-      return '<span class="kw-chip" data-kw="'+esc+'" onclick="toggleSuggestKw(this)">'+k.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>';
-    }).join('');
-  }catch(e){ if(myId===kwSuggestReqId) box.style.display='none'; }
+  return (window.KW_POOL&&window.KW_POOL[cat])||null;
 }
+function _kwChipHtml(p){
+  var on=selectedSuggestKws.indexOf(p.k)>=0?' on':'';
+  var kEsc=p.k.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  var v=p.v>=10000?(p.v/10000).toFixed(1).replace(/\.0$/,'')+'만':p.v>=1000?(p.v/1000).toFixed(1).replace(/\.0$/,'')+'천':''+p.v;
+  var cc=p.c==='낮음'?'low':p.c==='중간'?'mid':p.c==='높음'?'high':'';
+  return '<span class="kw-chip'+on+'" data-kw="'+kEsc+'" onclick="toggleKwPick(this)">'+kEsc
+    +'<span class="kwv">월'+v+'</span>'
+    +(p.c&&p.c!=='-'?'<span class="kwc '+cc+'">'+p.c+'</span>':'')+'</span>';
+}
+// 메인키워드 ↔ 풀 키워드 연관도 점수
+function _kwRelevance(mk,k){
+  if(!mk||k===mk) return 0;
+  var score=0;
+  if(k.indexOf(mk)>=0||mk.indexOf(k)>=0) score+=100;       // 직접 포함
+  var i;
+  for(i=0;i<mk.length-1;i++){ if(k.indexOf(mk.substr(i,2))>=0) score+=3; }  // 2글자 겹침
+  for(i=0;i<mk.length-2;i++){ if(k.indexOf(mk.substr(i,3))>=0) score+=5; }  // 3글자 겹침(가중)
+  return score;
+}
+// 박스 전체 표시/숨김 + 두 섹션 갱신
+function refreshKwBox(){
+  var box=document.getElementById('kw-suggest-box');
+  if(!box) return;
+  if(!_kwPool()){ box.style.display='none'; return; }
+  box.style.display='block';
+  renderKwReco();
+  var s=document.getElementById('kw-pick-search');
+  renderKwPicker(s?s.value:'');
+}
+// 섹션 A: 메인키워드 연관 추천
+function renderKwReco(){
+  var wrap=document.getElementById('kw-reco-wrap'), chips=document.getElementById('kw-reco-chips');
+  if(!wrap||!chips) return;
+  var pool=_kwPool();
+  if(!pool){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  var mk=(document.getElementById('kw')?document.getElementById('kw').value:'').trim().toLowerCase();
+  if(mk.length<2){ chips.innerHTML='<span class="kw-suggest-loading">메인키워드를 입력하면 연관 서브키워드가 추천돼요</span>'; return; }
+  var scored=[];
+  for(var i=0;i<pool.length;i++){
+    var sc=_kwRelevance(mk,pool[i].k.toLowerCase());
+    if(sc>0) scored.push([sc,pool[i]]);
+  }
+  scored.sort(function(a,b){ return b[0]-a[0] || b[1].v-a[1].v; });
+  var top=scored.slice(0,40);
+  if(!top.length){ chips.innerHTML='<span class="kw-suggest-loading">연관 키워드를 못 찾았어요 — 아래 전체 검색을 이용하세요</span>'; return; }
+  chips.innerHTML=top.map(function(x){return _kwChipHtml(x[1]);}).join('');
+}
+// 섹션 B: 전체 검색
+function renderKwPicker(filter){
+  var box=document.getElementById('kw-suggest-box'), chips=document.getElementById('kw-suggest-chips');
+  if(!box||!chips) return;
+  var pool=_kwPool();
+  if(!pool||!pool.length){ box.style.display='none'; return; }
+  box.style.display='block';
+  filter=(filter||'').trim().toLowerCase();
+  var list=filter?pool.filter(function(p){return p.k.toLowerCase().indexOf(filter)>=0;}):pool;
+  var CAP=60, shown=list.slice(0,CAP);
+  if(!shown.length){ chips.innerHTML='<span class="kw-suggest-loading">검색 결과가 없어요</span>'; return; }
+  chips.innerHTML=shown.map(_kwChipHtml).join('')
+    +(list.length>CAP?'<div style="font-size:10px;color:var(--t3);width:100%;margin-top:5px">상위 '+CAP+'개 표시 (총 '+list.length.toLocaleString()+'개) — 위 검색창으로 더 찾기</div>':'');
+}
+function toggleKwPick(el){
+  var kw=el.getAttribute('data-kw');
+  var sub=document.getElementById('subkw');
+  var arr=sub.value.trim()?sub.value.split(',').map(function(x){return x.trim();}).filter(Boolean):[];
+  var idx=selectedSuggestKws.indexOf(kw), nowOn;
+  if(idx<0){
+    selectedSuggestKws.push(kw);
+    if(arr.indexOf(kw)<0)arr.push(kw);
+    nowOn=true;
+    showToast('[v] "'+kw+'" 추가','ok');
+  }else{
+    selectedSuggestKws.splice(idx,1);
+    arr=arr.filter(function(x){return x!==kw;});
+    nowOn=false;
+  }
+  sub.value=arr.join(', ');
+  // 두 섹션에 같은 키워드 칩이 있으면 모두 상태 동기화
+  document.querySelectorAll('.kw-chip[data-kw]').forEach(function(c){
+    if(c.getAttribute('data-kw')===kw) c.classList.toggle('on',nowOn);
+  });
+}
+// (구) AI 추천 호출 자리 → 엑셀 picker로 대체된 하위호환 스텁
+function fetchKwSuggest(){ refreshKwBox(); }
 
 
 function toggleSuggestKw(el){
@@ -2721,6 +2790,8 @@ function initRefPasteCleaners(){
       try { this.selectionStart = this.selectionEnd = pos; } catch(_){}
     });
   });
+  // 초기 카테고리(기본 선불폰)에 맞춰 서브키워드 picker 표시
+  try { refreshKwBox(); } catch(_){}
 }
 if(document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', initRefPasteCleaners);
@@ -2737,7 +2808,9 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
   var introStyle=getRandom(OPENING_STYLES);
   var randomIntro=getRandom(INTROS);
   var randomEnding=getRandom(ENDINGS);
+  var charMin=1500, charMax=2000;
   var charTarget=getRandomInt(1540,1920);
+  if(isEnglish){ charMin=2300; charMax=2700; charTarget=getRandomInt(2450,2600); } // 영어 카테고리는 2,500자 내외
   var subtitleStyle=getRandom(SUBTITLE_STYLES);
 
   var structureGuide='';
@@ -2781,7 +2854,34 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
 
   var engInfo='';
   if(isEnglish){
-    engInfo='\n\n[영어회화 필수구성]\n2:1 관리시스템(원어민강사+한국인플래너) 자연스럽게 소개. 영어예문+해석 3개 이상. 강한 CTA 마무리. 소제목 최소 4개 이상 필수.\n';
+    // 유사문서 회피용 표현 변형 풀 (매번 다른 각도로 시작)
+    var engReason=getRandom([
+      '영어를 (다시) 배우려는 진짜 이유 — 취업·이직·해외여행·자기계발 등 — 에 공감하며',
+      '왜 지금 영어가 필요해졌는지, 업무·면접·여행 같은 현실적인 순간을 떠올리게 하며',
+      '영어를 잘하고 싶은 마음은 큰데 막상 시작이 어려운 독자의 동기에 공감하며'
+    ]);
+    var engStuck=getRandom([
+      '단어 암기와 문법 공부만 반복하는 기존 방식의 한계',
+      '인풋만 쌓고 정작 입으로 뱉어보지 않아 말문이 막히는 이유',
+      '학원·인강을 들어도 실제로 말이 안 나오는 근본 원인'
+    ]);
+    engInfo='\n\n[영어회화 글 작성 지침 — 반드시 따를 것]\n'
+      +'■ 전체 분량: 공백 포함 약 2,500자. 소제목으로 단락을 나누되 소제목은 최대 7개까지.\n'
+      +'■ 글 흐름(이 순서로 자연스럽게):\n'
+      +'  (1) 도입: '+engReason+' 영어를 배우는 이유로 부드럽게 시작\n'
+      +'  (2) 문제 제기: '+engStuck+' — 왜 영어 실력이 잘 늘지 않는지 짚기\n'
+      +'  (3) 해결: 그래서 우리가 매일 미션을 주며 어떻게 대응하는지로 연결 → 아래 데일리 기본 미션 3가지를 반드시 소개\n'
+      +'  (4) 진행 방식: 온라인·비대면 + 수업 시간 안내\n'
+      +'  (5) 마무리: 부담 없이 시작을 권하는 CTA\n\n'
+      +'■ 데일리 기본 미션 (아래 3가지 모두 반드시 포함. 내용은 빠짐없이 담되, 매 글마다 어휘·표현을 살짝 바꿔 유사문서를 피할 것)\n'
+      +'1) 섀도잉: 원어민의 소리를 듣고 성대모사하듯 따라 말하는 학습. 원어민 특유의 억양·리듬감을 습득해 표현하는 연습. 내 실력에 맞는 문장으로 매일 연습. 발음이 좋아지며 전달력이 향상됨.\n'
+      +'2) 딕테이션: 내가 영어를 어떻게 듣고 있는지 객관적으로 확인할 수 있음. 연음과 묵음을 익히는 과정. 한글·영어로 받아 적어 보며 소리의 특징을 정확히 이해.\n'
+      +'3) 낭독: 책 읽기를 통해 다양한 문장을 습득. 계속 소리 내어 읽으며 어휘력·표현력 향상. 억양·리듬감·악센트를 익혀 표현하는 연습.\n\n'
+      +'■ 진행 방식 (반드시 명확히 언급)\n'
+      +'· 오프라인이 아니라 100% 온라인, 비대면으로 진행.\n'
+      +'· 수업 가능 시간은 새벽 6시부터 밤 11시 30분까지 → 본인 일정에 맞춰 유연하게 시간 선택 가능.\n\n'
+      +'■ 유사문서 회피: 위 미션·진행 방식 설명을 매 글마다 동의어/문장 구조를 바꿔 다르게 풀어쓸 것(의미는 그대로 유지, 같은 문장 반복 금지).\n'
+      +'■ 영어 예문 + 한글 해석을 2~3개 자연스럽게 포함. 광고 티 없이 진솔하게.\n';
   }
 
   // ── 체험단 (음식/제품/여행) 프롬프트
@@ -2933,7 +3033,7 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
   var versionGuide=postVersion==='mobile'
     ?'\n[모바일 버전 필수 규칙]\n한 문장 쓰고 무조건 줄바꿈. 문장 20자 이하. 3줄 연속 금지. 정보전달형 제외 이모지 적극 활용(👉 ✅ 💡 등). 선불폰은 각 절차 단계마다 줄바꿈 필수.\n'
     :'\n[PC 버전] 긴 문단, 연속적인 흐름.\n';
-  var user='아래 조건으로 네이버 블로그 글 작성. JSON만 출력.\n\n카테고리: '+catLabel+'\n메인키워드: '+kw+'\n서브키워드: '+(subList.join(', ')||'없음')+'\n지역: '+(region||'없음')+'\n글 톤: '+tone+'\n특이사항: '+(dir||'없음')+'\n'+usedNote+patternNote+versionGuide+'\n'+toneGuide+'\n글 스타일:\n'+introGuide+'\n맺음말: "'+randomEnding+'" 느낌으로\n목표 글자수: 공백포함 '+charTarget+'자 내외\n'+phoneInfo+engInfo+reviewInfo+'\n절대 준수 규칙:\n1. 제목: "'+kw+'" 반드시 포함 + 35자 이내 (SEO 필수)\n2. 메인키워드 "'+kw+'" 본문에서 정확히 3회만 사용 - 2회도 안되고 4회도 절대 금지\n3. 서브키워드 각각 1~5회 이내 (0회도 안됨 - 반드시 본문에 자연스럽게 포함)\n4. ## ** 마크다운 절대 금지\n5. '+forbiddenWords+'6. 단락 사이 빈줄 1개\n7. 숫자/수치 최소 3개 이상 (요금, 날짜, 시간, 거리 등 구체적 수치)\n8. 공백포함 반드시 1,500자 이상 2,000자 미만 - 작성 후 스스로 글자 세어서 부족하면 보충\n9. 소제목 구조화 필수 (숫자 or 이모지 or ■ 소제목으로 단락 구분)\n10. AI 티 나는 표현 절대 금지\n11. 참고 내용 그대로 복사 금지\n'+synonymGuide+'\n출력(JSON만, 첫글자{, content 내 큰따옴표 반드시 \\" 이스케이프): {"title":"제목","content":"본문('+charTarget+'자내외)","hashtags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8","태그9","태그10"]}';
+  var user='아래 조건으로 네이버 블로그 글 작성. JSON만 출력.\n\n카테고리: '+catLabel+'\n메인키워드: '+kw+'\n서브키워드: '+(subList.join(', ')||'없음')+'\n지역: '+(region||'없음')+'\n글 톤: '+tone+'\n특이사항: '+(dir||'없음')+'\n'+usedNote+patternNote+versionGuide+'\n'+toneGuide+'\n글 스타일:\n'+introGuide+'\n맺음말: "'+randomEnding+'" 느낌으로\n목표 글자수: 공백포함 '+charTarget+'자 내외\n'+phoneInfo+engInfo+reviewInfo+'\n절대 준수 규칙:\n1. 제목: "'+kw+'" 반드시 포함 + 35자 이내 (SEO 필수)\n2. 메인키워드 "'+kw+'" 본문에서 정확히 3회만 사용 - 2회도 안되고 4회도 절대 금지\n3. 서브키워드 각각 1~5회 이내 (0회도 안됨 - 반드시 본문에 자연스럽게 포함)\n4. ## ** 마크다운 절대 금지\n5. '+forbiddenWords+'6. 단락 사이 빈줄 1개\n7. 숫자/수치 최소 3개 이상 (요금, 날짜, 시간, 거리 등 구체적 수치)\n8. 공백포함 반드시 '+charMin.toLocaleString()+'자 이상 '+charMax.toLocaleString()+'자 미만 - 작성 후 스스로 글자 세어서 부족하면 보충\n9. 소제목 구조화 필수 (숫자 or 이모지 or ■ 소제목으로 단락 구분)\n10. AI 티 나는 표현 절대 금지\n11. 참고 내용 그대로 복사 금지\n'+synonymGuide+'\n출력(JSON만, 첫글자{, content 내 큰따옴표 반드시 \\" 이스케이프): {"title":"제목","content":"본문('+charTarget+'자내외)","hashtags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8","태그9","태그10"]}';
 
   return{sys:sys,user:user};
 }
@@ -3008,8 +3108,9 @@ function onEditChange(){
 
   // 통계도 실시간 업데이트
   var cn = body.replace(/\s/g,'').length;
-  var ok = cc>=1500&&cc<2000;
-  var goalTxt = ok?'✓ 달성':(cc<1500?'✗ '+(1500-cc)+'자 부족':'✗ '+(cc-2000)+'자 초과');
+  var g = charGoal(cur.cat);
+  var ok = cc>=g.min&&cc<g.max;
+  var goalTxt = ok?'✓ 달성':(cc<g.min?'✗ '+(g.min-cc)+'자 부족':'✗ '+(cc-g.max)+'자 초과');
   var statsEl = document.getElementById('stats');
   if(statsEl) statsEl.innerHTML =
     '<div class="stat"><div class="stat-l">공백 포함</div><div class="stat-v '+(ok?'ok':'ng')+'">'+cc.toLocaleString()+'자</div></div>'+
@@ -3105,6 +3206,8 @@ async function generate(){
   finally{document.getElementById('genbtn').disabled=false;}
 }
 function getKwCount(text,kw){if(!kw||!text)return 0;return(text.match(new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))||[]).length;}
+// 카테고리별 목표 글자수 범위 (영어는 2,500자 내외)
+function charGoal(cat){ return cat==='english' ? {min:2300,max:2700} : {min:1500,max:2000}; }
 function renderResult(r){
   var clean=(r.content||'').replace(/#{1,6}\s*/g,'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1').replace(/_{1,2}([^_]+)_{1,2}/g,'$1');
   var cleanTitle=(r.title||'').replace(/#{1,6}\s*/g,'').replace(/\*\*/g,'').replace(/\*/g,'');
@@ -3116,8 +3219,9 @@ function renderResult(r){
   document.getElementById('restime').innerHTML='<span class="haibadge '+cfg.bc+'" style="padding:2px 8px;border-radius:10px;font-size:11px">'+cfg.name+'</span>&nbsp;'+t+' 생성';
 
   // 글자수 통계
-  var cc=clean.length, cn=clean.replace(/\s/g,'').length, ok=cc>=1500&&cc<2000;
-  var goalTxt=ok?'✓ 달성':(cc<1500?'✗ '+(1500-cc)+'자 부족':'✗ '+(cc-2000)+'자 초과');
+  var g=charGoal(r.cat);
+  var cc=clean.length, cn=clean.replace(/\s/g,'').length, ok=cc>=g.min&&cc<g.max;
+  var goalTxt=ok?'✓ 달성':(cc<g.min?'✗ '+(g.min-cc)+'자 부족':'✗ '+(cc-g.max)+'자 초과');
   document.getElementById('stats').innerHTML=
     '<div class="stat"><div class="stat-l">공백 포함</div><div class="stat-v '+(ok?'ok':'ng')+'">'+cc.toLocaleString()+'자</div></div>'+
     '<div class="stat"><div class="stat-l">공백 제외</div><div class="stat-v">'+cn.toLocaleString()+'자</div></div>'+
@@ -3144,13 +3248,14 @@ function renderQualityReport(r, clean, cleanTitle, cc, mainCount, subList){
   var checks=[];
 
   // ── 자동 분석 항목들
-  var charOk=cc>=1500&&cc<2000;
+  var g=charGoal(r.cat);
+  var charOk=cc>=g.min&&cc<g.max;
   checks.push({
     id:'char', auto:true,
     ok:charOk,
-    label:'글자수 1,500자 이상 2,000자 미만',
-    detail: charOk ? '현재 '+cc+'자 ✓' : (cc<1500?'현재 '+cc+'자 — '+(1500-cc)+'자 더 필요':'현재 '+cc+'자 — '+(cc-2000)+'자 초과'),
-    fix: cc<1500 ? '글 방향란에 "내용 보충 필요" 입력 후 재생성' : '글 방향란에 "좀 더 간결하게" 입력 후 재생성'
+    label:'글자수 '+g.min.toLocaleString()+'자 이상 '+g.max.toLocaleString()+'자 미만',
+    detail: charOk ? '현재 '+cc+'자 ✓' : (cc<g.min?'현재 '+cc+'자 — '+(g.min-cc)+'자 더 필요':'현재 '+cc+'자 — '+(cc-g.max)+'자 초과'),
+    fix: cc<g.min ? '글 방향란에 "내용 보충 필요" 입력 후 재생성' : '글 방향란에 "좀 더 간결하게" 입력 후 재생성'
   });
 
   var titleHasKw=cleanTitle.includes(r.kw);
@@ -3306,10 +3411,12 @@ function renderQrItem(idx){
 
 var QR_FIX_MAP={
   char:function(body,r){
-    var cc=body.replace(/\s/g,'').length;
-    return cc<1500
-      ?'아래 블로그 본문이 '+cc+'자로 부족합니다. 1,800~2,000자로 자연스럽게 보충해주세요. 키워드("'+r.kw+'") 3회 유지. 마크다운 금지. 본문만 출력.'
-      :'아래 블로그 본문이 '+cc+'자로 초과합니다. 1,800~2,000자로 줄여주세요. 키워드("'+r.kw+'") 3회 유지. 마크다운 금지. 본문만 출력.';
+    var g=charGoal(r&&r.cat);
+    var cc=(body||'').length; // 공백포함
+    var tgt=Math.round((g.min+g.max)/2);
+    return cc<g.min
+      ?'아래 블로그 본문이 공백포함 '+cc+'자로 부족합니다. 공백포함 '+g.min.toLocaleString()+'~'+g.max.toLocaleString()+'자(약 '+tgt.toLocaleString()+'자)로 자연스럽게 내용을 보충해주세요. 키워드("'+r.kw+'") 3회 유지. 마크다운 금지. 본문만 출력.'
+      :'아래 블로그 본문이 공백포함 '+cc+'자로 깁니다. 공백포함 '+g.min.toLocaleString()+'~'+g.max.toLocaleString()+'자(약 '+tgt.toLocaleString()+'자)로 핵심만 남겨 줄여주세요. 키워드("'+r.kw+'") 3회 유지. 마크다운 금지. 본문만 출력.';
   },
   title_kw:function(body,r,title){return '아래 제목에 메인키워드 "'+r.kw+'"가 없습니다. 키워드 포함 35자 이내 새 제목 만들어주세요. 제목만 출력.';},
   title_len:function(body,r,title){return '아래 제목이 35자 초과입니다. 메인키워드 "'+r.kw+'" 유지하면서 35자 이내로 줄여주세요. 제목만 출력.';},
@@ -3538,9 +3645,47 @@ function copyHighlightedText(){
   showToast('[v] 복사 완료! (하이라이트 없이)','ok');
 }
 
-// autoFixItem은 이제 호버 팝업으로 대체 - 하위 호환용으로 유지
-async function autoFixItem(checkId){
-  applyFixTooltip(checkId);
+// 품질 리포트 'AI 자동 수정': 해당 항목을 AI로 고쳐 결과(cur)에 바로 반영
+async function autoFixItem(i){
+  var checks=window._qrChecks||[];
+  var c=checks[i];
+  if(!c){return;}
+  var fixFn=QR_FIX_MAP[c.id];
+  if(!fixFn){showToast('이 항목은 자동 수정을 지원하지 않아요','');return;}
+  if(!cur){showToast('수정할 글이 없어요','err');return;}
+  var apiKey=sessionStorage.getItem(AICFG[AI].sk)||localStorage.getItem(AICFG[AI].sk);
+  if(!apiKey){showToast('API 키를 먼저 저장해주세요','err');return;}
+
+  // 현재 제목/본문 (편집모드면 입력칸, 아니면 표시 텍스트)
+  var titleEl=_editMode?document.getElementById('edit-title'):document.getElementById('restitle');
+  var bodyEl =_editMode?document.getElementById('edit-body') :document.getElementById('resbody');
+  var title=titleEl?(titleEl.value!==undefined?titleEl.value:titleEl.textContent):(cur._cleanTitle||cur.title||'');
+  var body =bodyEl ?(bodyEl.value !==undefined?bodyEl.value :bodyEl.textContent ):(cur._clean||cur.content||'');
+
+  var isTitleFix=(c.id==='title_kw'||c.id==='title_len');
+  var prompt=fixFn(body,cur,title)+'\n\n[현재 '+(isTitleFix?'제목':'본문')+']\n'+(isTitleFix?title:body);
+
+  var btn=document.getElementById('fix-btn-'+i);
+  if(btn){btn.textContent='수정 중...';btn.disabled=true;}
+  try{
+    var result=(await callClaude(apiKey,'너는 한국어 블로그 글 교정 전문가야. 지시한 부분만 자연스럽게 고치고, 마크다운(##, **) 없이 결과물(제목 또는 본문)만 출력해. 설명·따옴표 금지.',prompt)).trim();
+    result=result.replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim(); // 혹시 모를 코드블록 제거
+    if(!result){throw new Error('빈 응답');}
+    if(isTitleFix){ cur.title=result; cur._cleanTitle=result; }
+    else { cur.content=result; cur._clean=result; }
+
+    if(_editMode){
+      if(isTitleFix && titleEl) titleEl.value=result;
+      if(!isTitleFix && bodyEl) bodyEl.value=result;
+      onEditChange(); // 품질 리포트·통계 즉시 재분석
+    } else {
+      renderResult(cur); // 결과 화면·통계·품질 리포트 전체 갱신
+    }
+    showToast('[v] "'+c.label+'" 수정 완료!','ok');
+  }catch(e){
+    showToast('수정 실패: '+(e.message||e),'err');
+    if(btn){btn.innerHTML='&#10022; AI 자동 수정';btn.disabled=false;}
+  }
 }
 
 

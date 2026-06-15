@@ -239,7 +239,7 @@ function extractJSON(text){
   // 1) 그대로
   try{return JSON.parse(s);}catch(_){}
   // 2) 문자열 내 raw 제어문자(줄바꿈/탭) 제거
-  let r=s.replace(/[ -]+/g,' ');
+  let r='';for(const _c of s){r+=(_c.charCodeAt(0)<32?' ':_c);}
   try{return JSON.parse(r);}catch(_){}
   // 3) 스마트따옴표 정규화 + 끝쉼표 제거
   r=r.replace(/[‘’]/g,"'").replace(/,\s*([}\]])/g,'$1');
