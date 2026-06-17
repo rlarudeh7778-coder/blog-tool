@@ -1,0 +1,37 @@
+name: 선불폰 글 정리(휴지통)
+
+# 애드센스 승인 전 상업성 선불폰 글을 휴지통으로 보내는 일회용 워크플로.
+# 수동 실행(workflow_dispatch) 전용. dry_run=1로 먼저 미리보기 권장.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "1이면 실제 삭제 없이 매칭만 미리보기"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v6
+
+      - name: 파이썬 설정
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: 의존성 설치
+        run: pip install requests
+
+      - name: 선불폰 글 휴지통 이동
+        env:
+          WP_URL: ${{ secrets.WP_URL }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: python scripts/wp_delete_phone.py
