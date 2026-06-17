@@ -1,0 +1,37 @@
+name: 필수 페이지 생성(소개·문의·개인정보처리방침)
+
+# 애드센스 승인용 필수 페이지를 워드프레스에 생성하는 일회용 워크플로.
+# 수동 실행(workflow_dispatch) 전용. 이미 있으면 건너뜀(멱등).
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "1이면 실제 생성 없이 미리보기만"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  create-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v6
+
+      - name: 파이썬 설정
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: 의존성 설치
+        run: pip install requests
+
+      - name: 필수 페이지 생성
+        env:
+          WP_URL: ${{ secrets.WP_URL }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: python scripts/wp_create_pages.py
