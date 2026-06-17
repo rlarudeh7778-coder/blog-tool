@@ -106,6 +106,17 @@ def create_page(p):
     return j.get("id"), j.get("link")
 
 
+def update_page(pid, p):
+    """기존 페이지 내용을 표준 내용으로 덮어쓰고 publish로 강제(워드프레스 기본 샘플 대응)."""
+    url = WP_URL + f"/wp-json/wp/v2/pages/{pid}"
+    payload = {"title": p["title"], "content": p["content"], "status": "publish"}
+    r = requests.post(url, json=payload, headers={"User-Agent": WP_UA},
+                      auth=(WP_USER, WP_APP_PW), timeout=90)
+    r.raise_for_status()
+    j = r.json()
+    return j.get("id"), j.get("link")
+
+
 def main():
     if not (WP_URL and WP_USER and WP_APP_PW):
         print("⏭ 워드프레스 시크릿(WP_URL/WP_USER/WP_APP_PASSWORD) 미설정 — 종료.")
@@ -116,6 +127,19 @@ def main():
     for p in PAGES:
         pid, link = page_exists(p["slug"])
         if pid:
+            # 개인정보처리방침은 워드프레스 기본 샘플(애드센스 문구 없음·초안)일 수 있어
+            # 표준 내용으로 덮어쓰고 publish로 강제한다. 나머지는 건드리지 않고 건너뜀.
+            if p["slug"] == "privacy-policy":
+                if DRY_RUN:
+                    print(f"  · (DRY_RUN) 덮어쓰기 예정 [{p['title']}] id={pid}")
+                    continue
+                try:
+                    uid, ulink = update_page(pid, p)
+                    print(f"  ✎ 덮어쓰기+공개 [{p['title']}] id={uid} {ulink or ''}")
+                    created += 1
+                except Exception as e:
+                    print(f"  ✗ 덮어쓰기 실패 [{p['title']}] id={pid}: {e}")
+                continue
             print(f"  · 이미 있음(건너뜀) [{p['title']}] id={pid} {link or ''}")
             skipped += 1
             continue
