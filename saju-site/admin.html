@@ -209,7 +209,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 <div class="aurora"></div>
 <canvas id="stars"></canvas>
 <header>
-  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.20</b></span></div>
+  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.21</b></span></div>
   <div class="hright">
     <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
   </div>
@@ -1356,7 +1356,15 @@ function renderHistory(){
 }
 /* ── Firebase 기기 간 동기화 ── */
 function getFbCfg(){ try{ const c=JSON.parse(localStorage.getItem('saju_fb')||'null'); return (c&&c.apiKey&&c.projectId)?c:null; }catch(_){ return null; } }
-function parseFbCfg(v){ v=(v||'').trim(); const m=v.match(/\{[\s\S]*\}/); if(!m)throw new Error('형식 오류'); const s=m[0].replace(/([{,]\s*)([A-Za-z0-9_]+)\s*:/g,'$1"$2":').replace(/,(\s*[}\]])/g,'$1'); return JSON.parse(s); }
+function parseFbCfg(v){
+  v=(v||'').trim();
+  // import 줄·init 줄이 함께 붙여넣어져도 firebaseConfig = {...} 객체만 정확히 추출
+  let m=v.match(/firebaseConfig\s*=\s*(\{[\s\S]*?\})/);
+  let obj=m?m[1]:((v.match(/\{[\s\S]*\}/)||[])[0]);
+  if(!obj)throw new Error('형식 오류');
+  const s=obj.replace(/([{,]\s*)([A-Za-z0-9_]+)\s*:/g,'$1"$2":').replace(/,(\s*[}\]])/g,'$1');
+  return JSON.parse(s);
+}
 let _fbDB=null;
 async function initFirebase(){
   const cfg=getFbCfg(); if(!cfg)return null;
