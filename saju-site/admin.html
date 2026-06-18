@@ -196,7 +196,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
   .pdf-cover,.rsec,.part,.cover,.sajupan{box-shadow:none}
   .pdf-cover{page-break-after:always}
   .sajupan{page-break-inside:avoid}   /* 만세력 패널만 통째로(여러 페이지짜리 .part/.rsec는 avoid 금지 → 문단 잘림 유발) */
-  .part{page-break-before:always}
+  .rsec,.part{page-break-before:always}   /* 각 큰 섹션(목차·리포트보는법·만세력·각 PART)은 새 페이지에서 시작 */
   .part-body{font-size:13.5pt;line-height:2}
   .part-h{font-size:21pt}
   .rsec h2{font-size:19pt}
@@ -209,7 +209,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 <div class="aurora"></div>
 <canvas id="stars"></canvas>
 <header>
-  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔</span></div>
+  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.18</b></span></div>
   <div class="hright">
     <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
   </div>
@@ -1157,8 +1157,8 @@ async function buildPdfDoc(scale,quality){
   }
   const opt={scale:scale||2,useCORS:true,backgroundColor:'#ffffff',ignoreElements:(x)=>x.classList&&(x.classList.contains('sky')||x.classList.contains('aurora')||x.id==='stars')};
   for(const block of blocks){
-    const isPart=block.classList.contains('part');
-    if(isPart && !first && y>Mtop){ pdf.addPage(); y=Mtop; }
+    // ★각 큰 섹션(표지·목차·리포트보는법·만세력·각 PART)은 무조건 새 페이지에서 시작★ (섹션 섞임 방지)
+    if(!first && y>Mtop){ pdf.addPage(); y=Mtop; }
     const blockWcss=block.offsetWidth, blockHcss=block.scrollHeight;
     const k=contentW/blockWcss;                 // mm per css px (세로 환산)
     const fullUsableCss=fullUsableMm/k;
