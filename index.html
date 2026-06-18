@@ -1849,7 +1849,7 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
   <button onclick="iaGenerate()" style="width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">🖼 소제목별 이미지 프롬프트 생성</button>
 
   <div id="ia-bulkbar" style="display:none;margin-bottom:14px">
-    <button onclick="iaCopyAll('chatgpt')" style="width:100%;padding:12px;background:linear-gradient(90deg,#7b5cff,#9b6bff);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🎯 전체 프롬프트 한 번에 복사 (일괄 모드)</button>
+    <button onclick="iaCopyAll()" style="width:100%;padding:12px;background:linear-gradient(90deg,#7b5cff,#9b6bff);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🎯 전체 프롬프트 한 번에 복사 (일괄 모드)</button>
     <div style="font-size:11px;color:var(--t3);margin-top:6px;line-height:1.6">💡 전체 복사 후 ChatGPT/Gemini에 붙여넣으면 섹션별로 순서대로 이미지를 만들 수 있어요. 각 카드의 버튼으로 섹션별 개별 복사·열기도 됩니다.</div>
   </div>
 
@@ -1943,8 +1943,8 @@ function iaCardHtml(p,i){
     +'<textarea id="ia-pt-'+i+'" readonly style="width:100%;min-height:118px;border:none;border-bottom:1px solid var(--bor);padding:11px 13px;font-family:inherit;font-size:12px;line-height:1.65;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+iaEsc(p.prompt)+'</textarea>'
     +'<div style="display:flex;gap:6px;padding:9px 13px">'
     +'<button onclick="iaCopy('+i+')" style="flex:1;padding:8px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📋 복사</button>'
-    +'<button onclick="iaToAI('+i+',\'chatgpt\')" style="flex:1;padding:8px;background:#10a37f;color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">ChatGPT 열기</button>'
-    +'<button onclick="iaToAI('+i+',\'gemini\')" style="flex:1;padding:8px;background:#4285f4;color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Gemini 열기</button>'
+    +'<a href="https://chatgpt.com/" target="_blank" rel="noopener" onclick="iaLinkCopy('+i+')" style="flex:1;padding:8px;background:#10a37f;color:#fff;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:flex;align-items:center;justify-content:center">ChatGPT 열기</a>'
+    +'<a href="https://gemini.google.com/app" target="_blank" rel="noopener" onclick="iaLinkCopy('+i+')" style="flex:1;padding:8px;background:#4285f4;color:#fff;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:flex;align-items:center;justify-content:center">Gemini 열기</a>'
     +'</div></div>';
 }
 function iaGenerate(){
@@ -1967,42 +1967,34 @@ function iaGenerate(){
   showToast(window._iaPrompts.length+'개 섹션 프롬프트 생성 완료','ok');
 }
 // 동기 복사(모바일 클릭 제스처 내에서 안정적) + 비동기 best-effort
-function iaCopySync(t){
-  var done=false;
+// 클립보드 복사 (모바일/iOS 대응). 클립보드 API 우선(포커스 안 뺏음) → execCommand 폴백
+function iaClip(t){
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t); return true; } }catch(e){}
   try{
     var ta=document.createElement('textarea');
-    ta.value=t; ta.setAttribute('readonly','');
+    ta.value=t; ta.readOnly=false; ta.contentEditable='true';
     ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
     document.body.appendChild(ta);
-    ta.focus(); ta.select();
-    try{ ta.setSelectionRange(0,t.length); }catch(e){}
-    done=document.execCommand('copy');
+    var ua=navigator.userAgent||'';
+    if(/ipad|iphone|ipod/i.test(ua)){
+      var range=document.createRange(); range.selectNodeContents(ta);
+      var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      ta.setSelectionRange(0,999999);
+    } else { ta.focus(); ta.select(); }
+    document.execCommand('copy');
     document.body.removeChild(ta);
   }catch(e){}
-  try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t); }catch(e){}
-  return done;
+  return true;
 }
-// AI 사이트 열기 (모바일에서 팝업 차단/튕김 대비 폴백)
-function iaOpenAI(which){
-  var url=which==='gemini'?'https://gemini.google.com/app':'https://chatgpt.com/';
-  var w=null;
-  try{ w=window.open(url,'_blank'); }catch(e){}
-  if(!w){ try{ location.assign(url); }catch(e2){ location.href=url; } } // 팝업 막히면 현재 탭 이동(프롬프트는 이미 복사됨)
-}
-function iaCopy(i){ var p=window._iaPrompts[i]; if(!p)return; iaCopySync(p.prompt); showToast('[v] 프롬프트 복사됨','ok'); }
-function iaToAI(i,which){
-  var p=window._iaPrompts[i]; if(!p)return;
-  iaCopySync(p.prompt);                                   // ① 먼저 복사 (이동 전에)
-  showToast('[v] 복사됨 — 붙여넣기만 하면 돼요','ok');
-  iaOpenAI(which);                                        // ② 그다음 사이트 열기
-}
-function iaCopyAll(which){
+function iaCopy(i){ var p=window._iaPrompts[i]; if(!p)return; iaClip(p.prompt); showToast('[v] 프롬프트 복사됨','ok'); }
+// 카드의 ChatGPT/Gemini 링크 클릭 시: 복사만 하고 링크(target=_blank)는 그대로 열리게 둠
+function iaLinkCopy(i){ var p=window._iaPrompts[i]; if(p){ iaClip(p.prompt); showToast('[v] 복사됨 — 열린 화면에 붙여넣기 하세요','ok'); } }
+function iaCopyAll(){
   if(!window._iaPrompts||!window._iaPrompts.length){showToast('먼저 프롬프트를 생성하세요','err');return;}
   var head=window._iaSameChar?'※ 인물 동일화 모드: 아래 순서대로 같은 대화창에 1번부터 차례로 붙여넣어야 인물이 유지됩니다.\n\n':'';
   var all=head+window._iaPrompts.map(function(p,i){return '['+(i+1)+'번 이미지] '+p.title+'\n'+p.prompt;}).join('\n\n──────\n\n');
-  iaCopySync(all);                                        // ① 먼저 복사
-  showToast('[v] 전체 '+window._iaPrompts.length+'개 복사됨','ok');
-  iaOpenAI(which);                                        // ② 그다음 열기
+  iaClip(all);
+  showToast('[v] 전체 '+window._iaPrompts.length+'개 복사됨 — ChatGPT/Gemini에 붙여넣기','ok');
 }
 </script>
 
