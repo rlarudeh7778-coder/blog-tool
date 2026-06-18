@@ -1831,14 +1831,20 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
     <div class="field" style="padding:0;flex:1;min-width:110px">
       <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">📐 비율</label>
       <select id="ia-ratio" style="width:100%;padding:9px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);cursor:pointer">
-        <option value="16:9">가로 16:9</option>
-        <option value="9:16">세로 9:16</option>
-        <option value="1:1">정사각 1:1</option>
-        <option value="4:3">가로 4:3</option>
-        <option value="3:4">세로 3:4</option>
+        <option value="16:9">16:9 · 유튜브/블로그 (가로)</option>
+        <option value="9:16">9:16 · 숏폼/릴스/쇼츠 (세로)</option>
+        <option value="1:1">1:1 · 정사각 (인스타 피드)</option>
+        <option value="4:5">4:5 · 인스타 세로</option>
+        <option value="3:4">3:4 · 세로</option>
+        <option value="4:3">4:3 · 가로</option>
       </select>
     </div>
   </div>
+
+  <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;font-weight:600;color:var(--t2);cursor:pointer">
+    <input type="checkbox" id="ia-samechar" style="width:16px;height:16px;cursor:pointer"/>
+    🧍 인물 동일화 <span style="font-size:11px;font-weight:400;color:var(--t3)">(모든 컷에 같은 인물 유지 — 순서대로 같은 대화창에 붙여넣으세요)</span>
+  </label>
 
   <button onclick="iaGenerate()" style="width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">🖼 소제목별 이미지 프롬프트 생성</button>
 
@@ -1868,7 +1874,7 @@ var IA_STYLES={
   minimal:{tone:'미니멀한 아이콘 스타일. 군더더기 없는 선과 면, 넉넉한 여백을 살린 심플한 구성.'},
   infographic:{tone:'정보 전달에 적합한 인포그래픽 스타일. 아이콘과 도형 위주의 깔끔하고 구조적인 시각화.'}
 };
-var IA_RATIOS={'16:9':'가로 16:9','9:16':'세로 9:16','1:1':'정사각 1:1','4:3':'가로 4:3','3:4':'세로 3:4'};
+var IA_RATIOS={'16:9':'가로 16:9','9:16':'세로 9:16 (숏폼·릴스 비율)','1:1':'정사각 1:1','4:5':'세로 4:5','3:4':'세로 3:4','4:3':'가로 4:3'};
 window._iaPrompts=[];
 
 function iaSplitSections(text){
@@ -1913,11 +1919,22 @@ function iaCore(title,body){
   }
   return combined;
 }
-function iaBuildPrompt(topic,title,core,tone,ratio){
-  return '다음 블로그 섹션에 어울리는 이미지를 한 장 만들어주세요.\n\n'
+function iaBuildPrompt(topic,title,core,tone,ratio,sameChar,isFirst){
+  var s='다음 블로그 섹션에 어울리는 이미지를 한 장 만들어주세요.\n\n'
     +'[섹션]\n주제: '+(topic||'블로그')+'\n소제목: '+title+'\n핵심 내용: '+core+'\n\n'
-    +'[톤]\n'+tone+'\n'+ratio+'. 글자·로고·워터마크 없음.\n\n'
-    +'장면·인물·앵글·조명은 자유롭게 결정해주세요.\n매번 새로운 구도와 새로운 인물로 만들어주세요.';
+    +'[톤]\n'+tone+'\n'+ratio+'. 글자·로고·워터마크 없음.\n\n';
+  if(sameChar){
+    if(isFirst){
+      s+='[인물 일관성] 이 이미지에 등장하는 인물을 이 시리즈 전체의 기준 인물로 삼습니다. 자연스러운 한 명의 인물(얼굴·헤어스타일·옷차림)을 정해주세요. 이후 이미지에서도 같은 인물을 유지합니다.\n'
+        +'장면·앵글·조명은 자유롭게 결정해주세요.';
+    } else {
+      s+='[인물 일관성] 앞서 생성한 이미지와 동일한 인물(같은 얼굴·헤어스타일·옷차림)을 그대로 유지해주세요.\n'
+        +'인물은 동일하게 두고, 장면·구도·앵글·조명만 바꿔주세요.';
+    }
+  } else {
+    s+='장면·인물·앵글·조명은 자유롭게 결정해주세요.\n매번 새로운 구도와 새로운 인물로 만들어주세요.';
+  }
+  return s;
 }
 function iaEsc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function iaCardHtml(p,i){
@@ -1935,13 +1952,15 @@ function iaGenerate(){
   var topic=document.getElementById('ia-topic').value.trim();
   var tone=(IA_STYLES[document.getElementById('ia-style').value]||IA_STYLES.photoreal).tone;
   var ratio=IA_RATIOS[document.getElementById('ia-ratio').value]||'가로 16:9';
+  var sameChar=document.getElementById('ia-samechar')?document.getElementById('ia-samechar').checked:false;
   var res=document.getElementById('ia-result'), bulk=document.getElementById('ia-bulkbar');
   var secs=iaSplitSections(text);
   if(!secs.length){ showToast('블로그 글을 붙여넣어 주세요','err'); res.innerHTML=''; bulk.style.display='none'; return; }
-  window._iaPrompts=secs.map(function(s){
+  window._iaSameChar=sameChar;
+  window._iaPrompts=secs.map(function(s,idx){
     var core=iaCore(s.title,s.body);
     var title=s.title||core.slice(0,20);
-    return {title:title, prompt:iaBuildPrompt(topic,title,core,tone,ratio)};
+    return {title:title, prompt:iaBuildPrompt(topic,title,core,tone,ratio,sameChar,idx===0)};
   });
   bulk.style.display='block';
   res.innerHTML=window._iaPrompts.map(iaCardHtml).join('');
@@ -1961,7 +1980,8 @@ function iaToAI(i,which){
 }
 function iaCopyAll(which){
   if(!window._iaPrompts||!window._iaPrompts.length){showToast('먼저 프롬프트를 생성하세요','err');return;}
-  var all=window._iaPrompts.map(function(p,i){return '['+(i+1)+'번 이미지] '+p.title+'\n'+p.prompt;}).join('\n\n──────\n\n');
+  var head=window._iaSameChar?'※ 인물 동일화 모드: 아래 순서대로 같은 대화창에 1번부터 차례로 붙여넣어야 인물이 유지됩니다.\n\n':'';
+  var all=head+window._iaPrompts.map(function(p,i){return '['+(i+1)+'번 이미지] '+p.title+'\n'+p.prompt;}).join('\n\n──────\n\n');
   window.open(which==='gemini'?'https://gemini.google.com/app':'https://chatgpt.com/','_blank');
   iaCopyText(all).then(function(){showToast('[v] 전체 '+window._iaPrompts.length+'개 프롬프트 복사됨','ok');});
 }
