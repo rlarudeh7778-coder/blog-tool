@@ -209,7 +209,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 <div class="aurora"></div>
 <canvas id="stars"></canvas>
 <header>
-  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.18</b></span></div>
+  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.19</b></span></div>
   <div class="hright">
     <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
   </div>
@@ -854,11 +854,60 @@ async function preflight(){
     return {ok:false, net:true, reason:'연결 실패 — '+(e&&e.name==='AbortError'?'응답 지연':'네트워크 차단')};
   }
 }
+/* ═══════════ 백그라운드/모바일 끊김 방지 ═══════════ */
+let wakeLock=null;
+async function acquireWake(){ try{ if('wakeLock' in navigator && document.visibilityState==='visible'){ wakeLock=await navigator.wakeLock.request('screen'); } }catch(_){ } }
+function releaseWake(){ try{ wakeLock&&wakeLock.release(); }catch(_){ } wakeLock=null; }
+// 화면이 보일 때까지 대기(다른 앱/화면 꺼짐이면 멈췄다가, 돌아오면 진행)
+function whenVisible(){ return (document.visibilityState==='visible') ? Promise.resolve() : new Promise(res=>{ const h=()=>{ if(document.visibilityState==='visible'){ document.removeEventListener('visibilitychange',h); res(); } }; document.addEventListener('visibilitychange',h); }); }
+function partDone(i){ return results[i] && !/생성 실패|생성이 중단/.test(results[i]); }
+function hasPending(){ for(let i=0;i<PARTS.length;i++){ if(!partDone(i)) return true; } return false; }
+// 화면 복귀 시: 생성 중이면 Wake Lock 재획득 / 멈춰있고 남은 PART가 있으면 자동 이어서
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible')return;
+  if(generating){ if(!wakeLock) acquireWake(); }
+  else if(cust && results && results.length && hasPending()){ resumeGen(); }
+});
+async function resumeGen(){
+  if(generating || !cust || !hasPending())return;
+  if(!getKey())return;
+  generating=true; acquireWake();
+  toast('남은 분석을 자동으로 이어서 만듭니다…','');
+  await genLoop();
+}
+// 완료된 PART는 건너뛰고 남은 것만 생성 — 끊겨도 멈춘 지점부터 이어짐(최대 3패스)
+async function genLoop(){
+  for(let pass=0; pass<3; pass++){
+    let progressed=false;
+    for(let i=0;i<PARTS.length;i++){
+      if(partDone(i))continue;
+      await whenVisible();          // 백그라운드면 화면 돌아올 때까지 대기
+      renderProgress(i);
+      try{
+        results[i]=await callClaudeRetry(sysPrompt(),partPrompt(i),(partial)=>{
+          const live=$('streamlive'); if(live){live.textContent=partial.slice(-700); live.scrollTop=live.scrollHeight;}
+        });
+        progressed=true;
+      }catch(e){
+        results[i]='⚠️ 이 부분이 잠시 멈췄어요: '+e.message+'\n\n→ 이 화면을 켜두면 자동으로 이어서 완성됩니다. (또는 이 섹션의 「🔄 다시 생성」)';
+      }
+      renderResults();
+    }
+    if(!hasPending())break;          // 전부 완료
+    if(!progressed)break;            // 이번 패스에 하나도 못 만듦(영구 오류) → 중단
+  }
+  generating=false; releaseWake();
+  renderResults();
+  $('resultBar').style.display='flex'; $('discBox').style.display='block';
+  saveHistory();
+  const pending=hasPending();
+  toast(pending?'일부 섹션이 남았어요 — 이 화면을 켜두면 자동으로 이어서 완성됩니다':(cust.pkg+' 분석이 완료되었습니다!'), pending?'':'ok');
+}
 async function generate(){
   if(generating)return;
   if(!getKey()){toast('먼저 ⚙️설정에서 API 키를 저장하세요','err');go('settings');return;}
   if(!cust){toast('먼저 사주판을 계산하세요','err');return;}
-  generating=true; results=[];
+  generating=true; results=[]; acquireWake();
   go('result'); $('resultBar').style.display='none'; $('discBox').style.display='none';
   const data=sajuDataText();
   renderCover();
@@ -866,7 +915,7 @@ async function generate(){
   $('partsBox').innerHTML='<div class="part"><div class="loadwrap"><div class="spinner"></div><div style="font-weight:700;color:var(--navy)">연결 확인 중…</div></div></div>';
   const pf=await preflight();
   if(!pf.ok){
-    generating=false;
+    generating=false; releaseWake();
     const inappMsg=IS_INAPP?'<p style="color:#b04;font-weight:700;margin:.6rem 0">⚠️ 지금 카카오톡/인앱 브라우저로 열려 있어요. 인앱 브라우저는 보안상 API 연결이 막힙니다.</p>':'';
     $('partsBox').innerHTML='<div class="part"><div class="part-h"><span class="num">!</span>분석을 시작할 수 없습니다</div><div class="part-body">'
       +'<p style="color:#b04;font-weight:700">'+esc(pf.reason)+'</p>'+inappMsg
@@ -879,34 +928,13 @@ async function generate(){
     return;
   }
   $('partsBox').innerHTML='';
-  const allTitles=PARTS.map((p,i)=>'PART '+(i+1)+': '+p.t).join(' / ');
-  const ctx=cust.pkg==='궁합'
-    ? '[궁합 분석] 아래에는 본인과 상대방, 두 사람의 사주 데이터가 함께 주어집니다. 반드시 두 사람의 사주를 비교·교차하여 "관계" 관점에서 풀이하세요.'
-    : (cust.pkg==='기본' ? '[기본 분석] 핵심을 명료하게, 군더더기 없이 작성하세요.' : (cust.pkg==='작명' ? '[사주 작명] 이름의 주인공 사주를 근거로 보완할 오행을 정하고, 발음오행·자원오행·수리를 고려한 어울리는 이름을 추천하세요.' : '[프리미엄 심층 분석] 풍부하고 깊이 있게, 구체적 근거와 함께 작성하세요.'));
-  let failed=false;
-  for(let i=0;i<PARTS.length;i++){
-    renderProgress(i);
-    try{
-      results[i]=await callClaudeRetry(sysPrompt(),partPrompt(i),(partial)=>{
-        const live=$('streamlive'); if(live){live.textContent=partial.slice(-700); live.scrollTop=live.scrollHeight;}
-      });
-    }catch(e){
-      // 실패한 PART만 오류 표시하고 계속 진행(나머지는 정상 생성) → 무한 로딩 방지
-      results[i]='⚠️ 이 부분 생성 실패: '+e.message+'\n\n→ 이 섹션의 「🔄 다시 생성」 버튼으로 다시 시도하세요.';
-      failed=true;
-    }
-    renderResults();
-  }
-  generating=false;
-  renderResults();   // 최종 정리 — 남은 진행 스피너 제거
-  $('resultBar').style.display='flex'; $('discBox').style.display='block';
-  saveHistory();     // 관리자 기록 저장
-  toast(failed?'일부 섹션 생성 실패 — 해당 섹션의 「다시 생성」으로 재시도하세요':(cust.pkg+' 분석이 완료되었습니다!'), failed?'err':'ok');
+  await genLoop();   // ★완료된 PART는 건너뛰고 남은 것만 생성 + 백그라운드 멈춤/재개 처리★
 }
 // 네트워크/서버 혼잡 시 자동 재시도(최대 3회, 지수 백오프) — 모바일 불안정 대응
 async function callClaudeRetry(sys,user,onText){
   let lastErr;
   for(let attempt=0;attempt<4;attempt++){
+    await whenVisible();   // 화면 꺼짐/다른 앱이면 돌아올 때까지 대기 후 시도(백그라운드 헛수고 방지)
     try{ return await callClaude(sys,user,onText); }
     catch(e){
       lastErr=e;
