@@ -179,9 +179,15 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 .ask-part .num{background:#7a5cc0}
 /* html2pdf 페이지 잘림 방지(@media print는 html2pdf에 적용 안 되므로 일반 규칙으로) */
 .html2pdf__page-break{height:0;display:block;page-break-before:always;break-before:page}
+/* ── 인쇄/PDF 페이지 나눔 규칙 ── */
 .pdf-block{break-inside:avoid;page-break-inside:avoid}
-.part-body h2,.part-body h3{break-after:avoid;page-break-after:avoid}
-.part-body p,.part-body li,.part-body blockquote,.gloss-i,.easy,.act,.toc-i{break-inside:avoid;page-break-inside:avoid}
+/* 소제목·PART 제목은 바로 뒤에서 끊지 않음(제목이 페이지 맨 아래 홀로 안 남게) */
+.part-body h2,.part-body h3,.part-body h4,.part-h,.rsec h2{break-after:avoid;page-break-after:avoid}
+/* 작은 단위(문단·목록·인용·표 행·카드·만세력 패널)는 통째로 — 중간에서 안 쪼개짐 */
+.part-body p,.part-body li,.part-body blockquote,.part-body tr,.part-body img,.gloss-i,.easy,.act,.toc-i,.sajupan,.pcol{break-inside:avoid;page-break-inside:avoid}
+/* 표는 행 단위로 나뉘게 + 다음 장에 머리행 반복 */
+.part-body table{break-inside:auto;page-break-inside:auto}
+.part-body thead{display:table-header-group}
 @media print{
   @page{size:A4;margin:14mm}
   body{background:#fff;font-size:12pt}
@@ -189,7 +195,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
   .panel{display:none!important}.panel#p-result{display:block!important;max-width:none;padding:0}
   .pdf-cover,.rsec,.part,.cover,.sajupan{box-shadow:none}
   .pdf-cover{page-break-after:always}
-  .rsec,.sajupan,.part{page-break-inside:avoid}
+  .sajupan{page-break-inside:avoid}   /* 만세력 패널만 통째로(여러 페이지짜리 .part/.rsec는 avoid 금지 → 문단 잘림 유발) */
   .part{page-break-before:always}
   .part-body{font-size:13.5pt;line-height:2}
   .part-h{font-size:21pt}
