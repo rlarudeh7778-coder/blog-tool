@@ -1943,8 +1943,8 @@ function iaCardHtml(p,i){
     +'<textarea id="ia-pt-'+i+'" readonly style="width:100%;min-height:118px;border:none;border-bottom:1px solid var(--bor);padding:11px 13px;font-family:inherit;font-size:12px;line-height:1.65;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+iaEsc(p.prompt)+'</textarea>'
     +'<div style="display:flex;gap:6px;padding:9px 13px">'
     +'<button onclick="iaCopy('+i+')" style="flex:1;padding:8px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📋 복사</button>'
-    +'<a href="https://chatgpt.com/" target="_blank" rel="noopener" onclick="iaLinkCopy('+i+')" style="flex:1;padding:8px;background:#10a37f;color:#fff;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:flex;align-items:center;justify-content:center">ChatGPT 열기</a>'
-    +'<a href="https://gemini.google.com/app" target="_blank" rel="noopener" onclick="iaLinkCopy('+i+')" style="flex:1;padding:8px;background:#4285f4;color:#fff;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:flex;align-items:center;justify-content:center">Gemini 열기</a>'
+    +'<a href="https://chatgpt.com/" target="_blank" rel="noopener" onclick="return iaGo(event,'+i+',\'https://chatgpt.com/\')" style="flex:1;padding:8px;background:#10a37f;color:#fff;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:flex;align-items:center;justify-content:center">ChatGPT 열기</a>'
+    +'<a href="https://gemini.google.com/app" target="_blank" rel="noopener" onclick="return iaGo(event,'+i+',\'https://gemini.google.com/app\')" style="flex:1;padding:8px;background:#4285f4;color:#fff;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:flex;align-items:center;justify-content:center">Gemini 열기</a>'
     +'</div></div>';
 }
 function iaGenerate(){
@@ -1987,8 +1987,17 @@ function iaClip(t){
   return true;
 }
 function iaCopy(i){ var p=window._iaPrompts[i]; if(!p)return; iaClip(p.prompt); showToast('[v] 프롬프트 복사됨','ok'); }
-// 카드의 ChatGPT/Gemini 링크 클릭 시: 복사만 하고 링크(target=_blank)는 그대로 열리게 둠
-function iaLinkCopy(i){ var p=window._iaPrompts[i]; if(p){ iaClip(p.prompt); showToast('[v] 복사됨 — 열린 화면에 붙여넣기 하세요','ok'); } }
+// 카드의 ChatGPT/Gemini 클릭: ① 먼저 복사 ② 새 탭 시도 ③ 막히면 같은 탭 이동(어떤 환경이든 열리게)
+function iaGo(ev,i,url){
+  var p=window._iaPrompts[i]; if(p) iaClip(p.prompt);   // ① 이동 전에 복사
+  showToast('[v] 복사됨 — 열린 화면에 길게 눌러 붙여넣기','ok');
+  var w=null; try{ w=window.open(url,'_blank'); }catch(e){}
+  if(w){ try{ev.preventDefault();}catch(e2){} return false; } // 새 탭 성공 → 링크 기본동작 취소
+  // 새 탭 실패(인앱 브라우저 등) → 같은 탭이라도 이동시킴
+  try{ location.href=url; }catch(e3){}
+  try{ev.preventDefault();}catch(e4){}
+  return false;
+}
 function iaCopyAll(){
   if(!window._iaPrompts||!window._iaPrompts.length){showToast('먼저 프롬프트를 생성하세요','err');return;}
   var head=window._iaSameChar?'※ 인물 동일화 모드: 아래 순서대로 같은 대화창에 1번부터 차례로 붙여넣어야 인물이 유지됩니다.\n\n':'';
