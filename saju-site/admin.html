@@ -209,7 +209,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 <div class="aurora"></div>
 <canvas id="stars"></canvas>
 <header>
-  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.21</b></span></div>
+  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.22</b></span></div>
   <div class="hright">
     <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
   </div>
@@ -749,7 +749,9 @@ async function streamClaude(sys,messages,onText,baseText){
   if(!k)throw new Error('API 키가 없습니다 — ⚙️설정에서 키를 저장하세요.');
   const ac=new AbortController();
   const IDLE_MS=110000; // 새 데이터가 전혀 안 오면 중단(모바일 프록시 버퍼링 대비 넉넉히)
-  let idle; const bump=()=>{clearTimeout(idle);idle=setTimeout(()=>ac.abort(),IDLE_MS);};
+  // 단, 화면이 꺼져 있거나 다른 앱을 보는 동안에는 중단하지 않고 기다림(돌아오면 계속)
+  let idle; const idleFire=()=>{ if(document.visibilityState!=='visible'){ idle=setTimeout(idleFire,5000); return; } ac.abort(); };
+  const bump=()=>{clearTimeout(idle);idle=setTimeout(idleFire,IDLE_MS);};
   // 요청당 토큰: 모바일은 짧게(끊김 적게) — 길이는 자동 이어쓰기가 보완
   const MAXT=IS_MOBILE?6000:8000;
   let r;
@@ -938,19 +940,30 @@ async function generate(){
 }
 // 네트워크/서버 혼잡 시 자동 재시도(최대 3회, 지수 백오프) — 모바일 불안정 대응
 async function callClaudeRetry(sys,user,onText){
-  let lastErr;
-  for(let attempt=0;attempt<4;attempt++){
-    await whenVisible();   // 화면 꺼짐/다른 앱이면 돌아올 때까지 대기 후 시도(백그라운드 헛수고 방지)
-    try{ return await callClaude(sys,user,onText); }
-    catch(e){
-      lastErr=e;
-      // 인증 오류 등 재시도 무의미한 건 즉시 중단
-      if(!/시간 초과|네트워크|서버 혼잡|429|스트림|빈 응답/.test(e.message))throw e;
-      if(attempt===3)break;
-      await new Promise(r=>setTimeout(r,2000*Math.pow(2,attempt))); // 2s,4s,8s
+  let realAttempts=0;
+  while(true){
+    await whenVisible();                 // 화면 꺼짐/다른 앱이면 돌아올 때까지 대기
+    let bgInterrupted=false;
+    const onHide=()=>{ if(document.visibilityState!=='visible') bgInterrupted=true; };
+    document.addEventListener('visibilitychange',onHide);
+    try{
+      const r=await callClaude(sys,user,onText);
+      document.removeEventListener('visibilitychange',onHide);
+      return r;
+    }catch(e){
+      document.removeEventListener('visibilitychange',onHide);
+      // ★다른 앱/화면 꺼짐 때문에 끊긴 경우★ → 오류로 치지 않고, 화면 돌아올 때까지 조용히 기다렸다 자동 재시도(횟수 차감 X)
+      if(bgInterrupted || document.visibilityState!=='visible'){
+        await whenVisible();
+        continue;
+      }
+      // 화면이 켜진 정상 상태에서의 실패만 진짜 오류로 처리(영어 네트워크 오류도 재시도)
+      if(!/시간 초과|네트워크|서버 혼잡|429|스트림|빈 응답|network|fetch|load failed|timeout|abort|connection/i.test(e.message))throw e;
+      realAttempts++;
+      if(realAttempts>=4)throw e;
+      await new Promise(r=>setTimeout(r,2000*Math.pow(2,realAttempts-1))); // 2s,4s,8s
     }
   }
-  throw lastErr;
 }
 // PART별 프롬프트 빌더(전체 생성·단일 재생성 공용). extra=추가 지시
 function partPrompt(i,extra){
