@@ -1966,24 +1966,43 @@ function iaGenerate(){
   res.innerHTML=window._iaPrompts.map(iaCardHtml).join('');
   showToast(window._iaPrompts.length+'개 섹션 프롬프트 생성 완료','ok');
 }
-function iaCopyText(t){
-  if(navigator.clipboard&&navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
-  var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.left='-9999px';
-  document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta);
-  return Promise.resolve();
+// 동기 복사(모바일 클릭 제스처 내에서 안정적) + 비동기 best-effort
+function iaCopySync(t){
+  var done=false;
+  try{
+    var ta=document.createElement('textarea');
+    ta.value=t; ta.setAttribute('readonly','');
+    ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try{ ta.setSelectionRange(0,t.length); }catch(e){}
+    done=document.execCommand('copy');
+    document.body.removeChild(ta);
+  }catch(e){}
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t); }catch(e){}
+  return done;
 }
-function iaCopy(i){ var p=window._iaPrompts[i]; if(!p)return; iaCopyText(p.prompt).then(function(){showToast('[v] 프롬프트 복사됨','ok');}); }
+// AI 사이트 열기 (모바일에서 팝업 차단/튕김 대비 폴백)
+function iaOpenAI(which){
+  var url=which==='gemini'?'https://gemini.google.com/app':'https://chatgpt.com/';
+  var w=null;
+  try{ w=window.open(url,'_blank'); }catch(e){}
+  if(!w){ try{ location.assign(url); }catch(e2){ location.href=url; } } // 팝업 막히면 현재 탭 이동(프롬프트는 이미 복사됨)
+}
+function iaCopy(i){ var p=window._iaPrompts[i]; if(!p)return; iaCopySync(p.prompt); showToast('[v] 프롬프트 복사됨','ok'); }
 function iaToAI(i,which){
   var p=window._iaPrompts[i]; if(!p)return;
-  window.open(which==='gemini'?'https://gemini.google.com/app':'https://chatgpt.com/','_blank'); // 클릭 제스처에서 먼저 열기
-  iaCopyText(p.prompt).then(function(){showToast('[v] 복사됨 — 열린 창에서 Ctrl+V 하세요','ok');});
+  iaCopySync(p.prompt);                                   // ① 먼저 복사 (이동 전에)
+  showToast('[v] 복사됨 — 붙여넣기만 하면 돼요','ok');
+  iaOpenAI(which);                                        // ② 그다음 사이트 열기
 }
 function iaCopyAll(which){
   if(!window._iaPrompts||!window._iaPrompts.length){showToast('먼저 프롬프트를 생성하세요','err');return;}
   var head=window._iaSameChar?'※ 인물 동일화 모드: 아래 순서대로 같은 대화창에 1번부터 차례로 붙여넣어야 인물이 유지됩니다.\n\n':'';
   var all=head+window._iaPrompts.map(function(p,i){return '['+(i+1)+'번 이미지] '+p.title+'\n'+p.prompt;}).join('\n\n──────\n\n');
-  window.open(which==='gemini'?'https://gemini.google.com/app':'https://chatgpt.com/','_blank');
-  iaCopyText(all).then(function(){showToast('[v] 전체 '+window._iaPrompts.length+'개 프롬프트 복사됨','ok');});
+  iaCopySync(all);                                        // ① 먼저 복사
+  showToast('[v] 전체 '+window._iaPrompts.length+'개 복사됨','ok');
+  iaOpenAI(which);                                        // ② 그다음 열기
 }
 </script>
 
