@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob: data:; img-src 'self' data: https: blob:; media-src 'self' blob: data:; connect-src 'self' https: blob: data:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:;">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>음성·자막 받아쓰기 — 리치원 AI 툴셋</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="리치원 AI 툴셋">
+<meta property="og:title" content="음성·자막 받아쓰기 (AI 속기사)">
+<meta property="og:description" content="동영상·음성 파일을 올리면 AI가 자동으로 받아쓰기하고 자막(SRT/VTT)을 만들어 줍니다.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--green:#1B8F5E;--gl:#e8f7f1;--gd:#136b46;--red:#E24B4A;--rl:#fdeaea;--bg:#f6f8f7;--sur:#fff;--bor:#e2e8e5;--txt:#1a2520;--t2:#4a6058;--t3:#8aaa9e;--r:14px;--rs:9px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;line-height:1.5}
+a{color:inherit}
+
+.header{background:var(--sur);border-bottom:1px solid var(--bor);padding:14px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:30}
+.header .logo{width:34px;height:34px;border-radius:9px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px}
+.header h1{font-size:17px;font-weight:700}
+.header .sub{font-size:12px;color:var(--t3);font-weight:400}
+.header .back{margin-left:auto;font-size:13px;color:var(--t2);text-decoration:none;padding:7px 13px;border:1px solid var(--bor);border-radius:8px}
+.header .back:hover{background:var(--gl);border-color:var(--green);color:var(--gd)}
+
+.container{max-width:880px;margin:0 auto;padding:28px 18px 80px}
+
+.card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:24px;margin-bottom:20px}
+.card h2{font-size:14px;font-weight:700;color:var(--t2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h2 .n{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* dropzone */
+.drop{border:2px dashed var(--bor);border-radius:var(--r);padding:38px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--bg)}
+.drop:hover,.drop.over{border-color:var(--green);background:var(--gl)}
+.drop .ic{font-size:40px;margin-bottom:10px}
+.drop .big{font-size:15px;font-weight:600;color:var(--txt)}
+.drop .small{font-size:12.5px;color:var(--t3);margin-top:6px}
+.filechip{display:none;align-items:center;gap:12px;background:var(--gl);border:1px solid var(--green);border-radius:var(--rs);padding:12px 16px;margin-top:14px}
+.filechip .fic{font-size:22px}
+.filechip .fname{font-weight:600;font-size:14px;word-break:break-all}
+.filechip .fmeta{font-size:12px;color:var(--t2)}
+.filechip .fdel{margin-left:auto;cursor:pointer;color:var(--t3);background:none;border:none;font-size:20px;padding:4px}
+.filechip .fdel:hover{color:var(--red)}
+
+/* options */
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
+.opt label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom:6px}
+.opt select{width:100%;height:44px;border:1.5px solid var(--bor);border-radius:var(--rs);padding:0 12px;font-size:14px;font-family:inherit;background:var(--sur);color:var(--txt);cursor:pointer}
+.opt select:focus{outline:none;border-color:var(--green)}
+.opt .hint{font-size:11.5px;color:var(--t3);margin-top:5px}
+
+.btn{height:50px;width:100%;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:15.5px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:20px;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}
+.btn:hover{background:var(--gd)}
+.btn:disabled{background:#bcd;cursor:not-allowed;opacity:.7}
+
+/* progress */
+.progwrap{display:none;margin-top:20px}
+.progbar{height:10px;background:var(--bor);border-radius:6px;overflow:hidden}
+.progfill{height:100%;width:0;background:var(--green);border-radius:6px;transition:width .3s}
+.progtxt{font-size:13px;color:var(--t2);margin-top:9px;display:flex;align-items:center;gap:8px}
+.spinner{width:15px;height:15px;border:2px solid var(--gl);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.errbox{display:none;background:var(--rl);border:1px solid #f1b9b9;border-radius:var(--rs);padding:14px 16px;margin-top:16px;font-size:13.5px;color:#b3302f;line-height:1.6;white-space:pre-wrap}
+
+/* result */
+.result{display:none}
+.player{width:100%;border-radius:var(--r);background:#000;margin-bottom:14px;max-height:420px}
+.livecap{min-height:52px;background:#0e1714;color:#fff;border-radius:var(--rs);padding:14px 18px;text-align:center;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.livecap.empty{color:#6b8a80;font-weight:400;font-size:14px}
+
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tbtn{height:38px;padding:0 15px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;background:var(--sur);color:var(--t2);border:1.5px solid var(--bor);display:flex;align-items:center;gap:6px}
+.tbtn:hover{border-color:var(--green);color:var(--gd);background:var(--gl)}
+.tbtn.solid{background:var(--green);color:#fff;border-color:var(--green)}
+.tbtn.solid:hover{background:var(--gd)}
+
+.viewtabs{display:flex;gap:6px;margin-bottom:12px;border-bottom:1px solid var(--bor)}
+.vtab{padding:9px 14px;font-size:13.5px;font-weight:600;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.vtab.active{color:var(--gd);border-bottom-color:var(--green)}
+
+.segments{max-height:480px;overflow-y:auto;border:1px solid var(--bor);border-radius:var(--rs)}
+.seg{display:flex;gap:12px;padding:11px 14px;border-bottom:1px solid var(--bor);cursor:pointer;font-size:14.5px;transition:.1s}
+.seg:last-child{border-bottom:none}
+.seg:hover{background:var(--gl)}
+.seg.active{background:var(--gl);box-shadow:inset 3px 0 0 var(--green)}
+.seg .ts{font-size:12px;color:var(--green);font-weight:600;font-variant-numeric:tabular-nums;flex-shrink:0;width:54px;padding-top:2px}
+.seg .stx{flex:1}
+
+.plain{display:none;width:100%;min-height:300px;max-height:480px;border:1px solid var(--bor);border-radius:var(--rs);padding:16px;font-size:15px;line-height:1.8;font-family:inherit;resize:vertical;color:var(--txt)}
+.plain:focus{outline:none;border-color:var(--green)}
+
+.note{font-size:12.5px;color:var(--t3);line-height:1.7;margin-top:14px}
+.note b{color:var(--t2)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--txt);color:#fff;padding:11px 20px;border-radius:24px;font-size:13.5px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:560px){.opts{grid-template-columns:1fr}.container{padding:18px 12px 60px}.card{padding:18px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🎙️</div>
+  <div>
+    <h1>음성·자막 받아쓰기</h1>
+    <div class="sub">AI 속기사 비서 · 동영상/음성 자동 받아쓰기</div>
+  </div>
+  <a class="back" href="dashboard.html">← 런처</a>
+</div>
+
+<div class="container">
+
+  <!-- STEP 1: 파일 -->
+  <div class="card">
+    <h2><span class="n">1</span> 동영상 또는 음성 파일 올리기</h2>
+    <div class="drop" id="drop">
+      <div class="ic">📁</div>
+      <div class="big">파일을 끌어다 놓거나 클릭해서 선택</div>
+      <div class="small">mp4 · mov · webm · mp3 · m4a · wav 등 (동영상/음성 모두 가능)</div>
+    </div>
+    <input type="file" id="fileInput" accept="video/*,audio/*" style="display:none">
+    <div class="filechip" id="fileChip">
+      <span class="fic" id="fileIc">🎬</span>
+      <div>
+        <div class="fname" id="fileName"></div>
+        <div class="fmeta" id="fileMeta"></div>
+      </div>
+      <button class="fdel" id="fileDel" title="삭제">×</button>
+    </div>
+    <div class="note">
+      💡 모든 처리는 <b>이 브라우저 안에서만</b> 이루어집니다. 학생 녹취 파일이 외부 서버로 전송되지 않아 안전해요.
+      파일이 길수록(영상 길이에 따라) 시간이 걸립니다.
+    </div>
+  </div>
+
+  <!-- STEP 2: 설정 -->
+  <div class="card">
+    <h2><span class="n">2</span> 받아쓰기 설정</h2>
+    <div class="opts">
+      <div class="opt">
+        <label>음성 언어</label>
+        <select id="optLang">
+          <option value="auto">자동 감지</option>
+          <option value="english" selected>English (영어)</option>
+          <option value="korean">한국어</option>
+          <option value="japanese">日本語</option>
+          <option value="chinese">中文</option>
+          <option value="spanish">Español</option>
+          <option value="french">Français</option>
+        </select>
+        <div class="hint">영어 수업 녹취면 English 추천</div>
+      </div>
+      <div class="opt">
+        <label>작업 방식</label>
+        <select id="optTask">
+          <option value="transcribe" selected>들리는 그대로 받아쓰기</option>
+          <option value="translate">영어로 번역해서 받아쓰기</option>
+        </select>
+        <div class="hint">'번역'은 어떤 언어든 영어 자막으로</div>
+      </div>
+      <div class="opt">
+        <label>AI 모델 (정확도 ↔ 속도)</label>
+        <select id="optModel">
+          <option value="Xenova/whisper-tiny">Tiny — 가장 빠름 (약 75MB)</option>
+          <option value="Xenova/whisper-base" selected>Base — 권장 (약 145MB)</option>
+          <option value="Xenova/whisper-small">Small — 정확도 ↑ (약 480MB)</option>
+        </select>
+        <div class="hint">처음 한 번만 모델을 내려받고 이후엔 캐시됩니다</div>
+      </div>
+      <div class="opt">
+        <label>처리 속도</label>
+        <select id="optQuant">
+          <option value="true" selected>경량 모드 (빠름, 권장)</option>
+          <option value="false">정밀 모드 (느림, 메모리 많이 씀)</option>
+        </select>
+        <div class="hint">대부분 경량 모드로 충분합니다</div>
+      </div>
+    </div>
+    <button class="btn" id="startBtn" disabled>🎙️ 받아쓰기 시작</button>
+
+    <div class="progwrap" id="progWrap">
+      <div class="progbar"><div class="progfill" id="progFill"></div></div>
+      <div class="progtxt"><span class="spinner"></span><span id="progTxt">준비 중…</span></div>
+    </div>
+    <div class="errbox" id="errBox"></div>
+  </div>
+
+  <!-- STEP 3: 결과 -->
+  <div class="card result" id="resultCard">
+    <h2><span class="n">3</span> 결과</h2>
+
+    <video class="player" id="player" controls playsinline></video>
+    <div class="livecap empty" id="liveCap">▶️ 재생하면 현재 대사가 여기에 표시됩니다</div>
+
+    <div class="toolbar">
+      <button class="tbtn solid" id="copyBtn">📋 전체 복사</button>
+      <button class="tbtn" id="dlTxt">⬇️ 텍스트(.txt)</button>
+      <button class="tbtn" id="dlSrt">⬇️ 자막(.srt)</button>
+      <button class="tbtn" id="dlVtt">⬇️ 자막(.vtt)</button>
+    </div>
+
+    <div class="viewtabs">
+      <div class="vtab active" data-view="seg">⏱️ 타임라인 자막</div>
+      <div class="vtab" data-view="plain">📝 전체 텍스트</div>
+    </div>
+
+    <div class="segments" id="segments"></div>
+    <textarea class="plain" id="plainText" spellcheck="false"></textarea>
+
+    <div class="note">
+      💡 <b>타임라인 자막</b>의 한 줄을 클릭하면 영상의 그 지점으로 바로 이동합니다.
+      <b>전체 텍스트</b>는 직접 수정한 뒤 복사할 수 있어요. 자막 파일(.srt)은 유튜브·곰플레이어 등에 그대로 넣을 수 있습니다.
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
+
+// 모델은 항상 원격(HuggingFace)에서 받아오고 브라우저 캐시에 저장
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+
+const $ = id => document.getElementById(id);
+const drop = $('drop'), fileInput = $('fileInput');
+let file = null;       // 업로드한 원본 파일
+let chunks = [];       // [{start,end,text}]
+let fullText = '';
+
+/* ---------- 파일 선택 ---------- */
+drop.addEventListener('click', ()=>fileInput.click());
+drop.addEventListener('dragover', e=>{e.preventDefault();drop.classList.add('over');});
+drop.addEventListener('dragleave', ()=>drop.classList.remove('over'));
+drop.addEventListener('drop', e=>{
+  e.preventDefault();drop.classList.remove('over');
+  if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e=>{ if(e.target.files[0]) setFile(e.target.files[0]); });
+$('fileDel').addEventListener('click', clearFile);
+
+function setFile(f){
+  if(!f.type.startsWith('video') && !f.type.startsWith('audio')){
+    showErr('동영상 또는 음성 파일만 올릴 수 있어요.'); return;
+  }
+  file = f;
+  $('fileName').textContent = f.name;
+  $('fileMeta').textContent = (f.size/1024/1024).toFixed(1)+' MB · '+(f.type||'알 수 없는 형식');
+  $('fileIc').textContent = f.type.startsWith('audio') ? '🎵' : '🎬';
+  $('fileChip').style.display = 'flex';
+  $('startBtn').disabled = false;
+  hideErr();
+}
+function clearFile(){
+  file=null; fileInput.value='';
+  $('fileChip').style.display='none';
+  $('startBtn').disabled=true;
+}
+
+/* ---------- 오디오 추출 & 16kHz 모노로 변환 ---------- */
+async function fileToAudio(f){
+  const buf = await f.arrayBuffer();
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AC();
+  let decoded;
+  try{
+    decoded = await ctx.decodeAudioData(buf.slice(0));
+  }catch(e){
+    ctx.close();
+    throw new Error('이 파일의 음성을 읽지 못했어요. mp4 / mp3 / m4a / wav 형식으로 변환 후 다시 시도해 보세요.\n('+e.message+')');
+  }
+  // 16kHz 모노로 리샘플 (Whisper 입력 규격)
+  const len = Math.ceil(decoded.duration * 16000);
+  const off = new OfflineAudioContext(1, len, 16000);
+  const src = off.createBufferSource();
+  src.buffer = decoded;
+  src.connect(off.destination);
+  src.start();
+  const rendered = await off.startRendering();
+  ctx.close();
+  return rendered.getChannelData(0);
+}
+
+/* ---------- 받아쓰기 실행 ---------- */
+let transcriber = null, loadedModel = null, loadedQuant = null;
+
+$('startBtn').addEventListener('click', run);
+
+async function run(){
+  if(!file) return;
+  hideErr();
+  $('startBtn').disabled = true;
+  $('resultCard').style.display='none';
+  $('progWrap').style.display='block';
+
+  const modelId = $('optModel').value;
+  const quant = $('optQuant').value === 'true';
+  const lang = $('optLang').value;
+  const task = $('optTask').value;
+
+  try{
+    // 1) 오디오 추출
+    setProg(3, '🎵 음성을 추출하는 중…');
+    const audio = await fileToAudio(file);
+
+    // 2) 모델 로드 (필요할 때만)
+    if(!transcriber || loadedModel!==modelId || loadedQuant!==quant){
+      transcriber = await pipeline('automatic-speech-recognition', modelId, {
+        dtype: quant ? 'q8' : 'fp32',
+        progress_callback: p=>{
+          if(p.status==='progress' && p.total){
+            const pct = Math.round(p.progress);
+            setProg(5 + pct*0.35, `🤖 AI 모델 내려받는 중… ${pct}%  (처음 한 번만)`);
+          }else if(p.status==='ready'){
+            setProg(42,'🤖 모델 준비 완료');
+          }
+        }
+      });
+      loadedModel=modelId; loadedQuant=quant;
+    }
+
+    // 3) 받아쓰기
+    setProg(48, '✍️ 받아쓰는 중… (영상이 길면 시간이 걸려요)');
+    const opts = {
+      chunk_length_s: 30,
+      stride_length_s: 5,
+      return_timestamps: true,
+      task: task,
+    };
+    if(lang!=='auto') opts.language = lang;
+
+    const out = await transcriber(audio, opts);
+    setProg(96, '📋 자막 정리 중…');
+
+    // 4) 결과 정리
+    chunks = (out.chunks||[])
+      .filter(c=>c.text && c.text.trim())
+      .map(c=>({
+        start: c.timestamp[0]??0,
+        end: c.timestamp[1]??((c.timestamp[0]||0)+2),
+        text: c.text.trim()
+      }));
+    fullText = (out.text||'').trim();
+    if(!chunks.length && fullText){ chunks=[{start:0,end:0,text:fullText}]; }
+
+    setProg(100, '✅ 완료!');
+    renderResult();
+  }catch(e){
+    console.error(e);
+    showErr('받아쓰기 중 오류가 발생했어요.\n'+(e.message||e));
+  }finally{
+    $('startBtn').disabled = false;
+    setTimeout(()=>{ $('progWrap').style.display='none'; }, 900);
+  }
+}
+
+function setProg(pct, txt){
+  $('progFill').style.width = Math.min(100,pct)+'%';
+  $('progTxt').textContent = txt;
+}
+
+/* ---------- 결과 렌더 ---------- */
+const player = $('player'), liveCap = $('liveCap'), segBox = $('segments');
+
+function renderResult(){
+  // 영상/음성 플레이어
+  player.src = URL.createObjectURL(file);
+  player.style.display = file.type.startsWith('audio') ? 'none' : 'block';
+
+  // 타임라인 자막
+  segBox.innerHTML = '';
+  chunks.forEach((c,i)=>{
+    const div = document.createElement('div');
+    div.className='seg'; div.dataset.i=i;
+    div.innerHTML = `<span class="ts">${fmt(c.start)}</span><span class="stx"></span>`;
+    div.querySelector('.stx').textContent = c.text;
+    div.addEventListener('click', ()=>{ player.currentTime=c.start; player.play(); });
+    segBox.appendChild(div);
+  });
+
+  $('plainText').value = fullText || chunks.map(c=>c.text).join(' ');
+  $('resultCard').style.display='block';
+  liveCap.className='livecap empty';
+  liveCap.textContent='▶️ 재생하면 현재 대사가 여기에 표시됩니다';
+  $('resultCard').scrollIntoView({behavior:'smooth'});
+}
+
+// 재생 위치에 맞춰 현재 자막 하이라이트
+player.addEventListener('timeupdate', ()=>{
+  const t = player.currentTime;
+  let cur = -1;
+  for(let i=0;i<chunks.length;i++){
+    if(t>=chunks[i].start && t<(chunks[i].end||1e9)){ cur=i; break; }
+  }
+  document.querySelectorAll('.seg').forEach(s=>s.classList.remove('active'));
+  if(cur>=0){
+    liveCap.className='livecap';
+    liveCap.textContent = chunks[cur].text;
+    const el = segBox.querySelector(`.seg[data-i="${cur}"]`);
+    if(el){ el.classList.add('active'); }
+  }
+});
+
+/* ---------- 탭 전환 ---------- */
+document.querySelectorAll('.vtab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.vtab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const v = tab.dataset.view;
+    segBox.style.display = v==='seg'?'block':'none';
+    $('plainText').style.display = v==='plain'?'block':'none';
+  });
+});
+
+/* ---------- 내보내기 ---------- */
+function fmt(s){ // mm:ss
+  s=Math.max(0,s||0);
+  const m=Math.floor(s/60), ss=Math.floor(s%60);
+  return `${m}:${ss.toString().padStart(2,'0')}`;
+}
+function tc(s, sep){ // HH:MM:SS,mmm  (sep=',' for srt, '.' for vtt)
+  s=Math.max(0,s||0);
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=Math.floor(s%60), ms=Math.round((s-Math.floor(s))*1000);
+  const p=(n,l=2)=>n.toString().padStart(l,'0');
+  return `${p(h)}:${p(m)}:${p(ss)}${sep}${p(ms,3)}`;
+}
+function toSrt(){
+  return chunks.map((c,i)=>`${i+1}\n${tc(c.start,',')} --> ${tc(c.end||c.start+2,',')}\n${c.text}`).join('\n\n')+'\n';
+}
+function toVtt(){
+  return 'WEBVTT\n\n'+chunks.map(c=>`${tc(c.start,'.')} --> ${tc(c.end||c.start+2,'.')}\n${c.text}`).join('\n\n')+'\n';
+}
+function baseName(){ return (file?.name||'transcript').replace(/\.[^.]+$/,''); }
+function download(text, ext, mime){
+  const blob = new Blob([text], {type:mime});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = baseName()+'.'+ext;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+$('copyBtn').addEventListener('click', async ()=>{
+  try{ await navigator.clipboard.writeText($('plainText').value); toast('전체 텍스트를 복사했어요'); }
+  catch{ toast('복사 실패 — 전체 텍스트 탭에서 직접 복사해 주세요'); }
+});
+$('dlTxt').addEventListener('click', ()=>{ download($('plainText').value, 'txt', 'text/plain;charset=utf-8'); toast('텍스트 파일 저장'); });
+$('dlSrt').addEventListener('click', ()=>{ download(toSrt(), 'srt', 'text/plain;charset=utf-8'); toast('SRT 자막 저장'); });
+$('dlVtt').addEventListener('click', ()=>{ download(toVtt(), 'vtt', 'text/vtt;charset=utf-8'); toast('VTT 자막 저장'); });
+
+/* ---------- 기타 ---------- */
+function showErr(m){ const b=$('errBox'); b.textContent='⚠️ '+m; b.style.display='block'; }
+function hideErr(){ $('errBox').style.display='none'; }
+let toastT;
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2000); }
+</script>
+</body>
+</html>
