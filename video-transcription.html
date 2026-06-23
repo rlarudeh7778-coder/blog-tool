@@ -151,7 +151,7 @@ a{color:inherit}
     </div>
     <div class="note">
       💡 모든 처리는 <b>이 브라우저 안에서만</b> 이루어집니다. 학생 녹취 파일이 외부 서버로 전송되지 않아 안전해요.<br>
-      ⏳ 받아쓰는 동안에는 화면이 잠깐 멈춘 듯 보일 수 있어요(정상). <b>한국어는 'Base' 이상</b>을 권장해요(Tiny는 빠르지만 같은 말이 반복되는 등 부정확할 수 있어요). 더 정확히 하려면 'Small' 또는 처리 속도를 '정밀 모드'로.
+      ⚡ 지원 기기에서는 <b>GPU 가속</b>이 자동 적용돼 빨라집니다(안 되면 자동으로 일반 모드). <b>정확도가 중요하면 AI 모델을 'Small'</b>로 올리세요(전화 통화 등 저음질은 오인식이 늘 수 있어요).
     </div>
   </div>
 
@@ -346,8 +346,35 @@ async function fileToAudio(f){
   return rendered.getChannelData(0);
 }
 
-/* ---------- 받아쓰기 실행 (메인 스레드 · 검증된 설정) ---------- */
-let transcriber = null, loadedModel = null, loadedQuant = null;
+/* ---------- 받아쓰기 실행 (메인 스레드 · WebGPU 자동 + wasm 폴백) ---------- */
+let transcriber = null, loadedKey = '', usingGPU = false;
+
+// 모델 로드: 지원 기기는 WebGPU(빠름), 안 되면 wasm(안정)로 자동 폴백
+async function getTranscriber(modelId, quant, onProg){
+  const key = modelId + '|' + quant;
+  if(transcriber && loadedKey === key) return transcriber;
+  transcriber = null; loadedKey = '';
+
+  if(navigator.gpu){   // WebGPU 지원 시 가속 시도 (onnx-community 모델 + fp16/q4)
+    try{
+      const gpuModel = modelId.replace('Xenova/', 'onnx-community/');
+      transcriber = await pipeline('automatic-speech-recognition', gpuModel, {
+        device: 'webgpu',
+        dtype: { encoder_model:'fp16', decoder_model_merged:'q4' },
+        progress_callback: onProg
+      });
+      loadedKey = key; usingGPU = true;
+      return transcriber;
+    }catch(err){ console.warn('WebGPU 사용 불가 → wasm으로 전환:', err); transcriber = null; }
+  }
+  // 안정적인 wasm 경로 (검증됨)
+  transcriber = await pipeline('automatic-speech-recognition', modelId, {
+    dtype: quant ? 'q8' : 'fp32',
+    progress_callback: onProg
+  });
+  loadedKey = key; usingGPU = false;
+  return transcriber;
+}
 
 $('startBtn').addEventListener('click', run);
 
@@ -370,22 +397,18 @@ async function run(){
     const audio = await fileToAudio(file);
 
     // 2) 모델 로드 (필요할 때만 · 처음 한 번만 내려받음)
-    if(!transcriber || loadedModel!==modelId || loadedQuant!==quant){
-      setProg(6, '🤖 AI 모델 준비 중…');
-      transcriber = await pipeline('automatic-speech-recognition', modelId, {
-        dtype: quant ? 'q8' : 'fp32',
-        progress_callback: p=>{
-          if(p.status==='progress' && p.total){
-            const pct = Math.round(p.progress);
-            setProg(6 + pct*0.40, `🤖 AI 모델 내려받는 중… ${pct}%  (처음 한 번만)`);
-          }
-        }
-      });
-      loadedModel=modelId; loadedQuant=quant;
-    }
+    setProg(6, '🤖 AI 모델 준비 중…');
+    const onProg = p=>{
+      if(p.status==='progress' && p.total){
+        const pct = Math.round(p.progress);
+        setProg(6 + pct*0.40, `🤖 AI 모델 내려받는 중… ${pct}%  (처음 한 번만)`);
+      }
+    };
+    const tr = await getTranscriber(modelId, quant, onProg);
 
     // 3) 받아쓰기
-    setProg(50, '✍️ 받아쓰는 중… (긴 영상은 잠깐 멈춘 듯 보여도 처리 중이에요)');
+    setProg(50, usingGPU ? '✍️ 받아쓰는 중… (⚡GPU 가속)'
+                         : '✍️ 받아쓰는 중… (긴 영상은 잠깐 멈춘 듯 보여도 처리 중이에요)');
     const opts = {
       chunk_length_s:30, stride_length_s:5, return_timestamps:true, task,
       no_repeat_ngram_size:3,   // 같은 말 무한반복(환각) 방지
@@ -393,7 +416,21 @@ async function run(){
       temperature:0             // 일관된 결과
     };
     if(lang!=='auto') opts.language = lang;   // auto면 미지정(전체 단일 언어 감지)
-    const out = await transcriber(audio, opts);
+
+    let out;
+    try{
+      out = await tr(audio, opts);
+    }catch(runErr){
+      // GPU 추론 실패 시 wasm으로 1회 재시도
+      if(usingGPU){
+        console.warn('GPU 추론 실패 → wasm 재시도:', runErr);
+        setProg(48, '⚙️ 호환 모드로 다시 시도하는 중…');
+        transcriber = null; loadedKey = '';
+        const trW = await pipeline('automatic-speech-recognition', modelId, { dtype: quant?'q8':'fp32', progress_callback:onProg });
+        transcriber = trW; loadedKey = modelId+'|'+quant; usingGPU = false;
+        out = await trW(audio, opts);
+      }else{ throw runErr; }
+    }
 
     // 4) 결과 정리
     setProg(96, '📋 자막 정리 중…');
