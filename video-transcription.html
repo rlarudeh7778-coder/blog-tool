@@ -151,7 +151,7 @@ a{color:inherit}
     </div>
     <div class="note">
       💡 모든 처리는 <b>이 브라우저 안에서만</b> 이루어집니다. 학생 녹취 파일이 외부 서버로 전송되지 않아 안전해요.<br>
-      ⏳ 받아쓰는 동안에는 화면이 잠깐 멈춘 듯 보일 수 있어요(정상). <b>긴 영상(15분↑)</b>은 아래 AI 모델을 <b>'Tiny'</b>로 두면 훨씬 빠릅니다.
+      ⏳ 받아쓰는 동안에는 화면이 잠깐 멈춘 듯 보일 수 있어요(정상). <b>한국어는 'Base' 이상</b>을 권장해요(Tiny는 빠르지만 같은 말이 반복되는 등 부정확할 수 있어요). 더 정확히 하려면 'Small' 또는 처리 속도를 '정밀 모드'로.
     </div>
   </div>
 
@@ -183,9 +183,9 @@ a{color:inherit}
       <div class="opt">
         <label>AI 모델 (정확도 ↔ 속도)</label>
         <select id="optModel">
-          <option value="Xenova/whisper-tiny">Tiny — 가장 빠름 (약 75MB)</option>
           <option value="Xenova/whisper-base" selected>Base — 권장 (약 145MB)</option>
-          <option value="Xenova/whisper-small">Small — 정확도 ↑ (약 480MB)</option>
+          <option value="Xenova/whisper-small">Small — 가장 정확 (약 480MB, 느림)</option>
+          <option value="Xenova/whisper-tiny">Tiny — 가장 빠름 (약 75MB, 정확도 낮음·반복 오류 가능)</option>
         </select>
         <div class="hint">처음 한 번만 모델을 내려받고 이후엔 캐시됩니다</div>
       </div>
@@ -386,7 +386,12 @@ async function run(){
 
     // 3) 받아쓰기
     setProg(50, '✍️ 받아쓰는 중… (긴 영상은 잠깐 멈춘 듯 보여도 처리 중이에요)');
-    const opts = { chunk_length_s:30, stride_length_s:5, return_timestamps:true, task };
+    const opts = {
+      chunk_length_s:30, stride_length_s:5, return_timestamps:true, task,
+      no_repeat_ngram_size:3,   // 같은 말 무한반복(환각) 방지
+      repetition_penalty:1.15,  // 반복 억제
+      temperature:0             // 일관된 결과
+    };
     if(lang!=='auto') opts.language = lang;   // auto면 미지정(전체 단일 언어 감지)
     const out = await transcriber(audio, opts);
 
