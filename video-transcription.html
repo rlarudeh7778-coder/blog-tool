@@ -424,8 +424,10 @@ function fmt(s){ // mm:ss
   return `${m}:${ss.toString().padStart(2,'0')}`;
 }
 function tc(s, sep){ // HH:MM:SS,mmm  (sep=',' for srt, '.' for vtt)
-  s=Math.max(0,s||0);
-  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=Math.floor(s%60), ms=Math.round((s-Math.floor(s))*1000);
+  let ms=Math.round(Math.max(0,s||0)*1000);   // 먼저 ms로 반올림 → 자리올림 안전
+  const h=Math.floor(ms/3600000); ms-=h*3600000;
+  const m=Math.floor(ms/60000);   ms-=m*60000;
+  const ss=Math.floor(ms/1000);   ms-=ss*1000;
   const p=(n,l=2)=>n.toString().padStart(l,'0');
   return `${p(h)}:${p(m)}:${p(ss)}${sep}${p(ms,3)}`;
 }
