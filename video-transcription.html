@@ -150,8 +150,9 @@ a{color:inherit}
       <button class="fdel" id="fileDel" title="삭제">×</button>
     </div>
     <div class="note">
-      💡 모든 처리는 <b>이 브라우저 안에서만</b> 이루어집니다. 학생 녹취 파일이 외부 서버로 전송되지 않아 안전해요.
-      파일이 길수록(영상 길이에 따라) 시간이 걸립니다.
+      💡 모든 처리는 <b>이 브라우저 안에서만</b> 이루어집니다. 학생 녹취 파일이 외부 서버로 전송되지 않아 안전해요.<br>
+      ⚡ 받아쓰기는 <b>백그라운드에서 실행</b>돼 화면이 멈추지 않고, <b>WebGPU 지원 시 자동 가속</b>됩니다.
+      <b>아주 긴 영상(30분↑)</b>은 아래 AI 모델을 <b>'Tiny'</b>로 바꾸면 훨씬 빠르고 가벼워요.
     </div>
   </div>
 
@@ -282,11 +283,8 @@ a{color:inherit}
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
-
-// 모델은 항상 원격(HuggingFace)에서 받아오고 브라우저 캐시에 저장
-env.allowLocalModels = false;
-env.useBrowserCache = true;
+// ⚡ AI 받아쓰기는 별도 Web Worker(백그라운드 스레드)에서 실행됩니다.
+//   → 무거운 영상에서도 화면이 멈추지 않고("응답 없음" 방지), WebGPU로 가속됩니다.
 
 const $ = id => document.getElementById(id);
 const drop = $('drop'), fileInput = $('fileInput');
@@ -347,8 +345,68 @@ async function fileToAudio(f){
   return rendered.getChannelData(0);
 }
 
-/* ---------- 받아쓰기 실행 ---------- */
-let transcriber = null, loadedModel = null, loadedQuant = null;
+/* ---------- 받아쓰기 실행 (Web Worker + WebGPU) ---------- */
+
+// 워커 소스: 별도 스레드에서 transformers.js 로 받아쓰기 (메인 화면 안 멈춤)
+const WORKER_SRC = `
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+let tr = null, key = '';
+self.onmessage = async (e) => {
+  const m = e.data;
+  if(m.type !== 'run') return;
+  try{
+    const k = m.modelId + '|' + m.device + '|' + m.quant;
+    if(!tr || key !== k){
+      tr = await pipeline('automatic-speech-recognition', m.modelId, {
+        device: m.device,
+        dtype: m.device === 'webgpu' ? 'fp16' : (m.quant ? 'q8' : 'fp32'),
+        progress_callback: p => self.postMessage({ type:'progress', data:p })
+      });
+      key = k;
+    }
+    const opts = { chunk_length_s:30, stride_length_s:5, return_timestamps:true, task:m.task };
+    if(m.lang !== 'auto') opts.language = m.lang;
+    const out = await tr(m.audio, opts);
+    self.postMessage({ type:'done', data:out });
+  }catch(err){
+    self.postMessage({ type:'error', error:(err && err.message) || String(err) });
+  }
+};
+`;
+
+let worker = null;
+function makeWorker(){
+  const blob = new Blob([WORKER_SRC], { type:'text/javascript' });
+  return new Worker(URL.createObjectURL(blob), { type:'module' });
+}
+
+// 워커에 오디오를 보내고(버퍼는 복사 대신 '이전') 결과를 기다림
+function transcribeInWorker(audio, params){
+  return new Promise((resolve, reject)=>{
+    if(!worker) worker = makeWorker();
+    const onMsg = (e)=>{
+      const m = e.data;
+      if(m.type === 'progress'){
+        const p = m.data;
+        if(p.status === 'progress' && p.total){
+          const pct = Math.round(p.progress);
+          setProg(6 + pct*0.40, `🤖 AI 모델 내려받는 중… ${pct}%  (처음 한 번만)`);
+        }
+      }else if(m.type === 'done'){
+        cleanup(); resolve(m.data);
+      }else if(m.type === 'error'){
+        cleanup(); reject(new Error(m.error));
+      }
+    };
+    const onErr = (e)=>{ cleanup(); reject(new Error(e.message || '워커 오류')); };
+    function cleanup(){ worker && worker.removeEventListener('message', onMsg); worker && worker.removeEventListener('error', onErr); }
+    worker.addEventListener('message', onMsg);
+    worker.addEventListener('error', onErr);
+    worker.postMessage({ type:'run', audio, ...params }, [audio.buffer]); // transferable
+  });
+}
 
 $('startBtn').addEventListener('click', run);
 
@@ -357,47 +415,42 @@ async function run(){
   hideErr();
   $('startBtn').disabled = true;
   $('resultCard').style.display='none';
+  $('coachCard').style.display='none';
   $('progWrap').style.display='block';
 
   const modelId = $('optModel').value;
   const quant = $('optQuant').value === 'true';
   const lang = $('optLang').value;
   const task = $('optTask').value;
+  const canGPU = !!navigator.gpu;   // WebGPU 지원 여부
 
   try{
     // 1) 오디오 추출
     setProg(3, '🎵 음성을 추출하는 중…');
-    const audio = await fileToAudio(file);
+    let audio = await fileToAudio(file);
 
-    // 2) 모델 로드 (필요할 때만)
-    if(!transcriber || loadedModel!==modelId || loadedQuant!==quant){
-      transcriber = await pipeline('automatic-speech-recognition', modelId, {
-        dtype: quant ? 'q8' : 'fp32',
-        progress_callback: p=>{
-          if(p.status==='progress' && p.total){
-            const pct = Math.round(p.progress);
-            setProg(5 + pct*0.35, `🤖 AI 모델 내려받는 중… ${pct}%  (처음 한 번만)`);
-          }else if(p.status==='ready'){
-            setProg(42,'🤖 모델 준비 완료');
-          }
-        }
-      });
-      loadedModel=modelId; loadedQuant=quant;
+    // 2) 받아쓰기 (백그라운드 워커 → 화면 안 멈춤)
+    setProg(48, canGPU ? '✍️ 받아쓰는 중… (WebGPU 가속 · 화면이 멈추지 않아요)'
+                       : '✍️ 받아쓰는 중… (화면이 멈추지 않아요)');
+    let out;
+    try{
+      out = await transcribeInWorker(audio, { modelId, quant, lang, task, device: canGPU ? 'webgpu' : 'wasm' });
+    }catch(err){
+      // WebGPU 실패 시 호환(wasm) 모드로 1회 재시도 (audio 버퍼는 이전돼 비었으므로 재추출)
+      if(canGPU){
+        setProg(46, '⚙️ 호환 모드로 다시 시도하는 중…');
+        if(worker){ worker.terminate(); worker = null; }
+        audio = await fileToAudio(file);
+        out = await transcribeInWorker(audio, { modelId, quant, lang, task, device: 'wasm' });
+      }else{ throw err; }
     }
 
-    // 3) 받아쓰기
-    setProg(48, '✍️ 받아쓰는 중… (영상이 길면 시간이 걸려요)');
-    const opts = { chunk_length_s: 30, stride_length_s: 5, return_timestamps: true, task: task };
-    if(lang!=='auto') opts.language = lang;   // auto면 언어 미지정(전체 단일 언어 감지)
-    const out = await transcriber(audio, opts);
+    // 3) 결과 정리
+    setProg(96, '📋 자막 정리 중…');
     chunks = (out.chunks||[])
       .filter(c=>c.text && c.text.trim())
       .map(c=>({ start: c.timestamp[0]??0, end: c.timestamp[1]??((c.timestamp[0]||0)+2), text: c.text.trim() }));
     if(!chunks.length && (out.text||'').trim()){ chunks=[{start:0,end:0,text:out.text.trim()}]; }
-    setProg(96, '📋 자막 정리 중…');
-
-    // 4) 결과 정리
-    chunks = chunks.filter(c=>c.text && c.text.trim());
     fullText = chunks.map(c=>c.text.trim()).join(' ').trim();
 
     setProg(100, '✅ 완료!');
