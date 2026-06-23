@@ -162,15 +162,16 @@ a{color:inherit}
       <div class="opt">
         <label>음성 언어</label>
         <select id="optLang">
-          <option value="auto" selected>🌐 자동 감지 (한국어·영어 등)</option>
-          <option value="english">English (영어)</option>
-          <option value="korean">한국어</option>
+          <option value="mixed" selected>🇰🇷+🇺🇸 한국어+영어 혼합 (구간별 인식)</option>
+          <option value="auto">🌐 자동 감지 (단일 언어)</option>
+          <option value="english">English (영어만)</option>
+          <option value="korean">한국어만</option>
           <option value="japanese">日本語</option>
           <option value="chinese">中文</option>
           <option value="spanish">Español</option>
           <option value="french">Français</option>
         </select>
-        <div class="hint">한·영이 섞였으면 '자동 감지' 추천 · 한 언어만이면 직접 지정이 더 정확</div>
+        <div class="hint">한·영이 번갈아 나오면 <b>'혼합'</b> 추천(구간별로 언어 자동 판별) · 한 언어만이면 그 언어를 직접 지정이 가장 정확</div>
       </div>
       <div class="opt">
         <label>작업 방식</label>
@@ -347,6 +348,39 @@ async function fileToAudio(f){
   return rendered.getChannelData(0);
 }
 
+/* ---------- 혼합(한+영) 받아쓰기: 짧은 구간으로 잘라 구간별 언어 자동 감지 ---------- */
+async function transcribeMixed(audio, tr){
+  const SR = 16000, WIN = 20 * SR;   // 20초 단위 (구간마다 언어를 따로 감지)
+  const total = audio.length;
+  const out = [];
+  for(let pos=0; pos<total; pos+=WIN){
+    const slice = audio.subarray(pos, Math.min(pos+WIN, total));
+    if(slice.length < SR*0.4) break;            // 0.4초 미만 자투리는 건너뜀
+    const base = pos / SR;
+    // 언어 미지정 → 이 20초 구간만 보고 한국어/영어를 자동 판별
+    const r = await tr(slice, { chunk_length_s: 30, return_timestamps: true, task: 'transcribe' });
+    (r.chunks||[]).forEach(c=>{
+      const t = (c.text||'').trim();
+      if(!t) return;
+      out.push({
+        start: (c.timestamp[0]??0) + base,
+        end:   (c.timestamp[1]??((c.timestamp[0]||0)+2)) + base,
+        text:  t
+      });
+    });
+    const done = Math.min(100, Math.round((pos+WIN)/total*100));
+    setProg(48 + Math.min(46, (pos+WIN)/total*46), `✍️ 한·영 구간별 받아쓰는 중… ${done}%`);
+  }
+  // 구간 경계에서 같은 말이 연속 중복되면 제거
+  const dedup = [];
+  for(const c of out){
+    const p = dedup[dedup.length-1];
+    if(p && p.text===c.text && Math.abs(p.start-c.start)<0.8) continue;
+    dedup.push(c);
+  }
+  return dedup;
+}
+
 /* ---------- 받아쓰기 실행 ---------- */
 let transcriber = null, loadedModel = null, loadedQuant = null;
 
@@ -386,28 +420,25 @@ async function run(){
     }
 
     // 3) 받아쓰기
-    setProg(48, '✍️ 받아쓰는 중… (영상이 길면 시간이 걸려요)');
-    const opts = {
-      chunk_length_s: 30,
-      stride_length_s: 5,
-      return_timestamps: true,
-      task: task,
-    };
-    if(lang!=='auto') opts.language = lang;
-
-    const out = await transcriber(audio, opts);
+    if(lang==='mixed'){
+      // 한국어+영어 혼합: 오디오를 짧은 구간으로 나눠 구간마다 언어를 따로 감지
+      setProg(48, '✍️ 한·영 구간별로 받아쓰는 중…');
+      chunks = await transcribeMixed(audio, transcriber);
+    }else{
+      setProg(48, '✍️ 받아쓰는 중… (영상이 길면 시간이 걸려요)');
+      const opts = { chunk_length_s: 30, stride_length_s: 5, return_timestamps: true, task: task };
+      if(lang!=='auto') opts.language = lang;   // auto면 언어 미지정(전체 단일 언어 감지)
+      const out = await transcriber(audio, opts);
+      chunks = (out.chunks||[])
+        .filter(c=>c.text && c.text.trim())
+        .map(c=>({ start: c.timestamp[0]??0, end: c.timestamp[1]??((c.timestamp[0]||0)+2), text: c.text.trim() }));
+      if(!chunks.length && (out.text||'').trim()){ chunks=[{start:0,end:0,text:out.text.trim()}]; }
+    }
     setProg(96, '📋 자막 정리 중…');
 
     // 4) 결과 정리
-    chunks = (out.chunks||[])
-      .filter(c=>c.text && c.text.trim())
-      .map(c=>({
-        start: c.timestamp[0]??0,
-        end: c.timestamp[1]??((c.timestamp[0]||0)+2),
-        text: c.text.trim()
-      }));
-    fullText = (out.text||'').trim();
-    if(!chunks.length && fullText){ chunks=[{start:0,end:0,text:fullText}]; }
+    chunks = chunks.filter(c=>c.text && c.text.trim());
+    fullText = chunks.map(c=>c.text.trim()).join(' ').trim();
 
     setProg(100, '✅ 완료!');
     renderResult();
