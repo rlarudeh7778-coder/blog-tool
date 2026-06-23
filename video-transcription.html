@@ -151,8 +151,7 @@ a{color:inherit}
     </div>
     <div class="note">
       💡 모든 처리는 <b>이 브라우저 안에서만</b> 이루어집니다. 학생 녹취 파일이 외부 서버로 전송되지 않아 안전해요.<br>
-      ⚡ 받아쓰기는 <b>백그라운드에서 실행</b>돼 화면이 멈추지 않고, <b>WebGPU 지원 시 자동 가속</b>됩니다.
-      <b>아주 긴 영상(30분↑)</b>은 아래 AI 모델을 <b>'Tiny'</b>로 바꾸면 훨씬 빠르고 가벼워요.
+      ⏳ 받아쓰는 동안에는 화면이 잠깐 멈춘 듯 보일 수 있어요(정상). <b>긴 영상(15분↑)</b>은 아래 AI 모델을 <b>'Tiny'</b>로 두면 훨씬 빠릅니다.
     </div>
   </div>
 
@@ -283,8 +282,10 @@ a{color:inherit}
 <div class="toast" id="toast"></div>
 
 <script type="module">
-// ⚡ AI 받아쓰기는 별도 Web Worker(백그라운드 스레드)에서 실행됩니다.
-//   → 무거운 영상에서도 화면이 멈추지 않고("응답 없음" 방지), WebGPU로 가속됩니다.
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
+// 모델은 항상 원격(HuggingFace)에서 받아오고 브라우저 캐시에 저장
+env.allowLocalModels = false;
+env.useBrowserCache = true;
 
 const $ = id => document.getElementById(id);
 const drop = $('drop'), fileInput = $('fileInput');
@@ -345,39 +346,8 @@ async function fileToAudio(f){
   return rendered.getChannelData(0);
 }
 
-/* ---------- 받아쓰기 실행 (Web Worker + WebGPU) ---------- */
-
-let worker = null;
-function makeWorker(){
-  // 같은 출처의 실제 워커 파일 사용 (blob 모듈워커보다 CDN import가 안정적)
-  return new Worker('transcribe-worker.js', { type:'module' });
-}
-
-// 워커에 오디오를 보내고(버퍼는 복사 대신 '이전') 결과를 기다림
-function transcribeInWorker(audio, params){
-  return new Promise((resolve, reject)=>{
-    if(!worker) worker = makeWorker();
-    const onMsg = (e)=>{
-      const m = e.data;
-      if(m.type === 'progress'){
-        const p = m.data;
-        if(p.status === 'progress' && p.total){
-          const pct = Math.round(p.progress);
-          setProg(6 + pct*0.40, `🤖 AI 모델 내려받는 중… ${pct}%  (처음 한 번만)`);
-        }
-      }else if(m.type === 'done'){
-        cleanup(); resolve(m.data);
-      }else if(m.type === 'error'){
-        cleanup(); reject(new Error(m.error));
-      }
-    };
-    const onErr = (e)=>{ cleanup(); if(worker){worker.terminate(); worker=null;} reject(new Error(e.message || 'engine-load-failed')); };
-    function cleanup(){ worker && worker.removeEventListener('message', onMsg); worker && worker.removeEventListener('error', onErr); }
-    worker.addEventListener('message', onMsg);
-    worker.addEventListener('error', onErr);
-    worker.postMessage({ type:'run', audio, ...params }, [audio.buffer]); // transferable
-  });
-}
+/* ---------- 받아쓰기 실행 (메인 스레드 · 검증된 설정) ---------- */
+let transcriber = null, loadedModel = null, loadedQuant = null;
 
 $('startBtn').addEventListener('click', run);
 
@@ -399,11 +369,28 @@ async function run(){
     setProg(3, '🎵 음성을 추출하는 중…');
     const audio = await fileToAudio(file);
 
-    // 2) 받아쓰기 (백그라운드 워커 → 화면 안 멈춤)
-    setProg(48, '✍️ 받아쓰는 중… (화면이 멈추지 않아요)');
-    const out = await transcribeInWorker(audio, { modelId, quant, lang, task });
+    // 2) 모델 로드 (필요할 때만 · 처음 한 번만 내려받음)
+    if(!transcriber || loadedModel!==modelId || loadedQuant!==quant){
+      setProg(6, '🤖 AI 모델 준비 중…');
+      transcriber = await pipeline('automatic-speech-recognition', modelId, {
+        dtype: quant ? 'q8' : 'fp32',
+        progress_callback: p=>{
+          if(p.status==='progress' && p.total){
+            const pct = Math.round(p.progress);
+            setProg(6 + pct*0.40, `🤖 AI 모델 내려받는 중… ${pct}%  (처음 한 번만)`);
+          }
+        }
+      });
+      loadedModel=modelId; loadedQuant=quant;
+    }
 
-    // 3) 결과 정리
+    // 3) 받아쓰기
+    setProg(50, '✍️ 받아쓰는 중… (긴 영상은 잠깐 멈춘 듯 보여도 처리 중이에요)');
+    const opts = { chunk_length_s:30, stride_length_s:5, return_timestamps:true, task };
+    if(lang!=='auto') opts.language = lang;   // auto면 미지정(전체 단일 언어 감지)
+    const out = await transcriber(audio, opts);
+
+    // 4) 결과 정리
     setProg(96, '📋 자막 정리 중…');
     chunks = (out.chunks||[])
       .filter(c=>c.text && c.text.trim())
@@ -416,8 +403,8 @@ async function run(){
   }catch(e){
     console.error(e);
     const msg=(e&&e.message)||String(e);
-    if(/engine-load-failed|Failed to fetch|dynamically imported|importScripts|NetworkError/i.test(msg)){
-      showErr('받아쓰기 엔진을 불러오지 못했어요.\n• 인터넷 연결을 확인하고 페이지를 새로고침해 주세요.\n• 회사/학교 네트워크나 광고차단 확장프로그램이 cdn.jsdelivr.net 접속을 막을 수 있어요.\n• 크롬/엣지 최신 브라우저를 권장합니다.\n\n(원인: '+msg+')');
+    if(/Failed to fetch|dynamically imported|NetworkError|load model|Unauthorized/i.test(msg)){
+      showErr('받아쓰기 엔진/모델을 불러오지 못했어요.\n• 인터넷 연결을 확인하고 페이지를 새로고침(Ctrl+Shift+R) 해주세요.\n• 광고차단 확장프로그램이 cdn.jsdelivr.net 접속을 막을 수 있어요(이 사이트에서 잠시 끄기).\n• 크롬/엣지 최신 브라우저 권장.\n\n(원인: '+msg+')');
     }else{
       showErr('받아쓰기 중 오류가 발생했어요.\n'+msg);
     }
