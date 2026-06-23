@@ -347,39 +347,10 @@ async function fileToAudio(f){
 
 /* ---------- 받아쓰기 실행 (Web Worker + WebGPU) ---------- */
 
-// 워커 소스: 별도 스레드에서 transformers.js 로 받아쓰기 (메인 화면 안 멈춤)
-const WORKER_SRC = `
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
-env.allowLocalModels = false;
-env.useBrowserCache = true;
-let tr = null, key = '';
-self.onmessage = async (e) => {
-  const m = e.data;
-  if(m.type !== 'run') return;
-  try{
-    const k = m.modelId + '|' + m.device + '|' + m.quant;
-    if(!tr || key !== k){
-      tr = await pipeline('automatic-speech-recognition', m.modelId, {
-        device: m.device,
-        dtype: m.device === 'webgpu' ? 'fp16' : (m.quant ? 'q8' : 'fp32'),
-        progress_callback: p => self.postMessage({ type:'progress', data:p })
-      });
-      key = k;
-    }
-    const opts = { chunk_length_s:30, stride_length_s:5, return_timestamps:true, task:m.task };
-    if(m.lang !== 'auto') opts.language = m.lang;
-    const out = await tr(m.audio, opts);
-    self.postMessage({ type:'done', data:out });
-  }catch(err){
-    self.postMessage({ type:'error', error:(err && err.message) || String(err) });
-  }
-};
-`;
-
 let worker = null;
 function makeWorker(){
-  const blob = new Blob([WORKER_SRC], { type:'text/javascript' });
-  return new Worker(URL.createObjectURL(blob), { type:'module' });
+  // 같은 출처의 실제 워커 파일 사용 (blob 모듈워커보다 CDN import가 안정적)
+  return new Worker('transcribe-worker.js', { type:'module' });
 }
 
 // 워커에 오디오를 보내고(버퍼는 복사 대신 '이전') 결과를 기다림
@@ -400,7 +371,7 @@ function transcribeInWorker(audio, params){
         cleanup(); reject(new Error(m.error));
       }
     };
-    const onErr = (e)=>{ cleanup(); reject(new Error(e.message || '워커 오류')); };
+    const onErr = (e)=>{ cleanup(); if(worker){worker.terminate(); worker=null;} reject(new Error(e.message || 'engine-load-failed')); };
     function cleanup(){ worker && worker.removeEventListener('message', onMsg); worker && worker.removeEventListener('error', onErr); }
     worker.addEventListener('message', onMsg);
     worker.addEventListener('error', onErr);
@@ -457,7 +428,12 @@ async function run(){
     renderResult();
   }catch(e){
     console.error(e);
-    showErr('받아쓰기 중 오류가 발생했어요.\n'+(e.message||e));
+    const msg=(e&&e.message)||String(e);
+    if(/engine-load-failed|Failed to fetch|dynamically imported|importScripts|NetworkError/i.test(msg)){
+      showErr('받아쓰기 엔진을 불러오지 못했어요.\n• 인터넷 연결을 확인하고 페이지를 새로고침해 주세요.\n• 회사/학교 네트워크나 광고차단 확장프로그램이 cdn.jsdelivr.net 접속을 막을 수 있어요.\n• 크롬/엣지 최신 브라우저를 권장합니다.');
+    }else{
+      showErr('받아쓰기 중 오류가 발생했어요.\n'+msg);
+    }
   }finally{
     $('startBtn').disabled = false;
     setTimeout(()=>{ $('progWrap').style.display='none'; }, 900);
