@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스레드 변환기 · 리치원블로그</title>
+<style>
+  :root{--bg:#0f1115;--card:#171a21;--line:#2a2f3a;--txt:#e8eaed;--sub:#9aa3b2;--accent:#6c8cff;--accent2:#36d399;--bad:#ff6b6b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:"Pretendard","Malgun Gothic","Segoe UI",-apple-system,system-ui,sans-serif;line-height:1.65}
+  .wrap{max-width:720px;margin:0 auto;padding:22px 18px 60px}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  h1{font-size:23px;margin:0 0 4px;letter-spacing:-.5px}
+  .sub{color:var(--sub);font-size:14px;margin:0 0 16px}
+  a.back{color:var(--sub);font-size:13px;text-decoration:none;border:1px solid var(--line);padding:6px 11px;border-radius:20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+  label{display:block;font-weight:600;font-size:14px;margin:0 0 7px}
+  input,textarea,select{width:100%;background:#0c0e13;border:1px solid var(--line);color:var(--txt);border-radius:11px;padding:13px;font-family:inherit;font-size:15px;resize:vertical}
+  textarea{min-height:90px}
+  .keyrow{display:flex;gap:8px}.keyrow input{flex:1}
+  .status{display:inline-flex;align-items:center;gap:7px;font-size:13px;margin-top:8px}
+  .dot{width:8px;height:8px;border-radius:50%;background:#666}.dot.ok{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+  .hint{color:var(--sub);font-size:12px;margin-top:6px}
+  details{margin-top:12px}summary{cursor:pointer;color:var(--accent);font-size:13px;font-weight:600}
+  button.go{margin-top:6px;width:100%;padding:15px;border:none;border-radius:13px;background:linear-gradient(90deg,var(--accent),#8a7bff);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+  button.go:disabled{opacity:.55;cursor:wait}
+  button.sm{background:var(--accent2);color:#06241a;border:none;border-radius:10px;padding:0 16px;font-weight:700;cursor:pointer}
+  .out{white-space:pre-wrap;font-size:15px;line-height:1.85}
+  .variant{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:13px}
+  .vh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .vt{font-weight:700;color:var(--accent);font-size:14px}
+  .copy{background:var(--accent2);color:#06241a;border:none;border-radius:8px;padding:7px 13px;font-weight:700;cursor:pointer;font-size:13px}
+  .thumb{background:#262b36;color:#cfe;border:1px solid var(--line);border-radius:8px;padding:7px 13px;font-weight:700;cursor:pointer;font-size:13px}
+  .err{color:var(--bad);font-size:14px}
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid #fff5;border-top-color:#fff;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;margin-right:7px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .studio{background:var(--card);border:1px solid var(--accent);border-radius:16px;padding:18px;margin:0 0 14px}
+  .studio h3{margin:0 0 12px;font-size:16px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+  .chip{padding:7px 12px;border-radius:20px;border:1px solid var(--line);background:#0c0e13;color:var(--sub);font-size:13px;cursor:pointer}
+  .chip.on{border-color:var(--accent);color:#fff;background:#1a2236}
+  .cv-wrap{display:flex;justify-content:center;margin:14px 0}
+  canvas.preview{width:100%;max-width:300px;border-radius:14px;box-shadow:0 8px 30px #0008}
+  .studio .small{font-size:12px;color:var(--sub)}
+  .studio textarea{min-height:70px}
+  .dlrow{display:flex;gap:10px;margin-top:6px;align-items:center}.dlrow button{flex:1}
+  .save{background:var(--accent2);color:#06241a;border:none;border-radius:11px;padding:13px;font-weight:700;cursor:pointer;font-size:15px}
+  .closeb{background:#262b36;color:var(--txt);border:1px solid var(--line);border-radius:11px;padding:13px;font-weight:600;cursor:pointer;font-size:14px;flex:0 0 auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1>🧵 스레드 변환기</h1></div>
+    <a class="back" href="index.html">← 글쓰기 툴</a>
+  </div>
+  <p class="sub">주제만 적으면 유명한 글들의 느낌으로 자연스럽게 바꾸고, 후킹 문구 썸네일까지 만들어줍니다.</p>
+
+  <!-- API 키 -->
+  <div class="card">
+    <label>Claude API 키</label>
+    <div class="keyrow">
+      <input id="apikey" type="password" placeholder="sk-ant-... (기존 글쓰기 툴과 같은 키 자동 인식)">
+      <button class="sm" onclick="saveKey()" id="savebtn">저장</button>
+    </div>
+    <div class="status"><span class="dot" id="dot"></span><span id="alabel">API 키 미설정</span></div>
+    <div class="hint">키는 이 브라우저에만 저장됩니다(localStorage <code>ak_claude</code>). console.anthropic.com 에서 발급.</div>
+  </div>
+
+  <!-- 입력 -->
+  <div class="card">
+    <label>무슨 글을 쓰고 싶나요?</label>
+    <input id="topic" placeholder="예: 새벽 기상 습관 / 육아 / 사이드프로젝트 수익화">
+    <div style="height:14px"></div>
+    <label>하고 싶은 말 (선택)</label>
+    <textarea id="draft" placeholder="편하게 적으세요. 비워두면 주제만 보고 알아서 써줍니다."></textarea>
+    <details>
+      <summary>⚙ 스타일 / 참고할 유명한 글 바꾸기</summary>
+      <div style="height:10px"></div>
+      <label>스타일</label>
+      <select id="style">
+        <option value="auto">자동 (주제에 맞게)</option>
+        <option value="insight">인사이트형</option>
+        <option value="empathy">공감형</option>
+        <option value="list">정보·리스트형</option>
+        <option value="story">스토리·후킹형</option>
+      </select>
+      <div style="height:12px"></div>
+      <label>참고할 유명한 글 (비워두면 기본 제공)</label>
+      <textarea id="refs" placeholder="잘 터진 유명한 스레드 글들을 붙여넣으면 그 느낌으로 변환합니다."></textarea>
+    </details>
+    <div style="height:16px"></div>
+    <button class="go" id="goBtn" onclick="run()">✨ 자연스럽게 변환</button>
+  </div>
+
+  <div id="result"></div>
+
+  <!-- 썸네일 스튜디오 -->
+  <div class="studio" id="studio" style="display:none">
+    <h3>🖼 썸네일 만들기</h3>
+    <label>후킹 문구 (이미지에 들어갈 글)</label>
+    <textarea id="thumbText" oninput="drawThumb()" placeholder="여기 글자가 이미지에 그대로 들어갑니다."></textarea>
+    <div class="small">짧고 강할수록 좋아요. 줄바꿈(Enter)도 반영됩니다.</div>
+    <div class="chips" id="hookStyleChips" style="margin-top:8px"></div>
+    <button class="thumb" style="margin-top:6px" id="hookBtn" onclick="suggestHooks()">✨ 후킹 문구 추천받기</button>
+    <div id="hookSuggest" class="chips" style="margin-top:8px"></div>
+
+    <label style="margin-top:14px">큰 이모지 (선택)</label>
+    <input id="thumbEmoji" oninput="drawThumb()" placeholder="문구 위에 크게 들어갈 이모지 (예: 🔥)" maxlength="6">
+    <div class="chips" id="emojiPalette"></div>
+
+    <label style="margin-top:14px">배경</label>
+    <div class="chips" id="bgModeChips"></div>
+    <div id="photoCtrl" style="display:none">
+      <input id="bgKeyword" placeholder="사진 키워드(영어 권장) 예: baby, money, coffee" oninput="reloadPhoto()">
+      <div class="chips" id="bgPresets"></div>
+      <div class="dlrow">
+        <button class="thumb" onclick="shufflePhoto()">🎲 다른 사진</button>
+        <span class="small" style="flex:1">어둡게: <input type="range" id="overlay" min="0" max="80" value="45" oninput="drawThumb()" style="vertical-align:middle"></span>
+      </div>
+      <div class="hint">키워드 사진이 안 나오면 자동으로 랜덤 사진으로 대체됩니다.</div>
+    </div>
+
+    <label style="margin-top:14px">색 테마 (그라데이션/글자색)</label>
+    <div class="chips" id="themeChips"></div>
+    <label style="margin-top:10px">비율</label>
+    <div class="chips" id="ratioChips"></div>
+    <label style="margin-top:10px">글자 정렬</label>
+    <div class="chips" id="alignChips"></div>
+    <label style="margin-top:10px">글자 크기</label>
+    <div class="dlrow">
+      <input type="range" id="fontSize" min="40" max="180" value="100" oninput="setFontSize(this.value)" style="flex:1">
+      <button class="thumb" onclick="resetFontSize()">자동맞춤</button>
+    </div>
+    <label style="margin-top:14px">아래 한 줄 (선택 · 계정/꼬리말)</label>
+    <input id="thumbHandle" oninput="drawThumb()" placeholder="예: @내계정  또는  비워두기">
+
+    <div class="cv-wrap"><canvas id="thumbCanvas" class="preview"></canvas></div>
+    <div class="dlrow">
+      <button class="save" onclick="downloadThumb()">⬇ 이미지 저장 (PNG)</button>
+      <button class="closeb" onclick="closeThumb()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=(id)=>document.getElementById(id);
+const AK='ak_claude';
+
+/* ───── API 키 ───── */
+function getKey(){ return (sessionStorage.getItem(AK)||localStorage.getItem(AK)||'').replace(/[^\x20-\x7E]/g,'').trim(); }
+function setStatus(ok){ $('dot').className='dot'+(ok?' ok':''); $('alabel').textContent=ok?'Claude 연결됨':'API 키 미설정'; }
+function loadKey(){ const k=getKey(); if(k){$('apikey').value=k;setStatus(true);} }
+async function saveKey(){
+  const k=$('apikey').value.replace(/[^\x20-\x7E]/g,'').trim();
+  if(!k){alert('API 키를 입력해주세요');return;}
+  const btn=$('savebtn'); btn.textContent='확인중'; btn.disabled=true;
+  let ok=false;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:5,messages:[{role:'user',content:'hi'}]})});
+    const d=await r.json(); ok=!d.error;
+  }catch(e){ ok=false; }
+  btn.textContent='저장'; btn.disabled=false;
+  if(ok){ sessionStorage.setItem(AK,k); localStorage.setItem(AK,k); setStatus(true); }
+  else alert('등록 실패 — API 키를 다시 확인해주세요');
+}
+loadKey();
+
+async function callClaude(sys,user,maxTokens){
+  const k=getKey(); if(!k) throw new Error('먼저 위에서 Claude API 키를 등록해주세요.');
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens||3000,system:sys,messages:[{role:'user',content:user}]})});
+  const d=await r.json(); if(d.error) throw new Error(d.error.message||'API 오류');
+  const t=d.content&&d.content.find(b=>b.type==='text'); return t?(t.text||'').trim():'';
+}
+
+/* ───── 프롬프트 (단독 Node 서버판과 동일) ───── */
+const DEFAULT_REFERENCES=`
+[예시1·인사이트형] 3년 동안 매일 글을 썼다. / 그래서 깨달은 단 하나. / 재능 있는 사람은 못 이긴다. / 근데 꾸준한 사람은 재능을 이긴다. / 오늘 한 줄이라도 써라.
+[예시2·공감형] 일요일 밤 11시. / 내일 출근 생각에 잠이 안 온다. / 나만 이런 거 아니죠? / 사실 다들 똑같이 버티고 있는 거였어.
+[예시3·리스트형] 퇴근 후 1시간으로 인생 바꾼 루틴(저장 추천) / 1. 폰 다른 방에 두기 / 2. 딱 25분 집중 / 3. 끝나면 한 줄 기록 / 4. 내일의 나에게 메모 / 5. 바로 자기
+[예시4·반전형] 열심히 하지 마라. / 대신 '꾸준히' 해라. / 열심히는 3일 가고, 꾸준히는 3년 간다.
+[예시5·스토리형] 이거 모르고 6개월을 날렸다. / 완벽하게 하려 했다. / 근데 완벽한 시작은 없더라. / 그냥 오늘 시작한 사람이 이긴다.`;
+const SYSTEM_PROMPT=`당신은 한국어 스레드(Threads) 바이럴 카피라이터입니다. 공유·리포스트가 많이 나오는 글을 씁니다.
+공식: 첫 줄(훅)에서 멈추게 / 한 줄에 한 생각, 짧게 끊고 여백 / 두괄식 / '나도 그렇다·퍼가고 싶다' 한 줄 / 마지막에 자연스러운 행동유도(공유·저장·공감) / 사람 냄새 나는 말투, AI티·과장·이모지 남발 금지.
+규칙: 레퍼런스의 느낌·리듬만 참고하고 절대 베끼지 말 것. 자연스러운 한국어. 설명 없이 완성된 글만. 정확히 2개 버전, 사이는 '===' 한 줄로 구분.`;
+const HOOK_SYSTEMS={
+ clickbait:`당신은 클릭을 부르는 한국어 썸네일 카피라이터입니다. 짧고 자극적인 후킹 문구를 만듭니다.
+규칙: 한 문구 공백포함 16자 내외 / 궁금증·충격·손해회피·숫자·반전 활용(내용과 연결) / 욕설·혐오·허위 금지 / 어울리는 이모지 1개 / 코드블록 없이 JSON 배열만: [{"text":"문구","emoji":"🔥"}] 정확히 4개.`,
+ empathy:`당신은 공감을 부르는 한국어 썸네일 카피라이터입니다. "이거 완전 내 얘기" 싶어 저장·공유하고 싶게 만드는 문구를 만듭니다.
+규칙: 한 문구 공백포함 18자 내외 / 보편적 경험·위로·뭉클함·솔직함 / 주어진 글의 감정·결을 그대로 살림 / 과장·허위 금지 / 따뜻한 이모지 1개 / 코드블록 없이 JSON 배열만: [{"text":"문구","emoji":"🥹"}] 정확히 4개.`
+};
+function safeJSON(s){ let t=s.trim().replace(/^```[a-z]*\s*/i,'').replace(/```$/,'').trim(); const a=t.indexOf('['),b=t.lastIndexOf(']'); if(a>=0&&b>a)t=t.slice(a,b+1); return JSON.parse(t); }
+
+/* ───── 변환 ───── */
+async function run(){
+  const topic=$('topic').value.trim(), draft=$('draft').value.trim();
+  const style=$('style').value, refs=$('refs').value.trim()||DEFAULT_REFERENCES.trim();
+  const box=$('result'), btn=$('goBtn');
+  if(!topic&&!draft){box.innerHTML='<p class="err">주제나 하고 싶은 말을 입력해주세요.</p>';return;}
+  const styleMap={auto:'주제에 맞게 알아서',insight:'인사이트형',empathy:'공감형',list:'정보·리스트형(번호 정리)',story:'스토리·후킹형'};
+  const user=`# 참고할 유명한 스레드 글(느낌만 참고, 베끼지 말 것)\n${refs}\n\n# 사용자가 쓰고 싶은 것\n- 주제: ${topic||'(없음)'}\n- 초안: ${draft||'(없음 — 주제만 보고 써줘)'}\n- 스타일: ${styleMap[style]}\n\n# 할 일\n위 느낌으로 공유·리포스트 잘 나올 스레드 글 2개 버전을 자연스럽게. 설명 없이 완성 글만, 두 버전 사이 '===' 한 줄.`;
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI가 쓰는 중…'; box.innerHTML='';
+  try{
+    const text=await callClaude(SYSTEM_PROMPT,user,3000);
+    const versions=text.split(/\n\s*={3,}\s*\n/).map(s=>s.trim()).filter(Boolean);
+    box.innerHTML=(versions.length?versions:[text]).map((v,i)=>`
+      <div class="variant"><div class="vh"><span class="vt">버전 ${i+1}</span>
+        <div style="display:flex;gap:8px"><button class="thumb" onclick="openThumb(this)">🖼 썸네일</button>
+        <button class="copy" onclick="copyV(this)">복사</button></div></div>
+        <div class="out" data-copy>${esc(v)}</div></div>`).join('');
+  }catch(e){ box.innerHTML='<div class="card"><p class="err">⚠ '+esc(e.message)+'</p><p class="hint">서버 일시 오류면 잠시 후 다시. 키 문제면 위에서 다시 등록.</p></div>'; }
+  finally{ btn.disabled=false; btn.innerHTML='✨ 자연스럽게 변환'; }
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function copyV(b){const t=b.closest('.variant').querySelector('[data-copy]').innerText;navigator.clipboard.writeText(t).then(()=>{b.textContent='복사됨 ✔';setTimeout(()=>b.textContent='복사',1500);});}
+
+/* ───── 썸네일 ───── */
+const THEMES=[
+  {name:'미드나잇',bg:['#1b2a4a','#0d1426'],fg:'#fff',accent:'#6c8cff'},
+  {name:'네온',bg:['#241b3a','#0e0a1a'],fg:'#fff',accent:'#b388ff'},
+  {name:'선셋',bg:['#ff7e5f','#feb47b'],fg:'#2a1407',accent:'#7a2e0e'},
+  {name:'민트',bg:['#11998e','#38ef7d'],fg:'#04231c',accent:'#04231c'},
+  {name:'모노',bg:['#1a1a1a','#000'],fg:'#fff',accent:'#ffd24a'},
+  {name:'페이퍼',bg:['#f5efe2','#e7ddc8'],fg:'#241d12',accent:'#b9844a'},
+  {name:'블러시',bg:['#ffdde1','#ee9ca7'],fg:'#3a1620',accent:'#a13b52'},
+];
+const RATIOS=[{name:'정사각형 1:1',w:1080,h:1080},{name:'세로 4:5',w:1080,h:1350}];
+const ALIGNS=[{name:'가운데',v:'center'},{name:'왼쪽',v:'left'}];
+const BGMODES=[{name:'🎨 그라데이션',v:'grad'},{name:'🖼 무료 사진',v:'photo'}];
+const EMOJIS=['🔥','😱','💸','✅','👀','🚨','💯','⚡','🤯','😭','🥹','🍼','❤️','💀','🙅'];
+const BG_PRESETS=[['👶 육아','baby'],['👨‍👩‍👧 가족','family'],['💼 일','work'],['💰 돈','money'],['🌅 아침','morning'],['☕ 커피','coffee'],['🏙 도시','city'],['🌿 자연','nature'],['📚 책','books'],['💪 운동','fitness']];
+const HOOKSTYLES=[{name:'🥹 공감형',v:'empathy'},{name:'🔥 자극적',v:'clickbait'}];
+let curTheme=0,curRatio=1,curAlign=0,bgMode='grad',photoSeed=1,bgImg=null,photoTimer=null;
+let hookStyle='empathy',currentVersionText='',fontSizeOverride=null;
+
+function chipHTML(arr,sel,fn){return arr.map((x,i)=>`<span class="chip ${i===sel?'on':''}" onclick="${fn}(${i})">${x.name}</span>`).join('');}
+function renderChips(){
+  $('themeChips').innerHTML=chipHTML(THEMES,curTheme,'pickTheme');
+  $('ratioChips').innerHTML=chipHTML(RATIOS,curRatio,'pickRatio');
+  $('alignChips').innerHTML=chipHTML(ALIGNS,curAlign,'pickAlign');
+  $('bgModeChips').innerHTML=BGMODES.map(m=>`<span class="chip ${m.v===bgMode?'on':''}" onclick="pickBgMode('${m.v}')">${m.name}</span>`).join('');
+  $('emojiPalette').innerHTML=EMOJIS.map(e=>`<span class="chip" style="font-size:18px" onclick="pickEmoji('${e}')">${e}</span>`).join('');
+  $('bgPresets').innerHTML=BG_PRESETS.map(p=>`<span class="chip" onclick="pickPreset('${p[1]}')">${p[0]}</span>`).join('');
+  $('hookStyleChips').innerHTML=HOOKSTYLES.map(s=>`<span class="chip ${s.v===hookStyle?'on':''}" onclick="pickHookStyle('${s.v}')">${s.name}</span>`).join('');
+}
+function pickTheme(i){curTheme=i;renderChips();drawThumb();}
+function pickRatio(i){curRatio=i;renderChips();drawThumb();}
+function pickAlign(i){curAlign=i;renderChips();drawThumb();}
+function pickEmoji(e){$('thumbEmoji').value=e;drawThumb();}
+function pickPreset(q){$('bgKeyword').value=q;reloadPhoto();}
+function pickHookStyle(v){hookStyle=v;renderChips();}
+function setFontSize(v){fontSizeOverride=+v;drawThumb();}
+function resetFontSize(){fontSizeOverride=null;drawThumb();}
+function pickBgMode(v){bgMode=v;$('photoCtrl').style.display=v==='photo'?'block':'none';renderChips();if(v==='photo')loadPhoto();else drawThumb();}
+function shufflePhoto(){photoSeed=Math.floor(Math.random()*99999)+1;loadPhoto();}
+function reloadPhoto(){clearTimeout(photoTimer);photoTimer=setTimeout(loadPhoto,450);}
+function weserv(inner){return 'https://images.weserv.nl/?url='+encodeURIComponent(inner);}
+function loadPhoto(){
+  const q=($('bgKeyword').value||'').trim();
+  bgImg=null; drawThumb();
+  const tryLoad=(url,onFail)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>{bgImg=im;drawThumb();};im.onerror=onFail;im.src=url;};
+  if(q){ tryLoad(weserv(`loremflickr.com/1080/1350/${encodeURIComponent(q)}?lock=${photoSeed}`),
+          ()=>tryLoad(weserv(`picsum.photos/seed/${photoSeed}/1080/1350`),()=>{bgImg=null;drawThumb();})); }
+  else { tryLoad(weserv(`picsum.photos/seed/${photoSeed}/1080/1350`),()=>{bgImg=null;drawThumb();}); }
+}
+
+async function suggestHooks(){
+  const btn=$('hookBtn'),box=$('hookSuggest');
+  const topic=$('topic').value.trim();
+  const draft=currentVersionText||$('draft').value.trim()||$('thumbText').value.trim();
+  btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spin"></span>문구 뽑는 중…';
+  try{
+    const flavor=hookStyle==='empathy'?'공감되고 마음을 건드리는':'클릭을 부르는 자극적인';
+    const user=`주제: ${topic||'(없음)'}\n글 전체:\n${(draft||'').slice(0,900)}\n\n위 글의 감정과 결을 살려, ${flavor} 썸네일 후킹 문구 4개를 JSON 배열로 줘.`;
+    const out=await callClaude(HOOK_SYSTEMS[hookStyle],user,800);
+    let hooks; try{hooks=safeJSON(out);}catch{hooks=[{text:out.split('\n')[0].slice(0,18),emoji:hookStyle==='empathy'?'🥹':'🔥'}];}
+    box.innerHTML=hooks.map(h=>{const txt=(h.emoji?h.emoji+' ':'')+h.text;return `<span class="chip" style="white-space:normal" onclick='useHook(${JSON.stringify(JSON.stringify(h))})'>${esc(txt)}</span>`;}).join('')||'<span class="small">문구를 못 만들었어요. 다시 시도.</span>';
+  }catch(e){ box.innerHTML='<span class="small">⚠ '+esc(e.message)+'</span>'; }
+  finally{ btn.disabled=false; btn.textContent=old; }
+}
+function useHook(s){const h=JSON.parse(s);$('thumbText').value=h.text||'';if(h.emoji)$('thumbEmoji').value=h.emoji;drawThumb();}
+
+function firstHook(text){const l=text.split('\n').map(s=>s.trim()).filter(Boolean);if(!l.length)return '';let h=l[0];if(h.length<=14&&l[1]&&(h.length+l[1].length)<=34)h+='\n'+l[1];return h;}
+function openThumb(btn){
+  const text=btn.closest('.variant').querySelector('[data-copy]').innerText;
+  currentVersionText=text; $('thumbText').value=firstHook(text);
+  bgMode='grad';bgImg=null;fontSizeOverride=null;$('fontSize').value=100;
+  $('photoCtrl').style.display='none';$('hookSuggest').innerHTML='';
+  renderChips(); const s=$('studio');s.style.display='block';drawThumb();s.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function closeThumb(){$('studio').style.display='none';}
+function wrapText(ctx,text,maxW){
+  const out=[];
+  text.split('\n').forEach(para=>{
+    if(!para.trim()){out.push('');return;}
+    let line='';
+    para.split(' ').forEach(word=>{
+      const test=line?line+' '+word:word;
+      if(ctx.measureText(test).width<=maxW){line=test;return;}
+      if(line){out.push(line);line='';}
+      if(ctx.measureText(word).width>maxW){let c='';for(const ch of word){if(ctx.measureText(c+ch).width<=maxW)c+=ch;else{if(c)out.push(c);c=ch;}}line=c;}else line=word;
+    });
+    if(line)out.push(line);
+  });
+  return out;
+}
+function drawThumb(){
+  const cv=$('thumbCanvas');if(!cv)return;
+  const r=RATIOS[curRatio],t=THEMES[curTheme];
+  cv.width=r.w;cv.height=r.h;
+  const ctx=cv.getContext('2d');
+  const ff='"Pretendard","Malgun Gothic","Apple SD Gothic Neo","Segoe UI","Apple Color Emoji","Segoe UI Emoji",system-ui,sans-serif';
+  const onPhoto=bgMode==='photo';
+  if(onPhoto&&bgImg){
+    const ir=bgImg.width/bgImg.height,cr=r.w/r.h;let dw,dh,dx,dy;
+    if(ir>cr){dh=r.h;dw=dh*ir;dx=(r.w-dw)/2;dy=0;}else{dw=r.w;dh=dw/ir;dx=0;dy=(r.h-dh)/2;}
+    ctx.drawImage(bgImg,dx,dy,dw,dh);
+    const ov=(+$('overlay').value||45)/100;ctx.fillStyle='rgba(0,0,0,'+ov+')';ctx.fillRect(0,0,r.w,r.h);
+  }else if(onPhoto&&!bgImg){
+    ctx.fillStyle='#11141b';ctx.fillRect(0,0,r.w,r.h);
+    ctx.fillStyle='#9aa3b2';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`600 ${Math.round(r.w*0.045)}px ${ff}`;
+    ctx.fillText('사진 불러오는 중…',r.w/2,r.h/2);return;
+  }else{
+    const g=ctx.createLinearGradient(0,0,r.w*0.4,r.h);g.addColorStop(0,t.bg[0]);g.addColorStop(1,t.bg[1]);ctx.fillStyle=g;ctx.fillRect(0,0,r.w,r.h);
+    const vg=ctx.createRadialGradient(r.w/2,r.h*0.42,r.w*0.2,r.w/2,r.h*0.5,r.w*0.8);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.18)');ctx.fillStyle=vg;ctx.fillRect(0,0,r.w,r.h);
+  }
+  const fg=onPhoto?'#fff':t.fg, accent=onPhoto?'#fff':t.accent, align=ALIGNS[curAlign].v;
+  const pad=Math.round(r.w*0.09),maxW=r.w-pad*2,cx=align==='center'?r.w/2:pad;
+  const emoji=($('thumbEmoji').value||'').trim();
+  const es=emoji?Math.round(r.w*0.17):0, gap=emoji?Math.round(r.w*0.025):0;
+  const text=($('thumbText').value||'여기에 후킹 문구').trim();
+  const availTop=r.h*0.13,availH=r.h*0.74,textBudget=availH-es-gap;
+  let size,lines,lh;
+  if(fontSizeOverride!=null){size=Math.round(r.w*(fontSizeOverride/1000));ctx.font=`800 ${size}px ${ff}`;lines=wrapText(ctx,text,maxW);lh=size*1.28;}
+  else{size=Math.round(r.w*0.10);for(;size>=28;size-=2){ctx.font=`800 ${size}px ${ff}`;lines=wrapText(ctx,text,maxW);lh=size*1.28;if(lines.length*lh<=textBudget)break;}const fs=$('fontSize');if(fs)fs.value=Math.min(180,Math.max(40,Math.round(size/r.w*1000)));}
+  const textH=lines.length*lh,totalH=es+gap+textH;
+  let y=availTop+Math.max(0,(availH-totalH)/2);
+  const shadow=()=>{if(onPhoto){ctx.shadowColor='rgba(0,0,0,0.6)';ctx.shadowBlur=18;ctx.shadowOffsetY=2;}};
+  const noShadow=()=>{ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;};
+  ctx.textAlign=align==='center'?'center':'left';ctx.textBaseline='top';
+  if(emoji){shadow();ctx.font=`400 ${es}px ${ff}`;ctx.fillText(emoji,cx,y);noShadow();y+=es+gap;}
+  else if(!onPhoto){const bw=Math.round(r.w*0.12),bh=10;ctx.fillStyle=accent;ctx.fillRect(align==='center'?r.w/2-bw/2:pad,y-bh-Math.round(r.h*0.02),bw,bh);}
+  shadow();ctx.fillStyle=fg;ctx.font=`800 ${size}px ${ff}`;lines.forEach(ln=>{ctx.fillText(ln,cx,y);y+=lh;});noShadow();
+  const handle=($('thumbHandle').value||'').trim();
+  if(handle){shadow();ctx.font=`600 ${Math.round(r.w*0.034)}px ${ff}`;ctx.globalAlpha=0.9;ctx.fillStyle=fg;ctx.fillText(handle,cx,r.h*0.9);ctx.globalAlpha=1;noShadow();}
+}
+function downloadThumb(){const cv=$('thumbCanvas');try{const a=document.createElement('a');a.download='threads-thumbnail.png';a.href=cv.toDataURL('image/png');a.click();}catch(e){alert('사진 배경 저장이 막혔어요(보안). 그라데이션 배경은 항상 저장됩니다.');}}
+</script>
+</body>
+</html>
