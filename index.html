@@ -1346,6 +1346,18 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
     <button class="th-go" id="th_goBtn" onclick="thRun()">✨ 자연스럽게 변환</button>
   </div>
 
+  <div class="th-card">
+    <label>📌 내 잘 터진 글 모음 (선택)</label>
+    <div class="th-sub">잘 터졌던 글을 여기 모아두면, 변환할 때 이 글들의 훅·표현·느낌을 먼저 분석해서 반영합니다. (이 브라우저에 저장돼요)</div>
+    <div style="height:8px"></div>
+    <textarea id="th_newref" placeholder="잘 터진 글 하나를 붙여넣고 아래 '+ 모음에 추가'를 누르세요."></textarea>
+    <div class="th-dlrow">
+      <button class="th-btn" onclick="thAddRef()">+ 모음에 추가</button>
+      <label class="th-sub" style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="th_useMine" style="width:auto"> 변환에 내 모음 우선 사용</label>
+    </div>
+    <div id="th_refList" style="margin-top:10px"></div>
+  </div>
+
   <div id="th_result"></div>
 
   <div class="th-studio" id="th_studio" style="display:none">
@@ -6753,21 +6765,48 @@ function careImport(e){
   }
 
   var DEFAULT_REFERENCES="[예시1·인사이트형] 3년 동안 매일 글을 썼다. / 그래서 깨달은 단 하나. / 재능 있는 사람은 못 이긴다. / 근데 꾸준한 사람은 재능을 이긴다. / 오늘 한 줄이라도 써라.\n[예시2·공감형] 일요일 밤 11시. / 내일 출근 생각에 잠이 안 온다. / 나만 이런 거 아니죠? / 사실 다들 똑같이 버티고 있는 거였어.\n[예시3·리스트형] 퇴근 후 1시간으로 인생 바꾼 루틴(저장 추천) / 1. 폰 다른 방에 / 2. 25분 집중 / 3. 한 줄 기록 / 4. 내일의 나에게 메모 / 5. 바로 자기\n[예시4·반전형] 열심히 하지 마라. / 대신 꾸준히 해라. / 열심히는 3일, 꾸준히는 3년 간다.\n[예시5·스토리형] 이거 모르고 6개월을 날렸다. / 완벽하게 하려 했다. / 근데 완벽한 시작은 없더라. / 그냥 오늘 시작한 사람이 이긴다.";
-  var SYSTEM_PROMPT="당신은 한국어 스레드(Threads) 바이럴 카피라이터입니다. 공유·리포스트가 많이 나오는 글을 씁니다.\n공식: 첫 줄(훅)에서 멈추게 / 한 줄에 한 생각, 짧게 끊고 여백 / 두괄식 / '나도 그렇다·퍼가고 싶다' 한 줄 / 마지막에 자연스러운 행동유도(공유·저장·공감) / 사람 냄새 나는 말투, AI티·과장·이모지 남발 금지.\n규칙: 레퍼런스의 느낌·리듬만 참고하고 절대 베끼지 말 것. 자연스러운 한국어. 설명 없이 완성된 글만. 정확히 2개 버전, 사이는 '===' 한 줄로 구분.";
+  var SYSTEM_PROMPT="당신은 한국어 스레드(Threads)·인스타 바이럴 카피라이터입니다. 공유·저장·리포스트가 많이 나오는 글을 씁니다.\n\n[글 공식] 첫 줄(훅)에서 스크롤 멈추게 / 한 줄에 한 생각, 짧게 끊고 여백 / 두괄식(결론 먼저) / 중간에 '나도 그렇다·퍼가고 싶다' 싶은 공감 한 줄 / 마지막에 자연스러운 행동유도(공유·저장·공감) / 사람 냄새 나는 말투, AI티·과장·이모지 남발 금지.\n\n[첫 줄 훅 — 매 글마다 아래 유형 중 하나를 강하게] 숫자형(N년 해보고 깨달은 것/N가지/단 하나) · 폭로형(아무도 안 알려주는/사실 ~였다/불편한 진실) · 손해회피형(이거 모르면 손해/지금 안 하면 후회) · 공감정체성형(나만 이래?/~하는 사람들 특징/이거 완전 내 얘기) · 반전형(열심히 하지 마라/~가 틀렸다/오히려) · 질문형(왜 ~할까?/~해본 적 있죠?) · 선언형(결론부터./딱 하나만 기억해).\n\n[자주 쓰는 표현] 저장각/이건 진짜/찐/~할 수밖에 없는 이유/~하는 법/~의 정석. 마무리 CTA: 도움 됐으면 공유/저장해두고 보세요/필요한 사람한테 보내주세요/공감되면 댓글. (남발 말고 글당 1개만, 자연스럽게)\n\n[참고 글이 주어지면] 절대 베끼지 말고, 그 글들에서 반복되는 훅 유형·자주 쓰는 표현·문장 길이·구조를 먼저 분석한 뒤 그 패턴을 사용자 주제에 자연스럽게 입혀라.\n\n[규칙] 자연스러운 한국어, 번역체 금지. 설명·머리말 없이 완성된 글만. 정확히 2개 버전, 사이는 '===' 한 줄로 구분.";
   var HOOK_SYSTEMS={
     clickbait:"당신은 클릭을 부르는 한국어 썸네일 카피라이터입니다. 짧고 자극적인 후킹 문구를 만듭니다.\n규칙: 한 문구 공백포함 16자 내외 / 궁금증·충격·손해회피·숫자·반전 활용(내용과 연결) / 욕설·혐오·허위 금지 / 어울리는 이모지 1개 / 코드블록 없이 JSON 배열만: [{\"text\":\"문구\",\"emoji\":\"🔥\"}] 정확히 4개.",
     empathy:"당신은 공감을 부르는 한국어 썸네일 카피라이터입니다. '이거 완전 내 얘기' 싶어 저장·공유하고 싶게 만드는 문구를 만듭니다.\n규칙: 한 문구 공백포함 18자 내외 / 보편적 경험·위로·뭉클함·솔직함 / 주어진 글의 감정·결을 그대로 살림 / 과장·허위 금지 / 따뜻한 이모지 1개 / 코드블록 없이 JSON 배열만: [{\"text\":\"문구\",\"emoji\":\"🥹\"}] 정확히 4개."
   };
   function safeJSON(s){var t=s.trim().replace(/^```[a-z]*\s*/i,'').replace(/```$/,'').trim();var a=t.indexOf('['),b=t.lastIndexOf(']');if(a>=0&&b>a)t=t.slice(a,b+1);return JSON.parse(t);}
 
+  /* ── 내 잘 터진 글 모음 (localStorage 보관) ── */
+  var MYREFS_KEY='th_myrefs';
+  function getMyRefs(){try{return JSON.parse(localStorage.getItem(MYREFS_KEY)||'[]');}catch(e){return [];}}
+  function setMyRefs(a){try{localStorage.setItem(MYREFS_KEY,JSON.stringify(a));}catch(e){}}
+  window.thAddRef=function(){
+    var el=$('th_newref'),v=(el.value||'').trim();
+    if(!v){el.focus();return;}
+    var a=getMyRefs();a.unshift(v);setMyRefs(a);el.value='';
+    var c=$('th_useMine');if(c)c.checked=true;
+    thDrawRefs();
+  };
+  window.thDelRef=function(i){var a=getMyRefs();a.splice(i,1);setMyRefs(a);thDrawRefs();};
+  window.thDrawRefs=function(){
+    var box=$('th_refList');if(!box)return;
+    var a=getMyRefs();
+    if(!a.length){box.innerHTML='<div class="th-sub">아직 모은 글이 없어요. 잘 터진 글을 붙여넣고 추가해보세요.</div>';return;}
+    box.innerHTML='<div class="th-sub" style="margin-bottom:6px">📚 모은 글 '+a.length+'개 — 변환 시 이 글들의 패턴을 우선 반영</div>'+a.map(function(t,i){
+      var p=esc(t.replace(/\s+/g,' ').slice(0,70))+(t.length>70?'…':'');
+      return '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:var(--bg);border:1px solid var(--bor);border-radius:8px;margin-bottom:6px"><div style="flex:1;font-size:12px;color:var(--txt);line-height:1.5">'+p+'</div><button class="th-btn" style="padding:3px 8px;flex:0 0 auto" onclick="thDelRef('+i+')">삭제</button></div>';
+    }).join('');
+  };
+
   window.thRun=async function(){
     var topic=$('th_topic').value.trim(),draft=$('th_draft').value.trim();
-    var style=$('th_style').value,refs=($('th_refs')&&$('th_refs').value.trim())||DEFAULT_REFERENCES;
+    var style=$('th_style').value;
+    var mine=getMyRefs();
+    var useMine=$('th_useMine')&&$('th_useMine').checked&&mine.length;
+    var refs, refHeader;
+    if(useMine){ refs=mine.map(function(t,i){return '['+(i+1)+'] '+t;}).join('\n\n'); refHeader="# 내가 실제로 잘 터졌던 글들 (훅·자주 쓰는 표현·문장 길이·구조를 분석해서 반영. 베끼진 말 것)"; }
+    else { refs=($('th_refs')&&$('th_refs').value.trim())||DEFAULT_REFERENCES; refHeader="# 참고할 유명한 스레드 글 (느낌·훅·표현만 참고, 베끼지 말 것)"; }
     var box=$('th_result'),btn=$('th_goBtn');
     keyHint();
     if(!topic&&!draft){box.innerHTML='<p class="th-err">주제나 하고 싶은 말을 입력해주세요.</p>';return;}
     var styleMap={auto:'주제에 맞게 알아서',insight:'인사이트형',empathy:'공감형',list:'정보·리스트형(번호 정리)',story:'스토리·후킹형'};
-    var user="# 참고할 유명한 스레드 글(느낌만 참고, 베끼지 말 것)\n"+refs+"\n\n# 사용자가 쓰고 싶은 것\n- 주제: "+(topic||'(없음)')+"\n- 초안: "+(draft||'(없음 — 주제만 보고 써줘)')+"\n- 스타일: "+styleMap[style]+"\n\n# 할 일\n위 느낌으로 공유·리포스트 잘 나올 스레드 글 2개 버전을 자연스럽게. 설명 없이 완성 글만, 두 버전 사이 '===' 한 줄.";
+    var user=refHeader+"\n"+refs+"\n\n# 사용자가 쓰고 싶은 것\n- 주제: "+(topic||'(없음)')+"\n- 초안: "+(draft||'(없음 — 주제만 보고 써줘)')+"\n- 스타일: "+styleMap[style]+"\n\n# 할 일\n위 글들의 훅·표현·구조를 분석해 그 느낌으로, 공유·저장·리포스트 잘 나올 스레드 글 2개 버전을 자연스럽게. 설명 없이 완성 글만, 두 버전 사이 '===' 한 줄.";
     btn.disabled=true;btn.innerHTML='<span class="th-spin"></span>AI가 쓰는 중…';box.innerHTML='';
     try{
       var text=await thClaude(SYSTEM_PROMPT,user);
@@ -6912,7 +6951,7 @@ function careImport(e){
   window.thDownloadThumb=function(){var cv=$('th_canvas');try{var a=document.createElement('a');a.download='threads-thumbnail.png';a.href=cv.toDataURL('image/png');a.click();}catch(e){alert('사진 배경 저장이 막혔어요(보안). 그라데이션 배경은 항상 저장됩니다.');}};
 
   // 초기 렌더 (숨겨진 패널이어도 미리 준비)
-  function init(){ if($('th_themeChips')){renderChips();keyHint();} }
+  function init(){ if($('th_themeChips')){renderChips();keyHint();thDrawRefs();} }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
