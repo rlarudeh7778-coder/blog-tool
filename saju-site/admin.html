@@ -97,18 +97,18 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 .cover h1{font-family:'Nanum Myeongjo',serif;font-size:27px;font-weight:800;color:var(--gold);margin-bottom:.5rem;line-height:1.3}
 .cover .who{font-size:14px;color:#cdd6f0;line-height:1.8}
 .cover .who b{color:#fff}
-.part{background:var(--sur);color:var(--txt);border-radius:var(--r);padding:1.5rem 1.5rem;margin-bottom:1rem;box-shadow:0 12px 40px rgba(8,4,22,.5)}
-.part-h{font-family:'Nanum Myeongjo',serif;font-size:19px;font-weight:800;color:var(--navy);padding-bottom:.7rem;margin-bottom:1rem;border-bottom:2px solid var(--gold);display:flex;align-items:baseline;gap:9px}
-.part-h .num{font-size:12px;font-weight:800;color:#fff;background:var(--gold2);padding:3px 9px;border-radius:6px;flex-shrink:0}
-.part-body{font-size:15.5px;color:#2a3344;line-height:1.95}
-.part-body h2{font-size:15px;color:var(--navy);margin:1.2rem 0 .5rem;font-weight:800}
-.part-body h3{font-size:14px;color:var(--gold2);margin:1rem 0 .4rem;font-weight:700}
+.part{background:#fbf4e2;color:#3a2f22;border:1px solid #e0d2ad;border-radius:8px;padding:1.5rem 1.5rem;margin-bottom:1rem;box-shadow:0 8px 28px rgba(60,45,15,.14)}
+.part-h{font-family:'Nanum Myeongjo',serif;font-size:19px;font-weight:800;color:#5a3c12;padding-bottom:.7rem;margin-bottom:1rem;border-bottom:2px solid #c9a227;display:flex;align-items:baseline;gap:9px}
+.part-h .num{font-size:12px;font-weight:800;color:#fbf4e2;background:#9a6a1e;padding:3px 9px;border-radius:6px;flex-shrink:0}
+.part-body{font-size:15.5px;color:#352b1f;line-height:1.95}
+.part-body h2{font-size:15.5px;color:#5a3c12;margin:1.2rem 0 .5rem;font-weight:800}
+.part-body h3{font-size:14px;color:#9a6a1e;margin:1rem 0 .4rem;font-weight:700}
 .part-body p{margin:.55rem 0}
 .part-body ul,.part-body ol{margin:.5rem 0 .7rem 1.3rem}
 .part-body li{margin:.3rem 0}
-.part-body strong{color:var(--navy);font-weight:800}
-.part-body em{color:var(--gold2);font-style:normal;font-weight:600}
-.part-body blockquote{border-left:3px solid var(--gold);background:#fbf7ec;padding:.6rem .9rem;margin:.7rem 0;border-radius:0 8px 8px 0;color:#5a4a20}
+.part-body strong{color:#5a3c12;font-weight:800}
+.part-body em{color:#9a6a1e;font-style:normal;font-weight:600}
+.part-body blockquote{border-left:3px solid #c9a227;background:#f5edd6;padding:.6rem .9rem;margin:.7rem 0;border-radius:0 8px 8px 0;color:#5a4a20}
 .loadwrap{text-align:center;padding:2.5rem 1rem;color:#cdd6f0}
 .spinner{width:34px;height:34px;border:3px solid rgba(232,201,122,.25);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -147,24 +147,32 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.err{background:#d8504e}#toast.ok{background:#1f9d6a}
 /* ── 리포트(PDF) 표지·목차·안내·용어 ── */
-.pdf-cover{background:linear-gradient(160deg,#0e1530,#27306a);border:1px solid var(--bor);border-radius:var(--r);padding:3.4rem 1.6rem;text-align:center;color:#fff;margin-bottom:1.1rem}
-.pdf-cover .blogo{font-family:'Nanum Myeongjo',serif;font-size:30px;font-weight:800;color:var(--gold);letter-spacing:.05em}
-.pdf-cover .bsub{font-size:12px;color:#9aa6c8;letter-spacing:.25em;margin:.4rem 0 2rem}
-.pdf-cover .moon{font-size:54px;margin:.4rem 0 1.4rem}
-.pdf-cover h1{font-family:'Nanum Myeongjo',serif;font-size:30px;font-weight:800;color:#fff;line-height:1.4;margin-bottom:.3rem}
-.pdf-cover h1 b{color:var(--gold)}
-.pdf-cover .ptype{display:inline-block;border:1px solid var(--gold);color:var(--gold);font-size:12px;font-weight:700;padding:5px 16px;border-radius:20px;letter-spacing:.12em;margin:1.2rem 0 .6rem}
-.pdf-cover .pdate{font-size:12px;color:#9aa6c8;margin-top:1.6rem}
-.rsec{background:var(--sur);color:var(--txt);border-radius:var(--r);padding:1.6rem 1.5rem;margin-bottom:1.1rem;box-shadow:0 12px 40px rgba(8,4,22,.5)}
-.rsec h2{font-family:'Nanum Myeongjo',serif;font-size:20px;font-weight:800;color:var(--navy);border-bottom:2px solid var(--gold);padding-bottom:.6rem;margin-bottom:1rem}
-.toc-list{counter-reset:toc;font-size:15px;color:#2a3344;line-height:1.4}
-.toc-list .toc-i{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px dashed #e3e7f0}
-.toc-list .toc-i b{color:var(--gold2);font-weight:800;min-width:30px}
-.guide-p{font-size:15px;color:#2a3344;line-height:1.9;margin-bottom:.7rem}
+/* ── 전통 한지 디자인(리포트) ── */
+.pdf-cover{position:relative;background:#f4e8cc;border:3px solid #2c3a5e;border-radius:6px;padding:3.6rem 1.6rem;text-align:center;color:#3a2f22;margin-bottom:1.1rem;box-shadow:0 12px 40px rgba(60,45,15,.22)}
+.pdf-cover .cv-frame{position:absolute;inset:9px;border:1px solid #b89a5a;border-radius:3px;pointer-events:none}
+.pdf-cover .cv-corner{position:absolute;width:26px;height:26px;border:0 solid #9a6a1e}
+.pdf-cover .cv-corner.tl{top:14px;left:14px;border-top-width:3px;border-left-width:3px}
+.pdf-cover .cv-corner.tr{top:14px;right:14px;border-top-width:3px;border-right-width:3px}
+.pdf-cover .cv-corner.bl{bottom:14px;left:14px;border-bottom-width:3px;border-left-width:3px}
+.pdf-cover .cv-corner.br{bottom:14px;right:14px;border-bottom-width:3px;border-right-width:3px}
+.pdf-cover .blogo{font-family:'Nanum Myeongjo',serif;font-size:30px;font-weight:800;color:#7a4f12;letter-spacing:.05em;position:relative}
+.pdf-cover .bsub{font-size:12px;color:#9a8350;letter-spacing:.25em;margin:.4rem 0 2rem}
+.pdf-cover .moon{font-size:50px;margin:.4rem 0 1.4rem;color:#b5392f}
+.pdf-cover h1{font-family:'Nanum Myeongjo',serif;font-size:30px;font-weight:800;color:#3a2f22;line-height:1.45;margin-bottom:.3rem}
+.pdf-cover h1 b{color:#7a4f12}
+.pdf-cover .ptype{display:inline-block;border:1px solid #9a6a1e;color:#7a4f12;background:#fbf4e2;font-size:12px;font-weight:700;padding:5px 16px;border-radius:4px;letter-spacing:.12em;margin:1.2rem 0 .6rem}
+.pdf-cover .pdate{font-size:12px;color:#9a8350;margin-top:1.6rem}
+.pdf-cover .cv-seal{margin:1.3rem auto 0;width:54px;height:54px;line-height:1.15;border:2px solid #b5392f;border-radius:6px;color:#b5392f;font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#fbf2e6}
+.rsec{background:#fbf4e2;color:#3a2f22;border:1px solid #e0d2ad;border-radius:8px;padding:1.6rem 1.5rem;margin-bottom:1.1rem;box-shadow:0 8px 28px rgba(60,45,15,.14)}
+.rsec h2{font-family:'Nanum Myeongjo',serif;font-size:20px;font-weight:800;color:#5a3c12;border-bottom:2px solid #c9a227;padding-bottom:.6rem;margin-bottom:1rem}
+.toc-list{counter-reset:toc;font-size:15px;color:#4a3f2c;line-height:1.4}
+.toc-list .toc-i{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px dashed #e3d6b2}
+.toc-list .toc-i b{color:#9a6a1e;font-weight:800;min-width:30px}
+.guide-p{font-size:15px;color:#4a3f2c;line-height:1.9;margin-bottom:.7rem}
 .gloss{display:grid;gap:.7rem}
-.gloss-i{background:#f7f9ff;border:1px solid #e3e7f0;border-left:3px solid var(--gold);border-radius:8px;padding:11px 14px}
-.gloss-i .gt{font-weight:800;color:var(--navy);font-size:15px}
-.gloss-i .gd{font-size:14px;color:#3a4458;margin-top:3px;line-height:1.7}
+.gloss-i{background:#f6efda;border:1px solid #e3d6b2;border-left:3px solid #c9a227;border-radius:8px;padding:11px 14px}
+.gloss-i .gt{font-weight:800;color:#5a3c12;font-size:15px}
+.gloss-i .gd{font-size:14px;color:#4a3f2c;margin-top:3px;line-height:1.7}
 .easy{background:#eef6ff;border:1px solid #cfe2fb;border-radius:10px;padding:.9rem 1.1rem;margin:.9rem 0;color:#27406e}
 .easy .et{font-weight:800;color:#1f5fb0;font-size:14px;margin-bottom:.3rem}
 .act{background:#fff7ea;border:1px solid #f0dcae;border-radius:10px;padding:.9rem 1.1rem;margin:.9rem 0;color:#6a4e16}
@@ -206,9 +214,9 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 .balcard .bc-sub{font-size:12.5px;color:#5a4f38;line-height:1.65}
 .balnote{font-size:11px;color:#9a8c66;text-align:center;margin-top:6px}
 .part-body table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:14px}
-.part-body th,.part-body td{border:1px solid #d9deea;padding:8px 10px;text-align:center}
-.part-body th{background:#0e1530;color:var(--gold);font-weight:700}
-.part-body tr:nth-child(even) td{background:#f7f9ff}
+.part-body th,.part-body td{border:1px solid #d8c9a0;padding:8px 10px;text-align:center}
+.part-body th{background:#3b2f1c;color:#e9cf86;font-weight:700}
+.part-body tr:nth-child(even) td{background:#f6efda}
 .ask-part{border:2px solid var(--gold2)}
 .ask-part .part-h{border-bottom-color:var(--gold2)}
 .ask-part .num{background:#7a5cc0}
@@ -225,7 +233,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 .part-body thead{display:table-header-group}
 @media print{
   @page{size:A4;margin:14mm}
-  body{background:#fff;font-size:12pt}
+  body{background:#f4e8cc;font-size:12pt}
   header,.tabs,.toolbar,.disc,#toast,.no-print,.part-tools,.editbox,.regenbox,.sky,.aurora,#stars{display:none!important}
   .panel{display:none!important}.panel#p-result{display:block!important;max-width:none;padding:0}
   .pdf-cover,.rsec,.part,.cover,.sajupan{box-shadow:none}
@@ -244,7 +252,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 <div class="aurora"></div>
 <canvas id="stars"></canvas>
 <header>
-  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.24</b></span></div>
+  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.25</b></span></div>
   <div class="hright">
     <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
   </div>
@@ -1112,12 +1120,14 @@ function renderCover(){
   const now=new Date(), dateStr=now.getFullYear()+'.'+pad(now.getMonth()+1)+'.'+pad(now.getDate());
   // ① 표지(브랜드 로고)
   let cover='<div class="pdf-cover">'
+    +'<div class="cv-frame"></div><div class="cv-corner tl"></div><div class="cv-corner tr"></div><div class="cv-corner bl"></div><div class="cv-corner br"></div>'
     +'<div class="blogo">🌙 운명을 읽다</div>'
     +'<div class="bsub">A I  ·  사 주 명 리  ·  리 포 트</div>'
     +'<div class="moon">☾</div>'
     +'<div class="ptype">'+label+'</div>'
     +'<h1><b>'+names+'</b> 님의<br>'+title+'</h1>'
-    +'<div class="pdate">발행일 '+dateStr+'</div></div>';
+    +'<div class="pdate">발행일 '+dateStr+'</div>'
+    +'<div class="cv-seal"><span>운명</span><span>읽다</span></div></div>';
   // ② 목차
   let toc='<div class="rsec pdf-block"><h2>목차</h2><div class="toc-list">'
     +'<div class="toc-i"><b>🀄</b><span>만세력 — 나의 사주판 (사주팔자·오행·대운)</span></div>'
@@ -1146,10 +1156,10 @@ function renderCover(){
   const isG2=(cust.pkg==='궁합'&&cust.p2);
   let ohsec='<div class="rsec pdf-block"><h2>🌳 오행 균형 & 일주 동물</h2>'
     +'<p class="guide-p" style="margin-bottom:.4rem">다섯 기운(오행)의 분포와, 태어난 날이 상징하는 동물이에요. 한눈에 강한 기운·부족한 기운이 보입니다.</p>'
-    +'<h3 style="color:var(--navy);margin:1rem 0 .3rem">☯ 오행 상생상극 — 다섯 기운의 관계</h3>'+ohRelDiagram();
-  if(isG2) ohsec+='<h3 style="color:var(--navy);margin:1.2rem 0 .3rem">👤 '+esc(cust.name)+' 님</h3>';
+    +'<h3 style="color:#5a3c12;margin:1rem 0 .3rem">☯ 오행 상생상극 — 다섯 기운의 관계</h3>'+ohRelDiagram();
+  if(isG2) ohsec+='<h3 style="color:#5a3c12;margin:1.2rem 0 .3rem">👤 '+esc(cust.name)+' 님</h3>';
   ohsec+=ohBarChart(cust.a.oh)+balanceCards(cust.a.oh)+dayAnimalCard(cust.a,cust.name);
-  if(isG2) ohsec+='<h3 style="color:var(--navy);margin:1.4rem 0 .3rem">💞 '+esc(cust.p2.name)+' 님</h3>'+ohBarChart(cust.p2.a.oh)+balanceCards(cust.p2.a.oh)+dayAnimalCard(cust.p2.a,cust.p2.name);
+  if(isG2) ohsec+='<h3 style="color:#5a3c12;margin:1.4rem 0 .3rem">💞 '+esc(cust.p2.name)+' 님</h3>'+ohBarChart(cust.p2.a.oh)+balanceCards(cust.p2.a.oh)+dayAnimalCard(cust.p2.a,cust.p2.name);
   ohsec+='</div>';
   $('resultView').innerHTML=cover+toc+guide+manse+ohsec+'<div class="parts" id="partsBox"></div>';
 }
@@ -1235,9 +1245,9 @@ function savePDF(){
 }
 function pdfFilename(){return (cust?cust.name:'saju')+'_'+(cust?cust.pkg:'')+'_사주리포트.pdf';}
 // 다운로드용: 데스크탑 고품질 / 모바일은 메모리 절약 위해 해상도 낮춤
-function pdfOpts(q){var sc=IS_MOBILE?1.4:2;return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:(q||0.95)},html2canvas:{scale:sc,useCORS:true,backgroundColor:'#ffffff',ignoreElements:(el)=>el.classList&&(el.classList.contains('sky')||el.classList.contains('aurora')||el.id==='stars')},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
+function pdfOpts(q){var sc=IS_MOBILE?1.4:2;return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:(q||0.95)},html2canvas:{scale:sc,useCORS:true,backgroundColor:'#f4e8cc',ignoreElements:(el)=>el.classList&&(el.classList.contains('sky')||el.classList.contains('aurora')||el.id==='stars')},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
 // 메일 첨부용: 흰 배경 + 압축으로 용량 최소화(첨부 한도 대응)
-function pdfOptsMail(){return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:0.6},html2canvas:{scale:1.5,useCORS:true,backgroundColor:'#ffffff',ignoreElements:(el)=>el.classList&&(el.classList.contains('sky')||el.classList.contains('aurora')||el.id==='stars')},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
+function pdfOptsMail(){return {margin:[10,8,12,8],filename:pdfFilename(),image:{type:'jpeg',quality:0.6},html2canvas:{scale:1.5,useCORS:true,backgroundColor:'#f4e8cc',ignoreElements:(el)=>el.classList&&(el.classList.contains('sky')||el.classList.contains('aurora')||el.id==='stars')},jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','.gloss-i','.easy','.act','tr','.toc-i','blockquote','li','img']}};}
 // PDF 캡처 준비: ① 우주 배경 레이어 숨김 ② 결과영역 흰 배경 ③ 카드 그림자 제거(html2canvas 회색 얼룩 방지) ④ .no-print 숨김
 function hideNoPrint(){
   const rv=$('resultView');
@@ -1248,7 +1258,7 @@ function hideNoPrint(){
   const sh=Array.from(rv.querySelectorAll('.rsec,.part,.pdf-cover,.sajupan,.cover'));
   sh.forEach(e=>{e.dataset._sh=e.style.boxShadow;e.style.boxShadow='none';});
   const prevBg=rv.style.background;
-  rv.style.background='#fff';
+  rv.style.background='#f4e8cc';
   return ()=>{
     bg.forEach(e=>{e.style.display=e.dataset._pd||'';delete e.dataset._pd;});
     nps.forEach(e=>{e.style.display=e.dataset._pd||'';delete e.dataset._pd;});
@@ -1311,7 +1321,7 @@ async function buildPdfDoc(scale,quality){
       for(const c of el.children){ if(c.offsetHeight>0&&!c.classList.contains('no-print'))blocks.push(c); }
     }else if(el.offsetHeight>0&&!el.classList.contains('no-print')){ blocks.push(el); }
   }
-  const opt={scale:scale||2,useCORS:true,backgroundColor:'#ffffff',ignoreElements:(x)=>x.classList&&(x.classList.contains('sky')||x.classList.contains('aurora')||x.id==='stars')};
+  const opt={scale:scale||2,useCORS:true,backgroundColor:'#f4e8cc',ignoreElements:(x)=>x.classList&&(x.classList.contains('sky')||x.classList.contains('aurora')||x.id==='stars')};
   for(const block of blocks){
     // ★각 큰 섹션(표지·목차·리포트보는법·만세력·각 PART)은 무조건 새 페이지에서 시작★ (섹션 섞임 방지)
     if(!first && y>Mtop){ pdf.addPage(); y=Mtop; }
@@ -1338,7 +1348,7 @@ async function buildPdfDoc(scale,quality){
       }
       const sCss=B-cssY, sPx=Math.max(1,Math.round(sCss*pxPerCss)), srcYpx=Math.round(cssY*pxPerCss);
       const tmp=document.createElement('canvas'); tmp.width=canvas.width; tmp.height=sPx;
-      const ctx=tmp.getContext('2d'); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,tmp.width,tmp.height);
+      const ctx=tmp.getContext('2d'); ctx.fillStyle='#f4e8cc'; ctx.fillRect(0,0,tmp.width,tmp.height);
       ctx.drawImage(canvas,0,srcYpx,canvas.width,sPx,0,0,canvas.width,sPx);
       pdf.addImage(tmp.toDataURL('image/jpeg',quality||0.85),'JPEG',Mx,y,contentW,sCss*k,undefined,'FAST');
       y+=sCss*k; cssY=B;
@@ -1615,7 +1625,7 @@ async function savePNG(){
   toast('이미지 생성 중…','');
   const restore=hideNoPrint();
   try{
-    let cv=await html2canvas(el,{backgroundColor:'#ffffff',scale:2,useCORS:true,ignoreElements:(x)=>x.classList&&(x.classList.contains('sky')||x.classList.contains('aurora')||x.id==='stars')});
+    let cv=await html2canvas(el,{backgroundColor:'#f4e8cc',scale:2,useCORS:true,ignoreElements:(x)=>x.classList&&(x.classList.contains('sky')||x.classList.contains('aurora')||x.id==='stars')});
     restore();
     let a=document.createElement('a');
     a.download=(cust?cust.name:'saju')+'_사주리포트.png';
