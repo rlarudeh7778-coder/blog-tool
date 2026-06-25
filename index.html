@@ -6770,6 +6770,21 @@ function careImport(e){
     if(!k) throw new Error('Claude API 키가 없습니다. 「글쓰기」 탭에서 Claude 키를 먼저 저장하세요.');
     return await callClaude(k,sys,user); // 페이지의 기존 전역 함수 재사용 (claude-sonnet-4-6)
   }
+  // 영어 API 오류를 사용자 친화적 한글 안내로 변환
+  function thErr(e){
+    var m=((e&&e.message)||e||'').toString(), lo=m.toLowerCase();
+    if(/credit balance|too low|plans ?& ?billing|purchase credits|insufficient|billing/i.test(lo))
+      return '⚠ Anthropic 크레딧(잔액)이 부족합니다.\n\n키는 정상이에요. console.anthropic.com → Plans & Billing(결제)에서 결제수단 등록 또는 크레딧 충전 후 다시 시도하세요.';
+    if(/authentication|invalid x-api-key|unauthorized|x-api-key|api key|api 키/i.test(lo))
+      return '⚠ API 키가 올바르지 않습니다.\n\n글쓰기 탭 ⚙ 설정에서 sk-ant- 로 시작하는 Claude 키를 다시 등록하세요.';
+    if(/overloaded|rate ?limit|429|529|too many|quota/i.test(lo))
+      return '⚠ 지금 요청이 몰려 일시적으로 막혔어요.\n30초~1분 후 다시 시도해주세요.';
+    if(/model/i.test(lo)&&/not ?found|not_found|does not exist|지원/i.test(lo))
+      return '⚠ 모델 설정 오류입니다. 관리자에게 문의해주세요.';
+    if(/failed to fetch|networkerror|network error/i.test(lo))
+      return '⚠ 네트워크 연결을 확인해주세요. (잠시 후 다시 시도)';
+    return '⚠ '+m;
+  }
 
   var DEFAULT_REFERENCES="[예시1]\n퇴사하고 처음 안 게 있다.\n회사가 싫었던 게 아니라,\n내가 사라지는 게 싫었던 거였다.\n매일 같은 시간에 일어나고\n같은 표정으로 웃고\n같은 말을 반복하다 보면\n내가 누구였는지 잊어버린다.\n돈을 못 버는 것보다\n그게 더 무서웠다.\n쉬는 것도 용기다.\n===\n[예시2]\n연애 오래 해보면 안다.\n설레서 만나는 게 아니라\n편해서 같이 있는 거다.\n근데 편한 거랑 함부로 하는 건 다르다.\n익숙해지면 말이 툭툭 나가고\n그게 쌓이면 결국 사람이 떠난다.\n가까운 사이일수록\n더 예의를 차려야 한다.\n===\n[예시3]\n돈 모으면서 진짜 알게 된 거.\n안 쓰는 게 아니라\n뭘 원하는지 아는 게 먼저였다.\n남들 사니까 사고\n불안하니까 채우고\n그러다 보면 통장은 비고\n마음도 안 채워진다.\n적게 가진 사람이 불행한 게 아니라\n뭘 가졌는지 모르는 사람이 불행한 거다.";
   var SYSTEM_PROMPT="당신은 한국어 스레드(Threads) 글 작가입니다. 광고 카피가 아니라, 사람들이 '이거 완전 내 얘기'라며 공유·리포스트하고 싶어지는 진짜 같은 글을 씁니다.\n\n[가장 중요 — 광고 냄새 제거] '저장각'·'도움 됐으면 공유'·'저장해두세요'·'팔로우'·'댓글 남겨주세요' 같은 권유·홍보 멘트 절대 금지. 이모지·해시태그 기본 사용 안 함. 진짜 사람이 조용히 털어놓듯이.\n\n[잘 터지는 글의 구조 — 보여준 고성과 글의 패턴]\n1) 첫 줄: 구체적이고 고백적인 관찰. 자극적 낚시 말고 진짜 경험(예: 'OO를 주 3회 하면서 처음으로 이해했다').\n2) 짧은 문장, 한 줄에 한 생각, 줄 사이 여백.\n3) 같은 형식의 문장을 2~3번 반복해 리듬을 만든다(예: '왜 ~인지.'를 연달아).\n4) 단순한 관찰에서 더 깊은 진실로 한 단계 올라간다(예: '단순히 힘든 게 아니라, 내가 서서히 없어지는 일이다').\n5) 마지막은 사람들이 퍼가고 싶은 '한 문장 소신·선언'으로 닫는다(예: '도와주는 게 아니라, 같이 하는 거다'). 공유는 CTA가 아니라 이 마지막 한 줄에서 나온다.\n\n[참고 글이 주어지면] 절대 베끼지 말고, 거기서 말투·문장 길이·리듬·감정의 결을 먼저 분석해 똑같은 느낌으로 사용자 주제를 쓴다.\n\n[규칙] 자연스러운 한국어, 번역체·AI티 금지. 설명·머리말 없이 완성된 글만. 정확히 2개 버전, 사이는 '===' 한 줄로 구분.\n\n[유일한 예외] 주제가 정보·리스트형이고 마지막 권유가 정말 자연스러울 때만 '저장' 1개 허용. 감정·의견·경험 글에는 절대 넣지 않는다.";
@@ -6820,7 +6835,7 @@ function careImport(e){
       var versions=text.split(/\n\s*={3,}\s*\n/).map(function(s){return s.trim();}).filter(Boolean);
       if(!versions.length)versions=[text];
       box.innerHTML=versions.map(function(v,i){return '<div class="th-variant"><div class="th-vh"><span class="th-vt">버전 '+(i+1)+'</span><div style="display:flex;gap:7px"><button class="th-btn" onclick="thOpenThumb(this)">🖼 썸네일</button><button class="th-btn th-copy" onclick="thCopyV(this)">복사</button></div></div><div class="th-out" data-copy>'+esc(v)+'</div></div>';}).join('');
-    }catch(e){box.innerHTML='<div class="th-card"><p class="th-err">⚠ '+esc(e.message)+'</p><p class="th-sub">서버 일시 오류면 잠시 후 다시. 키 문제면 글쓰기 탭에서 다시 등록.</p></div>';}
+    }catch(e){box.innerHTML='<div class="th-card"><p class="th-err" style="white-space:pre-line">'+esc(thErr(e))+'</p></div>';}
     finally{btn.disabled=false;btn.innerHTML='✨ 자연스럽게 변환';}
   };
   window.thCopyV=function(b){var t=b.closest('.th-variant').querySelector('[data-copy]').innerText;navigator.clipboard.writeText(t).then(function(){b.textContent='복사됨 ✔';setTimeout(function(){b.textContent='복사';},1500);});};
@@ -6886,7 +6901,7 @@ function careImport(e){
       var out=await thClaude(HOOK_SYSTEMS[hookStyle],user);
       var hooks;try{hooks=safeJSON(out);}catch(e){hooks=[{text:out.split('\n')[0].slice(0,18),emoji:hookStyle==='empathy'?'🥹':'🔥'}];}
       box.innerHTML=hooks.map(function(h){var txt=(h.emoji?h.emoji+' ':'')+h.text;return '<span class="th-chip" style="white-space:normal" onclick=\'thUseHook('+JSON.stringify(JSON.stringify(h))+')\'>'+esc(txt)+'</span>';}).join('')||'<span class="th-sub">문구를 못 만들었어요. 다시 시도.</span>';
-    }catch(e){box.innerHTML='<span class="th-sub th-err">⚠ '+esc(e.message)+'</span>';}
+    }catch(e){box.innerHTML='<span class="th-sub th-err" style="white-space:pre-line">'+esc(thErr(e))+'</span>';}
     finally{btn.disabled=false;btn.textContent=old;}
   };
   window.thUseHook=function(s){var h=JSON.parse(s);$('th_thumbText').value=h.text||'';if(h.emoji)$('th_emoji').value=h.emoji;thDrawThumb();};
