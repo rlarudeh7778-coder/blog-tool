@@ -192,6 +192,19 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 .animalcard .ac-body{flex:1;display:flex;flex-direction:column;justify-content:center}
 .animalcard .ac-title{font-weight:800;color:#3a3022;font-size:14px;margin-bottom:6px}
 .animalcard .ac-body p{font-size:14px;color:#4a4030;line-height:1.8;margin:0}
+/* 오행 상생상극 도식 */
+.ohdiagram{text-align:center;margin:.5rem 0 1rem}
+.ohd-legend{display:flex;gap:18px;justify-content:center;margin-top:6px;font-size:12px;color:#6a5a3a}
+.ohd-legend i{display:inline-block;width:18px;height:4px;border-radius:3px;margin-right:5px;vertical-align:middle}
+/* 보완/도움/과한 기운 카드 */
+.balcards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:.7rem 0 .3rem}
+@media(max-width:560px){.balcards{grid-template-columns:1fr}}
+.balcard{background:#fbfaf4;border:1px solid #ece6d4;border-left:4px solid #c9a227;border-radius:10px;padding:11px 13px}
+.balcard .bc-h{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px}
+.balcard .bc-tag{font-size:11.5px;font-weight:800;color:#8a6a00}
+.balcard .bc-el{font-size:16px;font-weight:800}
+.balcard .bc-sub{font-size:12.5px;color:#5a4f38;line-height:1.65}
+.balnote{font-size:11px;color:#9a8c66;text-align:center;margin-top:6px}
 .part-body table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:14px}
 .part-body th,.part-body td{border:1px solid #d9deea;padding:8px 10px;text-align:center}
 .part-body th{background:#0e1530;color:var(--gold);font-weight:700}
@@ -231,7 +244,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 <div class="aurora"></div>
 <canvas id="stars"></canvas>
 <header>
-  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.23</b></span></div>
+  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.24</b></span></div>
   <div class="hright">
     <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
   </div>
@@ -520,6 +533,30 @@ function dayAnimalCard(a,name){
     +'<div class="ac-art"><div class="ac-emoji">'+emoji+'</div><div class="ac-hanja" style="color:'+col+'">'+title+'</div><div class="ac-ko">'+koName+'</div></div>'
     +'<div class="ac-body"><div class="ac-title">🐾 '+esc(name)+' 님의 일주 동물 · <b style="color:'+col+'">'+koName+'</b></div><p>'+desc+'</p></div></div>';
 }
+// 오행 상생상극 도식(단순 SVG — html2canvas 안전)
+function ohRelDiagram(){
+  const order=['목','화','토','금','수'], cx=150,cy=148,R=98, pos={};
+  order.forEach((k,i)=>{const a=(-90+i*72)*Math.PI/180; pos[k]=[cx+R*Math.cos(a), cy+R*Math.sin(a)];});
+  const ln=(a,b,c,w)=>'<line x1="'+pos[a][0].toFixed(1)+'" y1="'+pos[a][1].toFixed(1)+'" x2="'+pos[b][0].toFixed(1)+'" y2="'+pos[b][1].toFixed(1)+'" stroke="'+c+'" stroke-width="'+w+'"/>';
+  let ke='',sheng='';
+  order.forEach((k,i)=>{ ke+=ln(k,order[(i+2)%5],'#dba3a3',1.4); });      // 상극(안쪽 별)
+  order.forEach((k,i)=>{ sheng+=ln(k,order[(i+1)%5],'#6cb37b',3.2); });   // 상생(바깥 오각)
+  const nodes=order.map(k=>{const x=pos[k][0],y=pos[k][1];return '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="21" fill="'+ELEM_COLOR[k]+'"/><text x="'+x.toFixed(1)+'" y="'+(y+6).toFixed(1)+'" text-anchor="middle" fill="#ffffff" font-size="19" font-weight="700">'+k+'</text>';}).join('');
+  return '<div class="ohdiagram"><svg viewBox="0 0 300 290" width="300" height="290" style="max-width:300px">'+ke+sheng+nodes+'</svg>'
+    +'<div class="ohd-legend"><span><i style="background:#6cb37b"></i>상생 — 서로 살려줌</span><span><i style="background:#dba3a3"></i>상극 — 서로 눌러줌</span></div></div>';
+}
+// 보완/도움/과한 기운 카드(억부 간이 — 참고용)
+function balanceCards(oh){
+  const order=['목','화','토','금','수'];
+  const srt=[...order].sort((a,b)=>oh[a]-oh[b]||order.indexOf(a)-order.indexOf(b));
+  const yong=srt[0], gi=srt[srt.length-1], hee=order.find(k=>SHENG[k]===yong);
+  const card=(tag,el,sub)=>'<div class="balcard"><div class="bc-h"><span class="bc-tag">'+tag+'</span><span class="bc-el" style="color:'+ELEM_COLOR[el]+'">'+el+'('+ELEM_HJA[el]+')</span></div><div class="bc-sub">'+sub+'</div></div>';
+  return '<div class="balcards">'
+    +card('채워주면 좋은 기운', yong, ELEM_MEAN[yong]+' 기운이 가장 부족해요. 이 기운을 더하면 사주 균형이 좋아집니다.')
+    +card('도와주는 기운', hee, '<b style="color:'+ELEM_COLOR[hee]+'">'+hee+'</b>은(는) '+yong+'을 살려주는 기운이라 함께 챙기면 좋아요.')
+    +card('과한 기운', gi, ELEM_MEAN[gi]+' 기운이 강한 편이에요. 한쪽으로 치우치지 않게 조절하면 좋습니다.')
+    +'</div><p class="balnote">※ 위는 오행 개수로 본 간이 안내(참고용)이며, 정확한 용신은 본문 분석을 참고하세요.</p>';
+}
 
 function computeSaju(y,mo,d,hour,minute,gender){
   const noTime=(hour===null||hour===undefined);
@@ -793,7 +830,7 @@ function sysPrompt(){
   if(cust&&cust.pkg==='작명') return namingSysPrompt();
   return '당신은 30년 경력의 명리학자이지만, 어려운 말을 늘어놓지 않고 친한 언니·형처럼 쉽고 재미있게 풀어주는 사주 상담가입니다. 사주팔자·오행·십성·신강신약·용신·대운을 근거로 보되, ★설명은 철저히 쉽고 생활 밀착적으로★ 합니다.\n\n[★기준 연도(매우 중요)★] 지금은 '+CUR_YEAR+'년('+CUR_GANJI+'년)입니다. 본문에서 「올해」는 반드시 '+CUR_YEAR+'년을 뜻하고, 세운·올해의 운세·앞으로의 시기·연도 계산은 모두 '+CUR_YEAR+'년을 현재로 삼아 작성하세요(작년='+(CUR_YEAR-1)+'년, 내년='+(CUR_YEAR+1)+'년). 학습 시점과 헷갈려 다른 해를 현재로 착각하지 마세요.\n\n[가장 중요한 원칙 — 쉽고 재미있게]\n- ★어려운 한자·전문용어는 최대한 적게★ 쓰세요. 꼭 필요할 때만 쓰고, 쓰더라도 괄호로 아주 짧게(한 단어~한 문장)만 뜻을 달고 절대 길게 설명하지 마세요. 용어 자체가 아니라 "그래서 내 삶에서 어떻다는 건지"에 집중합니다.\n- ★생활 밀착 예시 필수★: 모든 풀이를 우리가 일상에서 실제로 겪는 구체적인 장면으로 설명하세요. 직장(상사·동료·업무), 연애·부부, 가족·부모자식, 돈·소비, 친구 관계, 성격이 툭 튀어나오는 순간 등.\n  예) "상관 기운이 강하시네요(자기표현·끼가 강한 기운). 이런 분은 직장에서 상사가 「이건 이렇게 해」 하고 지시하면, 속으로 「왜 나한테 시키지?」 하며 자존심이 살짝 상하고 반항심이 올라오곤 해요." 처럼, 읽는 분이 「어, 이거 완전 내 얘기네」 하고 무릎을 치도록 구체적인 장면으로 풀어주세요.\n- 친한 사람이 옆에서 이야기해 주듯 따뜻하고 편안하게. 학술 보고서처럼 딱딱하게 쓰지 마세요. 읽는 재미가 있게.\n\n[근거와 톤]\n- 제공된 사주 데이터(팔자·오행·십성·대운)에 근거해 그 사람만 맞게 개인화하세요. 다만 명리 근거(일간 OO, 월지 OO 등)는 짧게 한 번만 짚고, 분량은 풀이와 생활 예시에 쓰세요. 두루뭉술한 일반론 금지.\n- ★단정·확정 예언 절대 금지★: "올해 이혼합니다", "~병에 걸립니다", "반드시 망합니다" 금지. 대신 "~한 경향이 있어요", "~에 유의하시면 좋아요", "~할 가능성이 보여요"처럼 경향·가능성으로 쓰고, 노력으로 충분히 달라질 수 있음을 함께 전하세요. 참고용 콘텐츠임을 전제로 합니다.\n- ★나이 기준★: 본문에서 말하는 모든 나이·시기는 반드시 <b>세는나이(한국식 나이)</b> 기준. 처음 나이를 말할 때 한 번 "(세는나이 기준)"을 덧붙이세요.\n- 마크다운 사용: ## 소제목, **강조**, 표(| 머리 | … |), 목록(-), > 인용.\n\n[★각 PART는 아래 세 부분을 반드시 모두 포함하세요★]\n1) (풀이) 명리 근거는 짧게 한 번 짚고, 곧바로 일상 생활 예시를 풍부하게 들어 쉽고 재미있게 해석. 어려운 용어는 거의 쓰지 마세요.\n2) "## 💡 쉽게 풀어보면" — 위 내용의 핵심을 아주 가볍게 2~3문장으로 요약.\n3) "## ✅ 이렇게 해보세요" — 운을 더 좋게 만드는, 당장 실천할 수 있는 행동·말·습관·태도를 4~6가지 목록으로.\n\n- PART 제목이나 「PART N:」을 본문 첫 줄에 다시 쓰지 마세요(제목은 시스템이 이미 보여줍니다). 표 안에서 <br> 등 HTML 태그를 쓰지 말고, 「---」 같은 가로 구분선도 넣지 마세요.\n- 인사말·맺음말·군더더기 없이 본문만. 다른 PART와 중복 금지. 요청된 PART 내용만 작성.';
 }
-function lenGuide(){return {표준:'각 부분을 충실히(본문 5~7문단)',상세:'각 부분을 풍부하고 구체적으로(본문 7~10문단)',최대:'각 부분을 매우 상세하고 깊이 있게(본문 10~14문단, 소제목 활용)'}[getLen()];}
+function lenGuide(){return {표준:'각 부분을 충실히(본문 6~8문단), 구체적 생활 예시를 최소 2개 이상 곁들여',상세:'각 부분을 풍부하고 구체적으로(본문 8~12문단), 실제 상황 예시·대화 장면을 3개 이상 곁들이고 소제목으로 정리해',최대:'각 부분을 매우 상세하고 깊이 있게(본문 12~16문단), 다양한 경우의 수와 구체적 예시를 풍부하게, 소제목(##)으로 여러 갈래로 나눠'}[getLen()];}
 function namingSysPrompt(){
   return '당신은 30년 경력의 작명(성명학) 전문가이자 정통 명리학자입니다. 사주의 부족한 기운을 이름으로 보완하는 「사주 작명」을 합니다.\n\n[작명 3대 원리 — 반드시 근거로 사용]\n1) 발음오행(소리오행): 이름을 소리 냈을 때 자음이 갖는 오행(ㄱㅋ=목, ㄴㄷㄹㅌ=화, ㅇㅎ=토, ㅅㅈㅊ=금, ㅁㅂㅍ=수)이 성씨→이름으로 상생(서로 살려주는)으로 흐르도록.\n2) 자원오행(한자오행): 한자 부수가 품은 오행으로 사주에서 부족한 오행을 채움.\n3) 수리길흉: 성+이름 획수 조합이 길한 수리가 되도록(흉수 회피).\n\n[작성 원칙]\n- 먼저 사주(팔자·오행 분포·일간·신강신약)를 근거로 「채워야 할 오행(용신·희신)」과 「피할 오행」을 분명히 정한 뒤, 그 결론에 맞는 이름을 제시하세요. "오행에 OO가 부족하므로 OO 기운의 글자를…"처럼 반드시 사주와 연결.\n- 한자는 대법원 인명용 한자 중에서, 뜻이 밝고 부르기 좋은 글자만 사용하세요. 어렵거나 부정적·기괴한 뜻의 글자는 절대 제외.\n- 추천 이름은 성씨와 함께(예: 김+이름) 제시하고, 각 한자의 훈음(뜻)·발음오행·자원오행·획수를 밝히세요. 추천 후보는 표로 정리.\n- 한자 전문용어가 나오면 괄호로 쉬운 뜻을 붙이세요.\n- 따뜻하고 품격 있는 존댓말. ★단정 금지★: "이 이름이면 반드시 성공/부자/출세" 같은 표현 금지. "좋은 기운을 더해 주는 이름", "~에 도움이 되는 방향"처럼 보조적·참고용으로 서술하세요. 이름이 운명을 정하는 것이 아니라 좋은 기운을 보태는 것임을 전제로 합니다.\n- 마크다운 사용: ## 소제목, **강조**, 표(| 머리 | … |), 목록(-), > 인용.\n\n[★각 PART는 아래 세 부분을 반드시 모두 포함하세요★]\n1) (전문 풀이) 성명학·명리학 근거를 들어 작성.\n2) "## 💡 쉽게 풀어보면" — 위 내용을 한자·전문용어 없이 부모님(또는 본인)도 쉽게 이해하도록 비유를 들어 다시 설명(4~6문장).\n3) "## ✅ 이렇게 해보세요" — 이름을 고르고 쓸 때 바로 실천할 수 있는 조언을 4~6가지 목록으로.\n\n- 오행의 강약과 이름의 보완 정도는 ★(채워짐)·☆(빈칸)으로 된 5개 만점 별점으로 보기 쉽게 표현하세요(예: ★★★☆☆).\n- PART 제목이나 「PART N:」을 본문 첫 줄에 다시 쓰지 마세요(제목은 시스템이 이미 보여줍니다). 표 안에서 <br> 등 HTML 태그를 쓰지 말고, 「---」 같은 가로 구분선도 넣지 마세요.\n- 인사말·맺음말 없이 본문만. 다른 PART와 중복 금지. 요청된 PART 내용만 작성.';
 }
@@ -1108,10 +1145,11 @@ function renderCover(){
   // 오행 균형 막대그래프 + 일주 동물 (레퍼런스 시각 요소)
   const isG2=(cust.pkg==='궁합'&&cust.p2);
   let ohsec='<div class="rsec pdf-block"><h2>🌳 오행 균형 & 일주 동물</h2>'
-    +'<p class="guide-p" style="margin-bottom:.4rem">다섯 기운(오행)의 분포와, 태어난 날이 상징하는 동물이에요. 한눈에 강한 기운·부족한 기운이 보입니다.</p>';
-  if(isG2) ohsec+='<h3 style="color:var(--navy);margin:1rem 0 .3rem">👤 '+esc(cust.name)+' 님</h3>';
-  ohsec+=ohBarChart(cust.a.oh)+dayAnimalCard(cust.a,cust.name);
-  if(isG2) ohsec+='<h3 style="color:var(--navy);margin:1.4rem 0 .3rem">💞 '+esc(cust.p2.name)+' 님</h3>'+ohBarChart(cust.p2.a.oh)+dayAnimalCard(cust.p2.a,cust.p2.name);
+    +'<p class="guide-p" style="margin-bottom:.4rem">다섯 기운(오행)의 분포와, 태어난 날이 상징하는 동물이에요. 한눈에 강한 기운·부족한 기운이 보입니다.</p>'
+    +'<h3 style="color:var(--navy);margin:1rem 0 .3rem">☯ 오행 상생상극 — 다섯 기운의 관계</h3>'+ohRelDiagram();
+  if(isG2) ohsec+='<h3 style="color:var(--navy);margin:1.2rem 0 .3rem">👤 '+esc(cust.name)+' 님</h3>';
+  ohsec+=ohBarChart(cust.a.oh)+balanceCards(cust.a.oh)+dayAnimalCard(cust.a,cust.name);
+  if(isG2) ohsec+='<h3 style="color:var(--navy);margin:1.4rem 0 .3rem">💞 '+esc(cust.p2.name)+' 님</h3>'+ohBarChart(cust.p2.a.oh)+balanceCards(cust.p2.a.oh)+dayAnimalCard(cust.p2.a,cust.p2.name);
   ohsec+='</div>';
   $('resultView').innerHTML=cover+toc+guide+manse+ohsec+'<div class="parts" id="partsBox"></div>';
 }
