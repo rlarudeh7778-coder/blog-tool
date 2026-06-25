@@ -259,7 +259,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 <div class="aurora"></div>
 <canvas id="stars"></canvas>
 <header>
-  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.28</b></span></div>
+  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.29</b></span></div>
   <div class="hright">
     <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
   </div>
@@ -540,7 +540,10 @@ function ohBarChart(oh){
   return '<div class="ohchart"><div class="ohbars">'+rows+'</div><div class="ohnote">📊 '+note+'</div></div>';
 }
 // 일주동물 이미지: 확장자(png/jpg/jpeg/webp/대문자)를 차례로 시도 → 다 없으면 폴백 카드로
-const AC_EXTS=['png','jpg','jpeg','webp','PNG','JPG','JPEG','WEBP'];
+// 일반 확장자 + 윈도우 '확장자 숨김'으로 생긴 이중 확장자(tiger.jpeg.png 등)까지 자동 탐색
+const AC_EXTS=['png','jpg','jpeg','webp','PNG','JPG','JPEG','WEBP',
+  'jpeg.png','jpg.png','png.png','webp.png','jpeg.PNG','jpg.PNG','webp.PNG',
+  'png.jpg','png.jpeg','png.webp','jpg.jpeg','jpeg.jpg'];
 function acImgErr(img){
   const i=(+img.dataset.ei||0)+1;
   if(i<AC_EXTS.length){ img.dataset.ei=i; img.src='animals/'+img.dataset.an+'.'+AC_EXTS[i]; }
