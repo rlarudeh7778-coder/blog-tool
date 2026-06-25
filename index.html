@@ -2342,9 +2342,16 @@ async function saveKey(){
 }
 async function verifyKey(ai,k){
   try{
-    var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:5,messages:[{role:'user',content:'hi'}]})});
-    var d=await r.json();return!d.error;
-  }catch(e){return false;}
+    var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1,messages:[{role:'user',content:'hi'}]})});
+    if(r.status===401||r.status===403) return false;            // 인증 실패 = 키 오류
+    var d=await r.json();
+    if(d.error){
+      var t=((d.error.type||'')+' '+(d.error.message||'')).toLowerCase();
+      // 인증 관련 오류만 '키 틀림'으로 처리. 모델/사용량/요청 형식 등은 키 자체는 유효로 간주(저장 허용)
+      if(/authentication|invalid x-api-key|unauthorized|x-api-key header/.test(t)) return false;
+    }
+    return true;
+  }catch(e){ return false; }
 }
 function onCatChange(){
   var cat = document.getElementById('cat').value;
