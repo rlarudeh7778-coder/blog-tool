@@ -259,7 +259,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 <div class="aurora"></div>
 <canvas id="stars"></canvas>
 <header>
-  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.27</b></span></div>
+  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.28</b></span></div>
   <div class="hright">
     <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
   </div>
@@ -539,17 +539,24 @@ function ohBarChart(oh){
   const note='<b style="color:'+ELEM_COLOR[strong[0]]+'">'+strong.join('·')+'</b> 기운이 강하고'+(weak.length?(', <b>'+weak.join('·')+'</b> 기운이 비어 있어요.'):' 비교적 고른 편이에요.');
   return '<div class="ohchart"><div class="ohbars">'+rows+'</div><div class="ohnote">📊 '+note+'</div></div>';
 }
+// 일주동물 이미지: 확장자(png/jpg/jpeg/webp/대문자)를 차례로 시도 → 다 없으면 폴백 카드로
+const AC_EXTS=['png','jpg','jpeg','webp','PNG','JPG','JPEG','WEBP'];
+function acImgErr(img){
+  const i=(+img.dataset.ei||0)+1;
+  if(i<AC_EXTS.length){ img.dataset.ei=i; img.src='animals/'+img.dataset.an+'.'+AC_EXTS[i]; }
+  else { img.remove(); }
+}
 function dayAnimalCard(a,name){
   const elem=GAN_OH[a.s.D.g], ji=JI[a.s.D.j], col=ELEM_COLOR[elem];
   const hjJi=JI_HJA[a.s.D.j], title=ELEM_HJA[elem]+hjJi, koName=ELEM_KO[elem]+' '+JI_ANIMAL[ji], emoji=JI_EMOJI[ji];
   const desc=esc(name)+' 님의 일주 동물은 <b style="color:'+col+'">'+koName+'('+title+')</b>입니다. '
     +ELEM_TRAIT[elem]+'을 바탕으로, '+ANIMAL_TRAIT[ji]+' 기질이 어우러진 분이에요. '
     +'겉으로 드러나는 매력과 속에 품은 결이 이 동물의 상징과 꼭 닮아 있습니다.';
-  // animals/<동물>.png 가 있으면 큰 액자로, 없으면(404) 한자+이모지 카드로 자동 표시
+  // animals/<동물>.(png/jpg/jpeg/webp) 중 무엇이든 있으면 큰 액자로, 없으면 한자+이모지 카드로 자동 표시
   return '<div class="animalcard2">'
     +'<div class="ac2-head">🐾 '+esc(name)+' 님의 일주 동물 · <b style="color:'+col+'">'+koName+' ('+title+')</b></div>'
     +'<div class="ac2-frame">'
-      +'<img class="ac2-img" src="animals/'+JI_FILE[ji]+'.png" alt="" onload="this.parentNode.classList.add(\'hasimg\')" onerror="this.remove()">'
+      +'<img class="ac2-img" src="animals/'+JI_FILE[ji]+'.png" data-an="'+JI_FILE[ji]+'" data-ei="0" alt="" onload="this.parentNode.classList.add(\'hasimg\')" onerror="acImgErr(this)">'
       +'<div class="ac2-hjover" style="color:'+col+'">'+hjJi+'<small>'+koName+'</small></div>'
       +'<div class="ac2-fallback"><div class="ac2-emoji">'+emoji+'</div><div class="ac2-hj" style="color:'+col+'">'+title+'</div><div class="ac2-ko">'+koName+'</div></div>'
     +'</div>'
