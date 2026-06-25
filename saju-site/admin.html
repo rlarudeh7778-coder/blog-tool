@@ -170,6 +170,28 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 .act{background:#fff7ea;border:1px solid #f0dcae;border-radius:10px;padding:.9rem 1.1rem;margin:.9rem 0;color:#6a4e16}
 .act .et{font-weight:800;color:#9a6a00;font-size:14px;margin-bottom:.3rem}
 .part-body hr{border:none;border-top:1px solid #e3e7f0;margin:1.1rem 0}
+/* 오행 키워드 색상 강조 */
+.elmok{color:#2f7a3f;font-weight:700}.elhwa{color:#c83c3c;font-weight:700}.eltoo{color:#b8901a;font-weight:700}.elgeum{color:#5f6c80;font-weight:700}.elsoo{color:#2f5fa0;font-weight:700}
+/* 오행 막대그래프 */
+.ohchart{background:#fbfaf4;border:1px solid #ece6d4;border-radius:12px;padding:14px 16px;margin:.6rem 0}
+.ohbars{display:flex;flex-direction:column;gap:9px}
+.ohb-row{display:flex;align-items:center;gap:10px;font-size:14px}
+.ohb-lab{flex:0 0 56px;font-weight:800}
+.ohb-track{flex:1;height:13px;background:#eee7d6;border-radius:8px;overflow:hidden}
+.ohb-track>i{display:block;height:100%;border-radius:8px;transition:width .5s}
+.ohb-num{flex:0 0 18px;text-align:center;font-weight:800;color:#5a4a20}
+.ohb-mean{flex:0 0 118px;font-size:11.5px;color:#8a7c55;text-align:right}
+.ohnote{margin-top:11px;font-size:13px;color:#5a4a20;text-align:center;border-top:1px dashed #e3dcc4;padding-top:9px}
+@media(max-width:520px){.ohb-mean{display:none}}
+/* 일주 동물 카드 (html2canvas 친화: 단색 배경·변수/pseudo 미사용) */
+.animalcard{display:flex;gap:16px;align-items:stretch;background:#faf6ec;border:1px solid #e6dec8;border-radius:14px;padding:16px;margin:.6rem 0}
+.animalcard .ac-art{flex:0 0 116px;border-radius:12px;background:#f3ecdb;border:1px solid #e0d6bd;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px}
+.animalcard .ac-emoji{font-size:46px;line-height:1}
+.animalcard .ac-hanja{font-family:'Nanum Myeongjo',serif;font-size:26px;font-weight:800;margin-top:4px}
+.animalcard .ac-ko{font-size:12px;color:#7a6e50;margin-top:2px}
+.animalcard .ac-body{flex:1;display:flex;flex-direction:column;justify-content:center}
+.animalcard .ac-title{font-weight:800;color:#3a3022;font-size:14px;margin-bottom:6px}
+.animalcard .ac-body p{font-size:14px;color:#4a4030;line-height:1.8;margin:0}
 .part-body table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:14px}
 .part-body th,.part-body td{border:1px solid #d9deea;padding:8px 10px;text-align:center}
 .part-body th{background:#0e1530;color:var(--gold);font-weight:700}
@@ -209,7 +231,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 <div class="aurora"></div>
 <canvas id="stars"></canvas>
 <header>
-  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.22</b></span></div>
+  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.23</b></span></div>
   <div class="hright">
     <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
   </div>
@@ -469,6 +491,36 @@ const SHENG={목:'화',화:'토',토:'금',금:'수',수:'목'};
 const KE={목:'토',토:'수',수:'화',화:'금',금:'목'};
 function tenGod(io,iy,to,ty){let s=(iy===ty);if(to===io)return s?'비견':'겁재';if(SHENG[io]===to)return s?'식신':'상관';if(KE[io]===to)return s?'편재':'정재';if(KE[to]===io)return s?'편관':'정관';if(SHENG[to]===io)return s?'편인':'정인';return '';}
 
+/* ── 오행 색상 · 일주 동물(레퍼런스 시각 요소) ── */
+const ELEM_COLOR={목:'#3a8a4a',화:'#cf4646',토:'#c79a1e',금:'#6f7d92',수:'#3a6db0'};
+const ELEM_HJA={목:'靑',화:'赤',토:'黃',금:'白',수:'黑'};
+const ELEM_KO={목:'푸른',화:'붉은',토:'누런',금:'하얀',수:'검은'};
+const ELEM_TRAIT={목:'쭉쭉 뻗는 나무처럼 성장과 추진의 기운',화:'타오르는 불처럼 열정과 표현의 기운',토:'든든한 대지처럼 안정과 포용의 기운',금:'잘 벼린 쇠처럼 결단과 절제의 기운',수:'깊은 물처럼 지혜와 유연함의 기운'};
+const ELEM_MEAN={목:'성장·시작·기획력',화:'열정·에너지·표현력',토:'안정·신뢰·중재력',금:'결단·절제·원칙',수:'지혜·유연함·통찰'};
+const JI_ANIMAL={자:'쥐',축:'소',인:'호랑이',묘:'토끼',진:'용',사:'뱀',오:'말',미:'양',신:'원숭이',유:'닭',술:'개',해:'돼지'};
+const JI_EMOJI={자:'🐭',축:'🐮',인:'🐯',묘:'🐰',진:'🐲',사:'🐍',오:'🐴',미:'🐑',신:'🐵',유:'🐔',술:'🐶',해:'🐷'};
+const ANIMAL_TRAIT={자:'영민하고 재빠르며 기회를 잘 포착하는',축:'성실하고 묵묵히 끝까지 해내는',인:'당당하고 추진력 강한 리더형의',묘:'섬세하고 부드러우며 센스 있는',진:'스케일이 크고 카리스마 있는',사:'깊고 신중하며 통찰력 있는',오:'활달하고 자유로우며 추진력 있는',미:'온화하고 배려심 깊은 평화주의의',신:'재치 있고 영리하며 손재주 좋은',유:'꼼꼼하고 부지런하며 자기관리에 철저한',술:'의리 있고 정직하며 충직한',해:'순수하고 복이 많으며 베풀 줄 아는'};
+function ohBarChart(oh){
+  const order=['목','화','토','금','수'];
+  const max=Math.max(1,order.reduce((m,k)=>Math.max(m,oh[k]),0));
+  const strong=order.filter(k=>oh[k]===max), weak=order.filter(k=>oh[k]===0);
+  const rows=order.map(k=>'<div class="ohb-row"><span class="ohb-lab" style="color:'+ELEM_COLOR[k]+'">'+k+'('+ELEM_HJA[k]+')</span>'
+    +'<span class="ohb-track"><i style="width:'+Math.round(oh[k]/max*100)+'%;background:'+ELEM_COLOR[k]+'"></i></span>'
+    +'<span class="ohb-num">'+oh[k]+'</span><span class="ohb-mean">'+ELEM_MEAN[k]+'</span></div>').join('');
+  const note='<b style="color:'+ELEM_COLOR[strong[0]]+'">'+strong.join('·')+'</b> 기운이 강하고'+(weak.length?(', <b>'+weak.join('·')+'</b> 기운이 비어 있어요.'):' 비교적 고른 편이에요.');
+  return '<div class="ohchart"><div class="ohbars">'+rows+'</div><div class="ohnote">📊 '+note+'</div></div>';
+}
+function dayAnimalCard(a,name){
+  const elem=GAN_OH[a.s.D.g], ji=JI[a.s.D.j], col=ELEM_COLOR[elem];
+  const title=ELEM_HJA[elem]+JI_HJA[a.s.D.j], koName=ELEM_KO[elem]+' '+JI_ANIMAL[ji], emoji=JI_EMOJI[ji];
+  const desc=esc(name)+' 님의 일주 동물은 <b style="color:'+col+'">'+koName+'('+title+')</b>입니다. '
+    +ELEM_TRAIT[elem]+'을 바탕으로, '+ANIMAL_TRAIT[ji]+' 기질이 어우러진 분이에요. '
+    +'겉으로 드러나는 매력과 속에 품은 결이 이 동물의 상징과 꼭 닮아 있습니다.';
+  return '<div class="animalcard">'
+    +'<div class="ac-art"><div class="ac-emoji">'+emoji+'</div><div class="ac-hanja" style="color:'+col+'">'+title+'</div><div class="ac-ko">'+koName+'</div></div>'
+    +'<div class="ac-body"><div class="ac-title">🐾 '+esc(name)+' 님의 일주 동물 · <b style="color:'+col+'">'+koName+'</b></div><p>'+desc+'</p></div></div>';
+}
+
 function computeSaju(y,mo,d,hour,minute,gender){
   const noTime=(hour===null||hour===undefined);
   const hh=noTime?12:hour, mm=minute||0;
@@ -536,11 +588,16 @@ const BASIC_PARTS=[
  {t:CUR_YEAR+'년 올해의 운세',g:CUR_YEAR+'년('+CUR_GANJI+'년) 세운과 사주의 상호작용으로 전반적 흐름과 재물·일·관계·건강의 운, 올 한 해의 핵심 조언을 정리.'}
 ];
 const GUNGHAP_PARTS=[
- {t:'두 사람의 사주 비교',g:'본인과 상대방 각각의 일간·오행·격국·신강신약을 비교해 기질의 닮음과 다름, 서로에게 끌리는 점과 부딪치는 지점을 짚기.'},
- {t:'오행·십성의 상호작용',g:'두 사주의 오행 생극(생/극/합/충)과 십성 관계를 근거로 두 사람 사이 에너지가 어떻게 흐르는지, 서로 보완되는 부분과 충돌되는 부분.'},
- {t:'인연·관계의 흐름',g:'일지(배우자궁)·합충과 두 사람의 대운·세운을 근거로 인연의 깊이, 만남·발전·고비의 시기와 장기적 관계 흐름.'},
- {t:'갈등 요소와 보완점',g:'서로의 부족한 오행과 성향 차이에서 오는 현실적 갈등 포인트와, 그것을 메워주는 구체적인 보완 방법.'},
- {t:'관계 발전을 위한 조언',g:'두 사람이 오래 좋은 관계를 이어가기 위한 실천적 조언 — 소통 방식, 역할, 서로를 위하는 태도, 좋은 시기 활용법.'}
+ {t:'두 사람, 첫인상과 끌림의 정체',g:'본인과 상대방 각각의 일간·오행·신강신약을 비교해 두 사람이 서로에게 처음 끌린 이유와 첫인상을 풀이. 「불 같은 사람 ↔ 물 같은 사람」처럼 기질의 대비/닮음을 일상 장면으로 구체적으로. 처음엔 무엇에 반하고, 시간이 지나면 무엇이 달라 보이는지까지.'},
+ {t:'오행으로 본 두 사람의 케미',g:'두 사주의 오행 생극(상생/상극)을 근거로 에너지 궁합을 풀이. 서로를 살려주는(상생) 부분과 부딪히는(상극) 부분을 구체적 상황(데이트·말다툼·일상)으로. 부족한 오행을 상대가 채워주는지, 둘 다 강해 충돌하는지 등 경우의 수를 나눠 설명.'},
+ {t:'성격 차이 — 이래서 끌리고 이래서 싸운다',g:'십성·기질 차이로 생기는 현실 갈등을 구체적 예시로. 예) 한쪽은 계획형 다른쪽은 즉흥형, 한쪽은 표현형 다른쪽은 무뚝뚝형 — 같은 상황에서 둘이 어떻게 다르게 반응하는지 대화 장면처럼. 그 차이가 매력이 될 때 vs 상처가 될 때.'},
+ {t:'연애 스타일과 애정 표현법',g:'두 사람이 사랑을 주고받는 방식의 차이(스킨십·말·행동·선물 등)와, 서로가 「사랑받는다」고 느끼는 포인트가 어떻게 다른지. 한쪽이 서운해지기 쉬운 지점과, 상대가 어떻게 표현하면 좋은지 실전 팁.'},
+ {t:'다툼의 패턴과 화해의 기술',g:'두 사주가 부딪힐 때 반복되는 다툼의 패턴(누가 먼저 식고, 누가 끝까지 붙드는지 등)과 그 근본 원인. 각자에게 맞는 화해 방법 — 한 사람에겐 시간을, 한 사람에겐 즉각적 사과가 필요한 식으로 맞춤 처방.'},
+ {t:'잠자리·스킨십 궁합 (친밀도)',g:'두 사람의 음양·오행 균형으로 본 신체적·정서적 친밀감의 결, 표현 욕구의 차이, 서로 편안함을 느끼는 거리감. 과하지 않게 품격 있는 표현으로, 친밀감을 높이는 현실 조언을 함께.'},
+ {t:'돈·가치관·생활방식 궁합',g:'재성·기질로 본 소비/저축 성향, 일과 가정의 우선순위, 미래 계획에 대한 가치관 차이. 함께 살거나 결혼했을 때 부딪힐 수 있는 현실 포인트(돈 관리·집안일·양가 등)와 합의 방법.'},
+ {t:'인연의 깊이와 시기 — 만남·고비·결실',g:'일지(배우자궁)·합충과 두 사람의 대운·세운으로 인연의 깊이를 보고, 언제 가까워지고 언제 위기가 오는지, 결혼·동거 등 결실의 시기를 시기별로. '+CUR_YEAR+'년('+CUR_GANJI+'년) 두 사람의 흐름도 짚기.'},
+ {t:'결혼해도 될까? — 장기 관계 전망',g:'두 사주를 종합해 장기적으로 잘 맞는 부분과 노력이 필요한 부분을 솔직하게(단, 단정 금지·경향으로). 어떤 노력을 하면 오래가는 인연이 되는지, 반대로 방치하면 어떤 부분이 위험한지 균형 있게.'},
+ {t:'두 사람을 위한 맞춤 처방',g:'관계가 오래 행복하려면 각자 무엇을 하면 좋은지 「○○님께 / △△님께」로 나눠 구체적 행동·말·습관을 처방. 서로의 부족한 오행을 채워주는 개운 팁(함께 가면 좋은 방향·취미·시기)까지 따뜻하게 마무리.'}
 ];
 const NAMING_PARTS=[
  {t:'사주로 본 타고난 기운',g:'이름의 주인공(아이 또는 본인)의 사주팔자·오행 분포·일간·신강신약을 분석해 타고난 기질과 성향을 정리하세요. ★중요★ 아래 제공된 「오행 강약(별점)」을 그대로 살려, 목·화·토·금·수 다섯 오행의 강약을 ★ 5개 만점 별점으로 표(| 오행 | 강약 | 개수 | 한 줄 설명 |)로 보기 쉽게 보여주세요. 별이 적은(부족한) 오행이 무엇인지 분명히 짚고, 사주의 균형을 위해 「채워주면 좋은 오행(용신·희신)」과 「과한 오행(피할 기운)」을 명확히 도출하세요. 이 결론이 뒤의 작명 기준이 됩니다.'},
@@ -586,7 +643,7 @@ $('iNoTime').onchange=function(){let dis=this.checked;$('iH').disabled=dis;$('iM
 $('iNoTime2').onchange=function(){let dis=this.checked;$('iH2').disabled=dis;$('iMin2').disabled=dis;$('iH2').style.opacity=$('iMin2').style.opacity=dis?.4:1;};
 
 // 패키지 전환
-const PKG_HINT={기본:'기본: 사주팔자·오행·성격·올해의 운세 (핵심 3파트)',프리미엄:'프리미엄: 대운·재물·애정·직업·건강 등 심층 10파트 + 추가질문 1회',궁합:'궁합: 두 사람 정보를 입력해 관계를 심층 분석 (5파트)',작명:'작명·개명: 아이/본인의 사주로 보완할 기운을 찾아 어울리는 이름을 추천 (5파트)'};
+const PKG_HINT={기본:'기본: 사주팔자·오행·성격·올해의 운세 (핵심 3파트)',프리미엄:'프리미엄: 대운·재물·애정·직업·건강 등 심층 10파트 + 추가질문 1회',궁합:'궁합: 두 사람 정보를 입력해 관계를 심층 분석 (심층 10파트)',작명:'작명·개명: 아이/본인의 사주로 보완할 기운을 찾아 어울리는 이름을 추천 (5파트)'};
 $('iPkg').querySelectorAll('.segbtn').forEach(b=>b.addEventListener('click',()=>{
   activePkg=b.dataset.v; PARTS=partsFor(activePkg);
   let isG=(activePkg==='궁합'), isN=(activePkg==='작명');
@@ -1027,6 +1084,7 @@ function renderCover(){
   // ② 목차
   let toc='<div class="rsec pdf-block"><h2>목차</h2><div class="toc-list">'
     +'<div class="toc-i"><b>🀄</b><span>만세력 — 나의 사주판 (사주팔자·오행·대운)</span></div>'
+    +'<div class="toc-i"><b>🌳</b><span>오행 균형 &amp; 일주 동물</span></div>'
     +'<div class="toc-i"><b>📖</b><span>이 리포트 보는 법 &amp; 사주 용어 설명</span></div>'
     +PARTS.map((p,i)=>'<div class="toc-i"><b>'+(p.ask?'💬':(i+1))+'</b><span>'+esc(p.t)+'</span></div>').join('')
     +'</div></div>';
@@ -1047,7 +1105,15 @@ function renderCover(){
     +sajuPanelHTML(cust,cust.a);
   if(cust.pkg==='궁합'&&cust.p2) manse+='<div style="height:1rem"></div>'+sajuPanelHTML(cust.p2,cust.p2.a);
   manse+='</div>';
-  $('resultView').innerHTML=cover+toc+guide+manse+'<div class="parts" id="partsBox"></div>';
+  // 오행 균형 막대그래프 + 일주 동물 (레퍼런스 시각 요소)
+  const isG2=(cust.pkg==='궁합'&&cust.p2);
+  let ohsec='<div class="rsec pdf-block"><h2>🌳 오행 균형 & 일주 동물</h2>'
+    +'<p class="guide-p" style="margin-bottom:.4rem">다섯 기운(오행)의 분포와, 태어난 날이 상징하는 동물이에요. 한눈에 강한 기운·부족한 기운이 보입니다.</p>';
+  if(isG2) ohsec+='<h3 style="color:var(--navy);margin:1rem 0 .3rem">👤 '+esc(cust.name)+' 님</h3>';
+  ohsec+=ohBarChart(cust.a.oh)+dayAnimalCard(cust.a,cust.name);
+  if(isG2) ohsec+='<h3 style="color:var(--navy);margin:1.4rem 0 .3rem">💞 '+esc(cust.p2.name)+' 님</h3>'+ohBarChart(cust.p2.a.oh)+dayAnimalCard(cust.p2.a,cust.p2.name);
+  ohsec+='</div>';
+  $('resultView').innerHTML=cover+toc+guide+manse+ohsec+'<div class="parts" id="partsBox"></div>';
 }
 function renderProgress(i){
   let box=$('partsBox'); if(!box)return;
@@ -1115,7 +1181,12 @@ function md(t){
   }
   closeLists();return out.join('');
 }
-function inline(s){return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/(?<!\*)\*([^*]+)\*(?!\*)/g,'<em>$1</em>').replace(/&lt;br\s*\/?&gt;/gi,'<br>');}
+const ELC={목:'elmok',화:'elhwa',토:'eltoo',금:'elgeum',수:'elsoo'};
+function inline(s){
+  s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/(?<!\*)\*([^*]+)\*(?!\*)/g,'<em>$1</em>').replace(/&lt;br\s*\/?&gt;/gi,'<br>');
+  s=s.replace(/(목|화|토|금|수)(\(木\)|\(火\)|\(土\)|\(金\)|\(水\))/g,(m,a,b)=>'<span class="'+ELC[a]+'">'+a+b+'</span>'); // 오행 키워드 색상 강조
+  return s;
+}
 
 /* ═══════════ 저장 ═══════════ */
 var IS_MOBILE=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
