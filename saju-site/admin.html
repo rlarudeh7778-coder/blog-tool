@@ -191,18 +191,22 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 .ohb-mean{flex:0 0 118px;font-size:11.5px;color:#8a7c55;text-align:right}
 .ohnote{margin-top:11px;font-size:13px;color:#5a4a20;text-align:center;border-top:1px dashed #e3dcc4;padding-top:9px}
 @media(max-width:520px){.ohb-mean{display:none}}
-/* 일주 동물 카드 (html2canvas 친화: 단색 배경·변수/pseudo 미사용) */
-.animalcard{display:flex;gap:16px;align-items:stretch;background:#faf6ec;border:1px solid #e6dec8;border-radius:14px;padding:16px;margin:.6rem 0}
-.animalcard .ac-art{flex:0 0 116px;border-radius:12px;background:#f3ecdb;border:1px solid #e0d6bd;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px}
-.animalcard .ac-emoji{font-size:46px;line-height:1}
-.animalcard .ac-img{width:98px;height:98px;object-fit:contain;border-radius:8px;display:block}
-.animalcard .ac-art.hasimg .ac-emoji{display:none}
-.animalcard .ac-art.hasimg .ac-hanja{margin-top:6px}
-.animalcard .ac-hanja{font-family:'Nanum Myeongjo',serif;font-size:26px;font-weight:800;margin-top:4px}
-.animalcard .ac-ko{font-size:12px;color:#7a6e50;margin-top:2px}
-.animalcard .ac-body{flex:1;display:flex;flex-direction:column;justify-content:center}
-.animalcard .ac-title{font-weight:800;color:#3a3022;font-size:14px;margin-bottom:6px}
-.animalcard .ac-body p{font-size:14px;color:#4a4030;line-height:1.8;margin:0}
+/* 일주 동물 카드 — 큰 액자형(이미지 있으면) / 이모지 폴백(없으면) */
+.animalcard2{background:#faf6ec;border:1px solid #e6dec8;border-radius:14px;padding:16px;margin:.6rem 0}
+.ac2-head{font-weight:800;color:#3a3022;font-size:15px;text-align:center;margin-bottom:11px}
+.ac2-frame{position:relative;max-width:380px;margin:0 auto;border:3px solid #2c3a5e;border-radius:6px;padding:7px;background:#f4e8cc;min-height:130px}
+.ac2-img{width:100%;display:block;border-radius:3px}
+.ac2-hjover{display:none;position:absolute;top:16px;left:16px;font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:30px;line-height:1.05;text-shadow:0 1px 4px rgba(255,255,255,.75)}
+.ac2-hjover small{display:block;font-size:12px;margin-top:3px;font-weight:700}
+.ac2-frame.hasimg .ac2-hjover{display:block}
+.ac2-frame.hasimg{min-height:0}
+.ac2-fallback{text-align:center;padding:22px 0}
+.ac2-frame.hasimg .ac2-fallback{display:none}
+.ac2-emoji{font-size:52px;line-height:1}
+.ac2-hj{font-family:'Nanum Myeongjo',serif;font-size:28px;font-weight:800;margin-top:5px}
+.ac2-ko{font-size:12px;color:#7a6e50;margin-top:2px}
+.ac2-desc{font-size:14px;color:#4a4030;line-height:1.85;margin-top:13px}
+.ac2-desc b{font-size:13px;margin-right:3px}
 /* 오행 상생상극 도식 */
 .ohdiagram{text-align:center;margin:.5rem 0 1rem}
 .ohd-legend{display:flex;gap:18px;justify-content:center;margin-top:6px;font-size:12px;color:#6a5a3a}
@@ -255,7 +259,7 @@ header{background:rgba(12,8,28,.6);backdrop-filter:blur(14px);border-bottom:1px 
 <div class="aurora"></div>
 <canvas id="stars"></canvas>
 <header>
-  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.26</b></span></div>
+  <div class="logo">🌙 운명을 읽다 <b>관리자</b><span>· AI 사주·작명 콘솔 <b style="color:#46d59a;font-weight:700">v6.27</b></span></div>
   <div class="hright">
     <div class="astat"><span class="dot" id="apiDot"></span><span id="apiStat">API 미설정</span></div>
   </div>
@@ -537,16 +541,19 @@ function ohBarChart(oh){
 }
 function dayAnimalCard(a,name){
   const elem=GAN_OH[a.s.D.g], ji=JI[a.s.D.j], col=ELEM_COLOR[elem];
-  const title=ELEM_HJA[elem]+JI_HJA[a.s.D.j], koName=ELEM_KO[elem]+' '+JI_ANIMAL[ji], emoji=JI_EMOJI[ji];
+  const hjJi=JI_HJA[a.s.D.j], title=ELEM_HJA[elem]+hjJi, koName=ELEM_KO[elem]+' '+JI_ANIMAL[ji], emoji=JI_EMOJI[ji];
   const desc=esc(name)+' 님의 일주 동물은 <b style="color:'+col+'">'+koName+'('+title+')</b>입니다. '
     +ELEM_TRAIT[elem]+'을 바탕으로, '+ANIMAL_TRAIT[ji]+' 기질이 어우러진 분이에요. '
     +'겉으로 드러나는 매력과 속에 품은 결이 이 동물의 상징과 꼭 닮아 있습니다.';
-  // animals/<동물>.png 가 있으면 그 그림을, 없으면(404) 이모지 카드를 자동 표시
-  const img='<img class="ac-img" src="animals/'+JI_FILE[ji]+'.png" alt="" '
-    +'onload="this.parentNode.classList.add(\'hasimg\')" onerror="this.remove()">';
-  return '<div class="animalcard">'
-    +'<div class="ac-art">'+img+'<div class="ac-emoji">'+emoji+'</div><div class="ac-hanja" style="color:'+col+'">'+title+'</div><div class="ac-ko">'+koName+'</div></div>'
-    +'<div class="ac-body"><div class="ac-title">🐾 '+esc(name)+' 님의 일주 동물 · <b style="color:'+col+'">'+koName+'</b></div><p>'+desc+'</p></div></div>';
+  // animals/<동물>.png 가 있으면 큰 액자로, 없으면(404) 한자+이모지 카드로 자동 표시
+  return '<div class="animalcard2">'
+    +'<div class="ac2-head">🐾 '+esc(name)+' 님의 일주 동물 · <b style="color:'+col+'">'+koName+' ('+title+')</b></div>'
+    +'<div class="ac2-frame">'
+      +'<img class="ac2-img" src="animals/'+JI_FILE[ji]+'.png" alt="" onload="this.parentNode.classList.add(\'hasimg\')" onerror="this.remove()">'
+      +'<div class="ac2-hjover" style="color:'+col+'">'+hjJi+'<small>'+koName+'</small></div>'
+      +'<div class="ac2-fallback"><div class="ac2-emoji">'+emoji+'</div><div class="ac2-hj" style="color:'+col+'">'+title+'</div><div class="ac2-ko">'+koName+'</div></div>'
+    +'</div>'
+    +'<div class="ac2-desc"><b style="color:'+col+'">풀이</b> '+desc+'</div></div>';
 }
 // 오행 상생상극 도식(단순 SVG — html2canvas 안전)
 function ohRelDiagram(){
