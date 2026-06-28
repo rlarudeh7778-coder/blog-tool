@@ -26,7 +26,19 @@ export default {
     }
 
     try {
-      // 1) 블로그 RSS에서 최근 글 제목 수집
+      // ── 모드 1) 키워드 목록이 주어지면: 그 상업 키워드들로 순위 측정 (리뷰노트 방식)
+      const kwParam = (url.searchParams.get('keywords') || '').trim();
+      if (kwParam) {
+        const kws = kwParam.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 25);
+        if (!kws.length) return json({ error: '측정할 키워드가 없습니다.' }, 400, cors);
+        const details = await Promise.all(kws.map(async (kw) => {
+          const rank = await searchRank(kw, blogId, env);
+          return { keyword: kw, rank };
+        }));
+        return json({ blogId, score: calcScore(details), checked: details.length, details, mode: 'keywords' }, 200, cors);
+      }
+
+      // ── 모드 2) 키워드가 없으면: 블로그 RSS 최근 글 제목 기반 (폴백)
       const rssRes = await fetch('https://rss.blog.naver.com/' + encodeURIComponent(blogId) + '.xml', {
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; blogscore/1.0)' },
       });
