@@ -2021,13 +2021,12 @@ function iaCopyAll(){
   </div>
 
   <div class="field" style="padding:0;margin-bottom:10px">
-    <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">측정 키워드 (상업 키워드 기준)</label>
+    <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">측정 방식</label>
     <select id="bs_src" onchange="bsSrcChange()" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);cursor:pointer">
-      <option value="phone">선불폰·알뜰폰 상업키워드 (자동)</option>
-      <option value="english">영어회화·학원 상업키워드 (자동)</option>
-      <option value="custom">직접 입력한 키워드로 측정</option>
+      <option value="auto">최근 글 자동 측정 (글마다 키워드 순위 평균)</option>
+      <option value="custom">특정 키워드 순위 확인 (키워드 직접 입력)</option>
     </select>
-    <textarea id="bs_customkw" placeholder="측정할 키워드를 쉼표 또는 줄바꿈으로 구분해 입력 (예: 선불폰, 부산 선불폰, 선불유심 개통)" style="display:none;width:100%;min-height:70px;margin-top:7px;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;line-height:1.6;resize:vertical;outline:none;color:var(--txt);background:var(--sur)"></textarea>
+    <textarea id="bs_customkw" placeholder="순위를 확인할 키워드를 쉼표 또는 줄바꿈으로 구분해 입력 (예: 선불폰, 부산 선불폰, 선불유심 개통)" style="display:none;width:100%;min-height:70px;margin-top:7px;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;line-height:1.6;resize:vertical;outline:none;color:var(--txt);background:var(--sur)"></textarea>
   </div>
 
   <button onclick="bsRun()" id="bs_btn" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">📊 노출점수 측정하기</button>
@@ -2110,21 +2109,18 @@ async function bsRun(){
   if(!worker){ box.innerHTML='<div class="th-card" style="border-color:#c9a84c"><p style="color:#8a6d2f;font-size:13px;margin:0">⚙ 먼저 아래 「측정 서버(프록시) 설정」에서 Worker 주소를 등록해주세요.</p></div>'; return; }
   if(!blogId){ box.innerHTML='<p style="color:var(--red);font-size:13px">블로그 아이디를 입력해주세요.</p>'; return; }
 
-  // 측정할 키워드 결정
-  var keywords, volCat=null;
-  if(src==='custom'){
+  var custom = (src==='custom'), keywords=[];
+  var fetchUrl = worker+'?blogId='+encodeURIComponent(blogId);
+  if(custom){
     keywords=(document.getElementById('bs_customkw').value||'').split(/[,\n]/).map(function(s){return s.trim();}).filter(Boolean).slice(0,25);
-    if(!keywords.length){ box.innerHTML='<p style="color:var(--red);font-size:13px">측정할 키워드를 입력해주세요. (쉼표·줄바꿈 구분)</p>'; return; }
-  } else {
-    volCat=src;
-    keywords=bsPickKeywords(src);
-    if(!keywords.length){ box.innerHTML='<p style="color:var(--red);font-size:13px">해당 카테고리 키워드 풀이 없어요.</p>'; return; }
+    if(!keywords.length){ box.innerHTML='<p style="color:var(--red);font-size:13px">순위를 확인할 키워드를 입력해주세요. (쉼표·줄바꿈 구분)</p>'; return; }
+    fetchUrl += '&keywords='+encodeURIComponent(keywords.join(','));
   }
 
   btn.disabled=true; var ot=btn.textContent; btn.textContent='측정 중…';
-  box.innerHTML='<div style="text-align:center;padding:24px;color:var(--t3);font-size:13px">상업 키워드 '+keywords.length+'개로 노출 순위를 분석하는 중… (15~30초)</div>';
+  box.innerHTML='<div style="text-align:center;padding:24px;color:var(--t3);font-size:13px">'+(custom?'입력한 키워드 순위를 확인하는 중…':'최근 글의 검색 노출을 분석하는 중…')+' (15~30초)</div>';
   try{
-    var r=await fetch(worker+'?blogId='+encodeURIComponent(blogId)+'&keywords='+encodeURIComponent(keywords.join(',')),{method:'GET'});
+    var r=await fetch(fetchUrl,{method:'GET'});
     var d=await r.json();
     if(d.error){ box.innerHTML='<div class="th-card"><p style="color:var(--red);font-size:13px;margin:0">⚠ '+bsEsc(d.error)+'</p></div>'; return; }
     var s=Math.max(0,Math.min(100,Math.round(d.score||0))), g=bsGrade(s);
@@ -2132,23 +2128,36 @@ async function bsRun(){
     var rows=det.map(function(x){
       var rk=x.rank>0?(x.rank+'위'):'30위 밖';
       var rc=x.rank>0&&x.rank<=10?'var(--green)':(x.rank>0?'#BA7517':'var(--t3)');
-      var v=volCat?bsVol(volCat,x.keyword):null;
       return '<div style="display:flex;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--bor)">'
-        +'<div style="flex:1;min-width:0;font-size:12.5px;color:var(--txt);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🔎 '+bsEsc(x.keyword||'-')+(v!=null?' <span style="font-weight:400;color:var(--t3);font-size:11px">월'+bsFmtVol(v)+'</span>':'')+'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:12.5px;color:var(--txt);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🔎 '+bsEsc(x.keyword||'-')+'</div>'
+          +(x.title?'<div style="font-size:10.5px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+bsEsc(x.title)+'</div>':'')
+        +'</div>'
         +'<div style="font-size:13px;font-weight:700;color:'+rc+';white-space:nowrap">'+rk+'</div></div>';
     }).join('');
     var topN=det.filter(function(x){return x.rank>0&&x.rank<=10;}).length;
-    box.innerHTML=
-      '<div style="border:1px solid var(--bor);border-radius:var(--r);overflow:hidden">'
-      +'<div style="text-align:center;padding:22px 16px;background:var(--gl)">'
-        +'<div style="font-size:12px;color:var(--t2);margin-bottom:4px">@'+bsEsc(blogId)+' 노출점수</div>'
-        +'<div style="font-size:46px;font-weight:800;line-height:1;color:'+g.c+'">'+s+'<span style="font-size:18px;color:var(--t3)">점</span></div>'
-        +'<div style="font-size:13px;font-weight:700;color:'+g.c+';margin-top:6px">'+g.t+'</div>'
-        +'<div style="font-size:11px;color:var(--t3);margin-top:6px">상업 키워드 '+(d.checked||0)+'개 측정 · 상위10위 '+topN+'개 노출</div>'
-      +'</div>'
-      +(rows?'<div style="font-size:11px;color:var(--t3);padding:9px 12px;font-weight:700">키워드별 검색 순위 (상위 노출 순)</div>'+rows:'')
-      +'</div>'
-      +'<div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.6">※ 리뷰노트 방식 — <b>실제 상업 키워드</b>에서 이 블로그가 몇 위에 노출되는지로 측정합니다. 네이버 <b>블로그 검색 API</b> 기준이라 통합검색(VIEW) 순위와는 다소 차이가 있을 수 있어요(beta).</div>';
+    if(custom){
+      // 특정 키워드 모드 — 순위 확인이 핵심
+      box.innerHTML=
+        '<div style="border:1px solid var(--bor);border-radius:var(--r);overflow:hidden">'
+        +'<div style="padding:13px 14px;background:var(--gl);font-size:13px;font-weight:700;color:var(--gd)">@'+bsEsc(blogId)+' · 키워드별 노출 순위</div>'
+        +rows
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.6">※ 네이버 <b>블로그 검색 API(블로그탭)</b> 기준 순위예요. 30위 밖은 상위 노출이 안 된 상태입니다.</div>';
+    } else {
+      // 자동 모드 — 최근 글 기준 점수
+      box.innerHTML=
+        '<div style="border:1px solid var(--bor);border-radius:var(--r);overflow:hidden">'
+        +'<div style="text-align:center;padding:22px 16px;background:var(--gl)">'
+          +'<div style="font-size:12px;color:var(--t2);margin-bottom:4px">@'+bsEsc(blogId)+' 노출점수</div>'
+          +'<div style="font-size:46px;font-weight:800;line-height:1;color:'+g.c+'">'+s+'<span style="font-size:18px;color:var(--t3)">점</span></div>'
+          +'<div style="font-size:13px;font-weight:700;color:'+g.c+';margin-top:6px">'+g.t+'</div>'
+          +'<div style="font-size:11px;color:var(--t3);margin-top:6px">최근 글 '+(d.checked||0)+'개 기준 · 상위10위 '+topN+'개 노출</div>'
+        +'</div>'
+        +(rows?'<div style="font-size:11px;color:var(--t3);padding:9px 12px;font-weight:700">글별 핵심 키워드 검색 순위 (상위 노출 순)</div>'+rows:'')
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.6">※ 최근 글 각각의 핵심 키워드로 검색해 평균낸 점수예요. 정확히 보려면 위에서 <b>특정 키워드 순위 확인</b>을 쓰세요. (블로그 검색 API 기준 · beta)</div>';
+    }
   }catch(e){
     box.innerHTML='<div class="th-card"><p style="color:var(--red);font-size:13px;margin:0">⚠ 측정 서버에 연결하지 못했어요. Worker 주소가 맞는지, 배포됐는지 확인해주세요.</p></div>';
   }finally{ btn.disabled=false; btn.textContent=ot; }
