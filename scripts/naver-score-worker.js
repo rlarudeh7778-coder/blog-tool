@@ -46,7 +46,7 @@ export default {
         return json({ error: '블로그를 찾을 수 없거나 RSS가 비공개입니다. 아이디를 확인하세요.' }, 404, cors);
       }
       const xml = await rssRes.text();
-      const items = parseRss(xml).slice(0, 10);
+      const items = parseRss(xml).slice(0, 18);
       if (!items.length) {
         return json({ error: '최근 글을 찾지 못했어요. (글이 없거나 RSS 비공개)' }, 404, cors);
       }
@@ -90,11 +90,13 @@ function decodeEnt(s) {
   return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
 }
 function cleanQuery(t) {
-  // 제목 전체로 검색하면 '자기 글'이 무조건 1위라 의미가 없음.
-  // → 앞쪽 핵심 2(~3)단어만 뽑아 '경쟁 키워드'로 검색해 실제 순위를 본다.
+  // 제목 전체로 검색하면 '자기 글'이 항상 1위라 의미가 없음 → 흔한 군더더기 단어를 빼고
+  // 앞쪽 핵심 2(~3)단어만 뽑아 '경쟁 키워드'로 검색한다.
+  const FILLER = ['방법', '정리', '후기', '추천', '가이드', '총정리', '꿀팁', '베스트', 'best', '완벽', '쉽게',
+    '하는', '및', '주의', '실전', '셀프', '모음', '리스트', '순위', '비교', '내돈내산', '솔직', '총평', '대박', '진짜'];
   let q = t.replace(/\[[^\]]*\]/g, ' ').replace(/\([^)]*\)/g, ' ')
            .replace(/[^가-힣a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
-  const words = q.split(' ').filter(Boolean);
+  const words = q.split(' ').filter((w) => w && FILLER.indexOf(w.toLowerCase()) < 0 && !/^\d+$/.test(w));
   const head = words.slice(0, 2);
   if (head.join('').length < 4 && words[2]) head.push(words[2]); // 너무 짧으면 한 단어 더
   return head.join(' ');
