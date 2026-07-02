@@ -335,6 +335,9 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
   <div class="maintab" id="mt-blogscore" data-tab="blogscore" style="position:relative">📊 노출점수
     <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
   </div>
+  <div class="maintab" id="mt-homepan" data-tab="homepan" style="position:relative">🏠 홈판 글쓰기
+    <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
+  </div>
   <a href="video-transcription.html" class="maintab" id="mt-transcribe" style="position:relative;text-decoration:none">🎙️ 자막 받아쓰기
     <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
   </a>
@@ -2228,6 +2231,250 @@ async function bsRun(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bsInit);else bsInit();
 </script>
 
+<!-- ===== 🏠 홈판 글쓰기 탭 ===== -->
+<div class="mainpanel" id="mp-homepan">
+<div style="max-width:760px;margin:0 auto;padding:1.5rem 0 3rem">
+
+  <div style="margin-bottom:1rem">
+    <div style="font-size:16px;font-weight:800;color:var(--txt)">🏠 홈판(메인) 글쓰기 <span style="font-size:10px;font-weight:700;background:var(--gl);color:var(--gd);padding:2px 7px;border-radius:6px;vertical-align:middle">AI 하이브리드</span></div>
+    <div style="font-size:12px;color:var(--t3);margin-top:3px;line-height:1.6">네이버 홈판 노출 공식(DIA+ · 경험 중심)에 맞춰, <b>카테고리 구조 + 내 경험</b>을 결합해 상위 노출용 글을 만듭니다.</div>
+  </div>
+
+  <div id="hp_keyhint" style="display:none;border:1px solid #c9a84c;background:#fff9ef;border-radius:var(--rs);padding:10px 13px;margin-bottom:12px;font-size:12px;color:#8a6d2f;line-height:1.6">🔑 Claude API 키가 필요해요. <b>「✏ 글쓰기」 탭 → ⚙ 설정</b>에서 키를 먼저 저장하세요. (같은 키를 씁니다)</div>
+
+  <!-- 탭 전환: 홈판 글 / 제목 / 글감 -->
+  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+    <button class="hp-tab hp-on" data-hp="gen" onclick="hpTab('gen')" style="flex:1;min-width:110px;padding:9px;border:1px solid var(--bor);background:var(--green);color:#fff;border-radius:var(--rs);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">📝 홈판 글 생성</button>
+    <button class="hp-tab" data-hp="title" onclick="hpTab('title')" style="flex:1;min-width:110px;padding:9px;border:1px solid var(--bor);background:var(--sur);color:var(--t2);border-radius:var(--rs);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✨ 제목 생성기</button>
+    <button class="hp-tab" data-hp="idea" onclick="hpTab('idea')" style="flex:1;min-width:110px;padding:9px;border:1px solid var(--bor);background:var(--sur);color:var(--t2);border-radius:var(--rs);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">💡 오늘 뭐 쓰지</button>
+  </div>
+
+  <!-- ── 홈판 글 생성 ── -->
+  <div id="hp_pane_gen">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <div class="field" style="padding:0;flex:1;min-width:150px">
+        <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">카테고리</label>
+        <select id="hp_cat" onchange="hpCatChange()" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);cursor:pointer"></select>
+      </div>
+      <div class="field" style="padding:0;flex:1;min-width:150px">
+        <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">말투</label>
+        <select id="hp_tone" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);cursor:pointer">
+          <option value="옆집 언니처럼 친근한 해요체">친근한 해요체 (옆집 언니)</option>
+          <option value="정보 전달 위주의 깔끔한 존댓말">정보형 존댓말</option>
+          <option value="솔직담백한 반말 구어체">솔직 반말 구어체</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field" style="padding:0;margin-bottom:10px">
+      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">① 주제 / 키워드 <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--t3)">(롱테일이 유리 — 예: "5평 원룸 수납")</span></label>
+      <input type="text" id="hp_topic" placeholder="예: 다이소 압축봉 옷장 정리 / 청년도약계좌 / 부산 1박2일" style="width:100%;padding:11px 13px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:14px;outline:none;color:var(--txt);background:var(--sur)"/>
+    </div>
+
+    <div class="field" style="padding:0;margin-bottom:10px">
+      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">② 내 경험·상황 <span style="color:var(--red)">*</span> <span style="font-weight:400;color:#c0392b">★ 홈판 노출의 핵심 (영혼 주입)</span></label>
+      <textarea id="hp_exp" placeholder="직접 겪은 구체적 상황·감정·결과를 편하게 적어주세요. 예: 퇴근하고 오니 옷장이 터질 것 같아 스트레스였는데, 다이소 압축봉 2개(2천원)로 죽은 공간이 2배 넓어졌어요. 설치 1분." style="width:100%;min-height:100px;padding:11px 13px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;line-height:1.7;resize:vertical;outline:none;color:var(--txt);background:var(--sur)"></textarea>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px">※ 이 칸이 비면 AI티 나는 뻔한 글이 됩니다. 구체적일수록 홈판 확률↑</div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <div class="field" style="padding:0;flex:1;min-width:150px">
+        <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">③ 타겟 독자 <span style="font-weight:400;color:var(--t3)">(선택)</span></label>
+        <input type="text" id="hp_target" placeholder="예: 5평 자취생 / 손목 약한 50대 주부" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;outline:none;color:var(--txt);background:var(--sur)"/>
+      </div>
+      <div class="field" style="padding:0;flex:1;min-width:150px">
+        <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">④ 페르소나 <span style="font-weight:400;color:var(--t3)">(비우면 자동)</span></label>
+        <input type="text" id="hp_persona" placeholder="비우면 카테고리에 맞춰 자동 설정" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;outline:none;color:var(--txt);background:var(--sur)"/>
+      </div>
+    </div>
+
+    <button onclick="hpGen()" id="hp_genbtn" style="width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🏠 홈판 최적화 글 생성</button>
+    <div id="hp_structhint" style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.6"></div>
+    <div id="hp_result" style="margin-top:14px"></div>
+  </div>
+
+  <!-- ── 제목 생성기 ── -->
+  <div id="hp_pane_title" style="display:none">
+    <div class="field" style="padding:0;margin-bottom:10px">
+      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">주제 (제목 뽑을 소재)</label>
+      <input type="text" id="hp_ttopic" placeholder="예: 다이소 청소 꿀템 / 양배추 다이어트" onkeydown="if(event.key==='Enter')hpTitle()" style="width:100%;padding:11px 13px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:14px;outline:none;color:var(--txt);background:var(--sur)"/>
+    </div>
+    <button onclick="hpTitle()" id="hp_titlebtn" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✨ 클릭 부르는 제목 5개 뽑기</button>
+    <div style="font-size:11px;color:var(--t3);margin-top:7px;line-height:1.6">부정·경고 / 후회·비밀 / 숫자·가성비 / 비교·반전 / 괄호강조 5가지 유튜브 흥행 공식으로 뽑아요. (자극적인 만큼 본문이 뒷받침돼야 함)</div>
+    <div id="hp_tresult" style="margin-top:14px"></div>
+  </div>
+
+  <!-- ── 글감 추천 ── -->
+  <div id="hp_pane_idea" style="display:none">
+    <div class="field" style="padding:0;margin-bottom:10px">
+      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">내 분야</label>
+      <input type="text" id="hp_ifield" placeholder="예: 살림/인테리어, 뷰티, 재테크, 육아" onkeydown="if(event.key==='Enter')hpIdea()" style="width:100%;padding:11px 13px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:14px;outline:none;color:var(--txt);background:var(--sur)"/>
+    </div>
+    <button onclick="hpIdea()" id="hp_ideabtn" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💡 지금 터질 시의성 주제 20개</button>
+    <div style="font-size:11px;color:var(--t3);margin-top:7px;line-height:1.6">오늘 날짜·계절을 반영해 '지금' 검색이 몰릴 구체적 롱테일 주제를 뽑아요. (2주 앞서가기)</div>
+    <div id="hp_iresult" style="margin-top:14px"></div>
+  </div>
+
+  <!-- ── ChatGPT용 만능 프롬프트 복사 ── -->
+  <details style="margin-top:20px;border:1px solid var(--bor);border-radius:var(--r);background:var(--sur)">
+    <summary style="padding:12px 14px;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--t2)">📋 ChatGPT/재미나이용 '만능 프롬프트' 복사 — 밖에서 쓸 때</summary>
+    <div id="hp_prompts" style="padding:0 14px 14px"></div>
+  </details>
+
+  <div style="font-size:11px;color:var(--t3);margin-top:14px;line-height:1.7;background:var(--bg);border-radius:var(--rs);padding:11px 13px">
+    💡 <b>홈판 노출 핵심(팩트)</b>: ①시의성(지금 필요한 주제) ②결핍 해결(구체적 고민 해결) ③직접 경험·주관(DIA+) ④공백제외 1,500~2,000자 ⑤롱테일 키워드 ⑥3~4줄마다 문단·핵심 굵게. <b>프롬프트에만 의지하지 말고</b>, 홈판에 오른 글을 먼저 뜯어보고 "내가 왜 이렇게 쓰는지" 이해하는 게 진짜 실력이에요.
+  </div>
+
+</div>
+</div>
+
+<script>
+/* ===== 🏠 홈판 글쓰기 (독립 모듈) ===== */
+(function(){
+  function $(id){return document.getElementById(id);}
+  function hpKey(){try{return (sessionStorage.getItem('ak_claude')||localStorage.getItem('ak_claude')||'').replace(/[^\x20-\x7E]/g,'').trim();}catch(e){return '';}}
+  function hpHint(){var h=$('hp_keyhint'); if(h)h.style.display=hpKey()?'none':'block';}
+  function hpEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  async function hpClaude(sys,user){
+    var k=hpKey(); if(!k) throw new Error('NO_KEY');
+    return await callClaude(k,sys,user);
+  }
+  function hpErr(e){
+    var m=((e&&e.message)||e||'').toString(), lo=m.toLowerCase();
+    if(m==='NO_KEY') return '🔑 Claude API 키가 없어요. 「✏ 글쓰기」 탭 ⚙ 설정에서 키를 먼저 저장하세요.';
+    if(/credit balance|too low|billing|purchase credits/i.test(lo)) return '⚠ Anthropic 크레딧(잔액)이 부족합니다. console.anthropic.com → Plans & Billing에서 충전 후 다시 시도하세요.';
+    if(/authentication|invalid x-api-key|unauthorized/i.test(lo)) return '⚠ API 키가 올바르지 않습니다. ⚙ 설정에서 sk-ant- 키를 다시 등록하세요.';
+    if(/overloaded|rate ?limit|429|529/i.test(lo)) return '⚠ 요청이 몰려 일시적으로 막혔어요. 잠시 후 다시 시도하세요.';
+    return '⚠ '+m;
+  }
+  function hpCopy(t,btn){
+    try{ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);} else { var ta=document.createElement('textarea'); ta.value=t; ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);} }catch(e){}
+    if(btn){var o=btn.textContent; btn.textContent='복사됨 ✔'; setTimeout(function(){btn.textContent=o;},1400);}
+    showToast('[v] 복사됐어요','ok');
+  }
+  window.hpCopyFrom=function(btn,sel){ var el=btn.closest('[data-hpcard]').querySelector(sel); hpCopy(el.value!==undefined?el.value:el.textContent, btn); };
+
+  // 카테고리 정의 (홈판 공략집 기반)
+  var HP_CATS={
+    living:{label:'리빙/살림 (인테리어·다이소·청소)', persona:'10년 차 살림 고수이자 정리수납 컨설턴트. 가성비에 목숨 걸고 깐깐하게 분석하지만 솔직한 성격.',
+      chars:'1,200~1,800자', struct:'① 문제 제기: 독자가 겪는 생활 속 불편함을 리얼하게 짚어 공감 → ② 해결책: 구체적 아이템/방법 소개(가성비 강조) → ③ 과정·결과: 비포&애프터, "설치 1분"처럼 쉬운 난이도 강조 → ④ 결론: 이 방법이 바꾼 삶의 변화. 광고 아님을 증명할 소소한 단점 1개 포함.'},
+    food:{label:'푸드/요리 (레시피·맛집)', persona:'20년 경력 한식 조리사이자 미식가.',
+      chars:'1,200~1,800자', struct:'① 상황 설정: 왜 오늘 이 요리/이 집을 갔는지 배경 → ② 조리·과정: 1,2,3 번호로 간결히, "불 줄이면 탄다" 같은 주의 팁 → ③ 리얼 반응: "맛있다" 말고 "입 까다로운 남편이 국물까지 비웠다"처럼 오감·구체 반응. 지글지글·고소한 냄새 등 감각 묘사.'},
+    money:{label:'경제/재테크 (절약·정책·주식)', persona:'어려운 경제 용어를 유치원생도 이해하게 설명하는 친절한 재테크 멘토.',
+      chars:'1,800~2,500자', struct:'① 경각심: "이거 안 하면 OO만 원 손해" 손실 회피로 주목 → ② 쉬운 해설: 복잡한 조건을 나이/소득/대상 등으로 잘라 리스트·표로 → ③ 행동 유도: 신청법을 "3분이면 끝" 직관적으로. 숫자·날짜·금액은 굵게.'},
+    self:{label:'자기계발 (운동·독서·습관)', persona:'완벽하지 않지만 실수하며 성장한, 먼저 겪어본 선배.',
+      chars:'1,500~2,000자', struct:'① 취약성 고백: 나의 게으름/실패를 솔직히 → ② 계기와 방법: 변화 계기 + 뇌과학/심리 근거로 신뢰 → ③ 변화된 모습: 수치·상태로 증명 → ④ 동참 제안: 함께하자며 커뮤니티성 강화.'},
+    ent:{label:'연예/이슈 (드라마·트렌드)', persona:'드라마 숨은 복선을 찾아내는 예리한 평론가이자 수다쟁이 친구.',
+      chars:'1,000~1,500자', struct:'① 화두(Hook): 대중이 가장 궁금한 의문을 첫 줄에 → ② 팩트 3줄 요약: 누가·언제·무엇을 짧게 → ③ 심층 분석: 단순 요약 말고 나만의 주관적 해석/통찰 → ④ 대중 반응: 여론 분위기 전하며 마무리. 속도가 생명.'},
+    beauty:{label:'패션/뷰티 (화장품·OOTD)', persona:'성분 분석에 집착하는 뷰티 덕후이자 가성비 스타일리스트.',
+      chars:'1,200~1,800자', struct:'① 시각 자극: 워너비 이미지/연예인 착용 언급 → ② 현실 고통: 가격 등 제약을 짚어 공감 → ③ 대안 제시: 가성비 대체템/구체 발색·제형 후기 → ④ 코디·활용 팁: "이 옷은 슬랙스에" 스타일링 꿀팁.'},
+    sports:{label:'스포츠/레저 (골프·러닝·등산)', persona:'장비병이 있어 좋다는 건 다 써보는 솔직한 리뷰어이자 먼저 겪은 선배.',
+      chars:'1,500~2,000자', struct:'① 고통 공유: "연습해도 안 되던 분들 계시죠?" 정체기 공감 → ② 원인 분석: 자세/장비 관점 전문가스럽게(용어는 풀어서) → ③ 경험적 해결: 수치로 증명(기록 단축, 비거리 +20m) → ④ 추천 대상: "런린이/백돌이는 이거"처럼 구체 타겟.'},
+    travel:{label:'여행/나들이 (핫플·숙소·캠핑)', persona:'광고 맛집 안 가고 현지인 명소만 찾는 까칠한 여행 작가.',
+      chars:'1,200~1,800자', struct:'① 훅: "여기 안 가면 후회" 강력 추천 → ② 가는 길·주차·웨이팅: "네비 말고 OO주차장" 경험자만 아는 꿀팁(DIA+ 폭발 지점) → ③ 메인 코스: 인생샷/대표 메뉴 + 비추천 하나 섞어 솔직함 → ④ 총평·예산: "2인 5만 원, 오후 3시 피하세요" 방문 전 팁.'}
+  };
+  // ChatGPT용 만능 프롬프트 (밖에서 복사해 쓰는 용도)
+  var HP_PROMPTS={
+    living:'# 역할\n너는 정리수납 컨설턴트급 노하우를 가진 "살림 고수"야.\n\n# 상황(Context)\n우리 집 [주방/옷방]이 지금 [물건이 쌓여 발 디딜 틈 없는] 상태야. 그래서 [다이소 수납바구니]를 사서 정리했더니 [죽은 공간이 2배로 넓어지는] 기적을 경험했어.\n\n# 요청\n1. 도입: 정리 전 답답한 심정을 리얼하게 묘사해 공감.\n2. 본문: 장점 설명하되 "직접 써보니 이 부분은 아쉽더라" 단점 하나 섞어 광고 아님을 증명.\n3. 결론: "고민은 배송만 늦출 뿐" 뉘앙스로 강력 추천.\n4. 공백제외 1,200~1,800자, 3~4줄마다 문단, 핵심은 굵게.',
+    food:'# 역할\n너는 20년 경력 한식 조리사이자 미식가야.\n\n# 상황(Context)\n비도 오고 해서 [김치부침개]를 해 먹었어. 냉장고의 [신김치와 참치캔]만 넣었는데 [겉바속촉]이라 막걸리 생각나는 맛이야.\n\n# 요청\n1. 묘사: "맛있다" 금지. 지글지글 소리·고소한 냄새까지 오감 자극.\n2. 레시피: 초보도 따라 하게 1,2,3 번호로. "불 조절 실패하면 탄다" 팁 필수.\n3. 말투: "오늘 저녁 메뉴 고민 해결해 드릴게요" 친절한 존댓말. 1,200~1,800자.',
+    money:'# 역할\n너는 어려운 경제를 유치원생도 이해하게 설명하는 친절한 재테크 멘토야.\n\n# 상황(Context)\n[청년도약계좌] 정책이 나왔는데 조건이 복잡해 포기하는 사람이 많아. 뜯어보면 [최대 5천만 원 모으는] 기회거든.\n\n# 요청\n1. 경고: "이거 신청 안 하면 OO만 원 손해"로 시작해 주목.\n2. 해설: 자격을 [나이/소득/가구원 수] 3가지로 잘라 표·리스트로.\n3. 강조: 금액·날짜 등 숫자는 반드시 굵게. 1,800~2,500자.',
+    self:'# 역할\n너는 완벽하지 않지만 성장한, 먼저 겪어본 선배야.\n\n# 상황(Context)\n나도 [작심삼일 전문가]였는데 [아침 루틴]을 바꾸고 [3주 만에 달라진] 경험을 했어.\n\n# 요청\n1. 취약성 고백으로 시작해 공감.\n2. 변화 계기·방법을 뇌과학/심리 근거와 함께.\n3. 달라진 점을 수치로 증명하고 "함께 해봐요"로 마무리. 1,500~2,000자.',
+    ent:'# 역할\n너는 드라마 숨은 복선을 찾는 예리한 평론가이자 수다쟁이 친구야.\n\n# 상황(Context)\n어제 [드라마 이름]의 [주인공이 복수를 다짐하는 장면] 봤어? 다들 넘어갔지만 내 생각엔 [결말 암시 떡밥] 같아 소름 돋았어.\n\n# 요청\n1. "어제 그 장면, 저만 소름 돋았나요?" 질문으로 시작.\n2. 줄거리는 짧게, 나의 주관적 해석(뇌피셜)을 논리적으로 풀어 댓글 토론 유도.\n3. "여러분 생각은?" 으로 마무리. 1,000~1,500자.',
+    beauty:'# 역할\n너는 성분 분석에 집착하는 뷰티 덕후야.\n\n# 상황(Context)\n[극건성]이라 화장만 하면 [뜨고 갈라지는] 게 고민이었는데 [OOO 수분크림] 쓰고 [속당김 사라지고 화장이 찰떡같이] 먹었어.\n\n# 요청\n1. 공감: "오후 3시만 되면 당겨서 미스트 뿌리는 분들 계시죠?"\n2. 제형 묘사: 꾸덕한지/젤리 같은지 발림성이 느껴지게.\n3. 비교: "백화점 A사와 비교해도 손색없다"로 가성비 강조. 1,200~1,800자.',
+    sports:'# 역할\n너는 장비병 있어 좋다는 건 다 써보는 솔직한 리뷰어야.\n\n# 상황(Context)\n[러닝/골프]을 하는데 [무릎 통증/슬라이스]로 정체기였어. [OOO 러닝화/교정 레슨]을 시도하니 [통증이 사라지고/비거리 20m 늘어난] 경험을 했어.\n\n# 요청\n1. "유튜브 따라 해도 안 되던 분들 계시죠?" 고통 공유.\n2. 원인을 자세/장비 관점에서 전문가스럽게(용어는 풀어서).\n3. 변화는 수치로 증명. "런린이/백돌이는 꼭"처럼 대상 지정. 1,500~2,000자.',
+    travel:'# 역할\n너는 광고 맛집 안 가고 현지인 명소만 찾는 까칠한 여행 작가야.\n\n# 상황(Context)\n[OOO 지역]에 다녀왔어. 유명한 곳은 웨이팅만 길고 별로였는데 우연히 간 [골목 식당/숨은 해변]이 너무 좋아 나만 알고 싶어.\n\n# 요청\n1. "여기는 제발 유명해지지 않았으면" 훅으로 시작.\n2. 지도에 안 나오는 [주차 팁/웨이팅 피하는 시간/명당] 구체적으로(핵심 가치).\n3. "화장실은 좀 불편해요" 같은 단점도 하나 넣어 내돈내산 인증.\n4. 총평·예산으로 마무리. 1,200~1,800자.'};
+
+  window.hpTab=function(t){
+    ['gen','title','idea'].forEach(function(x){
+      var p=$('hp_pane_'+x); if(p)p.style.display=(x===t)?'block':'none';
+    });
+    document.querySelectorAll('.hp-tab').forEach(function(b){
+      var on=b.getAttribute('data-hp')===t;
+      b.style.background=on?'var(--green)':'var(--sur)'; b.style.color=on?'#fff':'var(--t2)';
+    });
+  };
+  window.hpCatChange=function(){
+    var c=$('hp_cat').value, cat=HP_CATS[c];
+    if($('hp_structhint')) $('hp_structhint').innerHTML=cat?('<b>'+cat.label.split(' (')[0]+' 구조</b> · 권장 '+cat.chars+'<br>'+hpEsc(cat.struct)):'';
+    if($('hp_persona')) $('hp_persona').placeholder=cat?('비우면: '+cat.persona.slice(0,26)+'…'):'비우면 자동';
+    // 만능 프롬프트도 현재 카테고리로 갱신
+    var pb=$('hp_prompts'); if(pb&&HP_PROMPTS[c]){
+      pb.innerHTML='<div data-hpcard style="border:1px solid var(--bor);border-radius:var(--rs);overflow:hidden;margin-top:4px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 11px;background:var(--gl)"><span style="font-size:12px;font-weight:700;color:var(--gd)">'+hpEsc(cat.label.split(' (')[0])+' 만능 프롬프트</span><button onclick="hpCopyFrom(this,\'textarea\')" style="padding:5px 11px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">복사</button></div>'
+        +'<textarea readonly style="width:100%;min-height:150px;border:none;padding:10px 12px;font-family:inherit;font-size:12px;line-height:1.6;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+hpEsc(HP_PROMPTS[c])+'</textarea></div>'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:8px">[ ] 괄호 안 내용만 본인 상황으로 바꿔서 ChatGPT/재미나이에 붙여넣으세요.</div>';
+    }
+  };
+  window.hpGen=async function(){
+    var c=$('hp_cat').value, cat=HP_CATS[c];
+    var topic=$('hp_topic').value.trim(), exp=$('hp_exp').value.trim();
+    var target=$('hp_target').value.trim(), persona=$('hp_persona').value.trim()||cat.persona;
+    var tone=$('hp_tone').value;
+    var box=$('hp_result'), btn=$('hp_genbtn');
+    hpHint();
+    if(!topic){ box.innerHTML='<p style="color:var(--red);font-size:13px">① 주제/키워드를 입력해주세요.</p>'; return; }
+    var sys='너는 '+persona+' 네이버 블로그 홈판(메인) 노출 글을 쓴다.\n'
+      +'[홈판 노출 원칙 — DIA+] 1) AI티·번역투 금지, 진짜 사람이 쓴 듯 자연스럽게 2) 기계적 정보 나열 금지, 직접 겪은 구체적 경험과 주관적 견해 중심 3) 독자의 구체적 결핍(고민)을 해결 4) 공백 제외 '+cat.chars+' 5) 3~4줄마다 문단 나누기 6) 핵심 문장은 **굵게**가 아니라 그냥 강조 표현으로(마크다운 기호 ##, ** 절대 금지) 7) 불필요한 부사(너무, 정말)·접속사 줄여 밀도 높이기 8) 과한 광고 문구 금지, 솔직함(작은 단점 1개)으로 신뢰.\n출력은 완성된 블로그 글만. 첫 줄은 제목(클릭을 부르되 낚시 금지, 롱테일 키워드 포함, 35자 이내), 그다음 본문. 설명·머리말 없이.';
+    var user='[카테고리] '+cat.label+'\n[이 카테고리 홈판 글 구조 — 이 순서/방식대로]\n'+cat.struct
+      +'\n\n[주제/키워드] '+topic
+      +'\n[내 실제 경험·상황 — 반드시 이 경험을 녹여서 진짜처럼]\n'+(exp||'(직접 입력 안 함 — 그럴듯한 현실적 상황을 자연스럽게 설정해서 써줘)')
+      +'\n[타겟 독자] '+(target||'(주제에 맞는 독자로 알아서)')
+      +'\n[말투] '+tone
+      +'\n\n위 구조와 경험을 살려 홈판 노출용 블로그 글을 완성해줘.';
+    btn.disabled=true; var ot=btn.textContent; btn.innerHTML='<span class="th-spin"></span>홈판 글 쓰는 중…';
+    box.innerHTML='<div style="text-align:center;padding:22px;color:var(--t3);font-size:13px">경험을 녹여 홈판 최적화 글을 작성 중… (20~40초)</div>';
+    try{
+      var out=(await hpClaude(sys,user)).replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
+      var cc=out.replace(/\s/g,'').length;
+      box.innerHTML='<div data-hpcard style="border:1px solid var(--bor);border-radius:var(--r);overflow:hidden">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 13px;background:var(--gl)"><span style="font-size:12px;font-weight:700;color:var(--gd)">🏠 홈판 글 (공백제외 약 '+cc.toLocaleString()+'자)</span><button onclick="hpCopyFrom(this,\'textarea\')" style="padding:6px 13px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📋 복사</button></div>'
+        +'<textarea readonly style="width:100%;min-height:340px;border:none;padding:13px;font-family:inherit;font-size:13px;line-height:1.8;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+hpEsc(out)+'</textarea></div>'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.6">※ 그대로 쓰지 말고 <b>내 사진·추가 경험을 얹어</b> 다듬으면 홈판 확률이 올라가요. 발행 전 어색한 문장은 손보세요.</div>';
+    }catch(e){ box.innerHTML='<div class="th-card"><p style="color:var(--red);font-size:13px;margin:0;white-space:pre-line">'+hpEsc(hpErr(e))+'</p></div>'; }
+    finally{ btn.disabled=false; btn.textContent='🏠 홈판 최적화 글 생성'; }
+  };
+  window.hpTitle=async function(){
+    var topic=$('hp_ttopic').value.trim(), box=$('hp_tresult'), btn=$('hp_titlebtn'); hpHint();
+    if(!topic){ box.innerHTML='<p style="color:var(--red);font-size:13px">주제를 입력해주세요.</p>'; return; }
+    var sys='너는 구독자 100만 유튜브 썸네일/제목 카피라이터야. 클릭률(CTR)을 극한으로 끌어올리되 허위·과장은 피한다. 코드블록 없이 결과만.';
+    var user='주제: "'+topic+'"\n아래 5가지 흥행 공식으로 제목 5개를 뽑아줘. 각 줄 앞에 [부정],[후회],[숫자],[비교],[강조] 태그를 붙이고 한 줄씩. 이모지는 줄당 1개 이내.\n1.부정·경고형 2.후회·비밀형 3.숫자·가성비형 4.비교·반전형 5.괄호 강조형.\n블로그식 인사 금지, 짧고 강렬하게.';
+    btn.disabled=true; btn.innerHTML='<span class="th-spin"></span>뽑는 중…';
+    box.innerHTML='';
+    try{
+      var out=(await hpClaude(sys,user)).trim();
+      var lines=out.split('\n').map(function(s){return s.replace(/^\s*\d+[.)]\s*/,'').trim();}).filter(Boolean).slice(0,8);
+      box.innerHTML=lines.map(function(t){
+        return '<div data-hpcard style="display:flex;gap:8px;align-items:center;padding:9px 12px;border:1px solid var(--bor);border-radius:var(--rs);margin-bottom:7px"><div style="flex:1;font-size:13px;color:var(--txt);line-height:1.5">'+hpEsc(t)+'</div><button onclick="hpCopyFrom(this,\'div\')" style="padding:5px 11px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex:0 0 auto">복사</button></div>';
+      }).join('')||'<p class="th-sub">다시 시도해주세요.</p>';
+    }catch(e){ box.innerHTML='<div class="th-card"><p style="color:var(--red);font-size:13px;margin:0;white-space:pre-line">'+hpEsc(hpErr(e))+'</p></div>'; }
+    finally{ btn.disabled=false; btn.textContent='✨ 클릭 부르는 제목 5개 뽑기'; }
+  };
+  window.hpIdea=async function(){
+    var field=$('hp_ifield').value.trim(), box=$('hp_iresult'), btn=$('hp_ideabtn'); hpHint();
+    if(!field){ box.innerHTML='<p style="color:var(--red);font-size:13px">내 분야를 입력해주세요.</p>'; return; }
+    var d=new Date(), ymd=d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일';
+    var sys='너는 트렌드에 민감한 네이버 블로그 전문 에디터야. 결과만 번호 리스트로.';
+    var user='내 분야: '+field+'\n오늘: '+ymd+' (계절·시기 반영, 2주 앞선 시의성 고려)\n지금 블로그에 쓰면 조회수 터질 시의성 있는 구체적 주제 20개를 추천해줘.\n- 넓은 주제 금지, "겨울철 결로 곰팡이 10분 만에 없애는 법"처럼 구체적 롱테일로.\n- 고민 해결·궁금증 위주. 20개 중 5개는 "지금 안 사면 후회할 꿀템" 제품 리뷰 주제로.\n- 각 줄 번호만 붙여 한 줄씩.';
+    btn.disabled=true; btn.innerHTML='<span class="th-spin"></span>주제 캐는 중…';
+    box.innerHTML='';
+    try{
+      var out=(await hpClaude(sys,user)).trim();
+      box.innerHTML='<div data-hpcard style="border:1px solid var(--bor);border-radius:var(--r);overflow:hidden">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 13px;background:var(--gl)"><span style="font-size:12px;font-weight:700;color:var(--gd)">💡 '+hpEsc(ymd)+' 기준 시의성 주제</span><button onclick="hpCopyFrom(this,\'textarea\')" style="padding:6px 13px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">복사</button></div>'
+        +'<textarea readonly style="width:100%;min-height:280px;border:none;padding:12px;font-family:inherit;font-size:12.5px;line-height:1.8;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+hpEsc(out)+'</textarea></div>'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:8px">마음에 드는 주제를 골라 위 「홈판 글 생성」이나 「제목 생성기」에 넣으세요.</div>';
+    }catch(e){ box.innerHTML='<div class="th-card"><p style="color:var(--red);font-size:13px;margin:0;white-space:pre-line">'+hpEsc(hpErr(e))+'</p></div>'; }
+    finally{ btn.disabled=false; btn.textContent='💡 지금 터질 시의성 주제 20개'; }
+  };
+  function hpInit(){
+    var sel=$('hp_cat'); if(!sel) return;
+    if(!sel.options.length){ Object.keys(HP_CATS).forEach(function(k){ var o=document.createElement('option'); o.value=k; o.textContent=HP_CATS[k].label; sel.appendChild(o); }); }
+    hpCatChange(); hpHint();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hpInit);else hpInit();
+})();
+</script>
+
 <script>function showToast(msg,type){var el=document.getElementById('toast');el.className='toast'+(type?' '+type:'');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2800);}
 
 // ── 센터 찾기
@@ -2502,7 +2749,7 @@ function init(){
 }
 
 function setMainTab(n){
-  ['write','analyze','center','cafe','crawl','guide','video','homepage','care','imgauto','blogscore'].forEach(function(x){
+  ['write','analyze','center','cafe','crawl','guide','video','homepage','care','imgauto','blogscore','homepan'].forEach(function(x){
     var mt=document.getElementById('mt-'+x);
     var mp=document.getElementById('mp-'+x);
     if(mt)mt.className='maintab'+(x===n?' on':'');
