@@ -2265,13 +2265,27 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       </select>
     </div>
     <div class="field" style="padding:0;flex:1;min-width:150px">
-      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">분량 (공백포함)</label>
+      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">본문 분량 (공백포함)</label>
       <select id="hp_len" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);cursor:pointer">
-        <option value="2500" selected>약 2,500자 (홈판 표준)</option>
-        <option value="2000">약 2,000자</option>
-        <option value="3000">약 3,000자 (정보성)</option>
+        <option value="2000" selected>약 2,000자 (홈판 표준)</option>
+        <option value="1500">약 1,500자</option>
+        <option value="2500">약 2,500자</option>
       </select>
     </div>
+  </div>
+
+  <div class="field" style="padding:0;margin-bottom:12px">
+    <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">각색 비율 <span style="font-weight:400;color:var(--t3)">(붙여넣은 글을 얼마나 새로 바꿀지 · 저작권 안전)</span></label>
+    <select id="hp_adapt" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);cursor:pointer">
+      <option value="50">50% 각색 — 원문 구조·논지 참고 (표현은 전부 새로)</option>
+      <option value="70" selected>70% 각색 — 정보만 취하고 구성·전개 대폭 변경 (추천)</option>
+      <option value="100">완전히 새로운 글 — 원문은 소재/영감으로만</option>
+    </select>
+  </div>
+
+  <div class="field" style="padding:0;margin-bottom:12px">
+    <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">글 방향성 / 추가 명령 <span style="font-weight:400;color:var(--t3)">(선택 — 원하는 방향을 자유롭게)</span></label>
+    <textarea id="hp_dir" placeholder="예: 20대 여성 타겟으로 / 부작용 위험을 강조 / 전문가 인터뷰 느낌으로 / 마지막에 다음 글 예고 넣어줘 / 좀 더 유쾌하게" style="width:100%;min-height:56px;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;line-height:1.6;resize:vertical;outline:none;color:var(--txt);background:var(--sur)"></textarea>
   </div>
 
   <button onclick="hpGo()" id="hp_gobtn" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">🏠 제목 3개 + 홈판 글 생성</button>
@@ -2310,14 +2324,23 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   window.hpGo=async function(){
     var input=$('hp_input').value.trim();
-    var field=$('hp_field').value, len=$('hp_len').value||'2500';
+    var field=$('hp_field').value, len=$('hp_len').value||'2000';
+    var adapt=($('hp_adapt')&&$('hp_adapt').value)||'70';
+    var dir=($('hp_dir')&&$('hp_dir').value.trim())||'';
     var box=$('hp_result'), btn=$('hp_gobtn');
     hpHint();
     if(!input){ box.innerHTML='<p style="color:var(--red);font-size:13px">참고할 글/기사/키워드를 붙여넣어 주세요.</p>'; return; }
     if(!hpKey()){ box.innerHTML='<div class="th-card" style="border-color:#c9a84c"><p style="color:#8a6d2f;font-size:13px;margin:0">🔑 「✏ 글쓰기」 탭 ⚙ 설정에서 Claude 키를 먼저 저장하세요.</p></div>'; return; }
 
+    var adaptMap={
+      '50':'원문의 큰 구조와 핵심 논지는 참고하되, 모든 문장을 동의어·유의어·다른 문형으로 100% 새로 쓴다(표현이 원문과 겹치면 안 됨).',
+      '70':'원문에서 사실·핵심 정보만 취하고, 구성 순서·전개 방식·예시·표현을 대폭 바꿔 상당히 다른 글로 재구성한다.',
+      '100':'원문은 주제·소재의 영감으로만 활용하고, 완전히 새로운 관점·구성·예시로 100% 새 글을 쓴다.'
+    };
+    var adaptText='각색 강도 '+adapt+'% — '+(adaptMap[adapt]||adaptMap['70'])+' 어떤 경우든 원문 문장을 그대로 복사 금지. 표절·저작권 문제가 없도록 표현을 충분히 바꾸고, 원문과 비슷해질 것 같으면 동의어·유의어·문장구조 변경으로 확실히 다르게 한다. (키워드만 입력된 경우 이 항목은 무시하고 완전 창작)';
     var sys='너는 네이버 홈판(추천피드) 노출을 목표로 하는 전문 블로그 에디터야. 목표는 검색 1위가 아니라 CTR(클릭률)+체류시간+저장/공유 극대화. 화제성과 실생활 실용성(저장 가치)을 함께 담는다.\n\n'
       +'[입력 자동 판단] 사용자가 붙여넣은 것이\n- 기사면: 핵심 사건·인물·포인트만 뽑아 새 글로.\n- 남의 글/초안이면: 표절 위험 없게 구조·문장·흐름을 완전히 재구성(사실/정보만 유지, 문장은 전부 새로 작성).\n- 키워드+의도면: 가장 홈판 가능성 높은 이슈 프레임을 스스로 잡아 작성.\n어떤 입력이든 동일한 출력 형식으로.\n\n'
+      +'[각색·저작권] '+adaptText+'\n\n'
       +'[말투] 부드러운 대화형(~했어요/~해요/~에요). 기자체 금지·블로거체. 과장/단정 금지. 모바일 가독성 최우선, 1~3줄 문단, 줄바꿈 넉넉히.\n\n'
       +'[제목] 정확히 3개. 숫자·수치 활용. 결론을 제목에서 다 말하지 말 것(궁금증 남기기). 저품질 유발 단어(충격/소름/경악/대반전/실화 등) 금지, 광고 느낌 금지. 인물형·사건형·생활형 공식 참고.\n\n'
       +'[구조 — DIASA + EEAT] 소제목 약 7개로 문단을 나눠 아래 흐름을 자연스럽게 녹인다:\n① 후킹 확장 + Authority: 이슈를 날짜·행동 중심으로 구체적으로 요약(감정 과장 금지)\n② 궁금증 증폭 + Experience: 왜 화제인지, 주변 반응·대중 심리·공감 포인트("나도 비슷한데?")\n③ 전문 분석 = Expertise: 분야에 맞는 전문 관점, 단정 금지("~일 수 있어요/~로 해석돼요"), 핵심 개념 쉽게 풀기\n④ 실천 팁 = Trust: 일반인이 오늘부터 가능한 팁 3~5개(무리한 방법 배제)\n⑤ 마무리: 이슈를 습관/태도/선택으로 부드럽게 연결\n\n'
@@ -2327,7 +2350,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       +'[해시태그] 8~12개, 주제 직접 연관 키워드만, 각 태그 짧게(총 20~40자 내외).\n\n'
       +'[금지] 마크다운 기호(#, *, **) 절대 사용 금지. AI티·번역투 금지.\n\n'
       +'[출력 형식 — 반드시 이 형식 그대로, 다른 말 없이]\n[제목]\n1) (제목1)\n2) (제목2)\n3) (제목3)\n\n[본문]\n(소제목 한 줄 + 문단, 약 7개 소제목 반복. 마지막 문단은 CTA)\n\n[해시태그]\n#태그 #태그 ...';
-    var user='[분야] '+(field||'자동 판단')+'\n[목표 분량] 공백포함 약 '+len+'자, 소제목 약 7개\n\n[입력 — 아래를 자동 판단해서 홈판 글로]\n'+input.slice(0,6000);
+    var user='[분야] '+(field||'자동 판단')+'\n[목표 분량] 공백포함 약 '+len+'자, 소제목 약 7개\n[각색 강도] '+adapt+'%'
+      +(dir?'\n[글 방향성·추가 요청 — 반드시 반영] '+dir:'')
+      +'\n\n[입력 — 아래를 자동 판단해서 홈판 글로]\n'+input.slice(0,6000);
 
     btn.disabled=true; btn.innerHTML='<span class="th-spin"></span>제목·홈판 글 쓰는 중… (20~40초)';
     box.innerHTML='<div style="text-align:center;padding:22px;color:var(--t3);font-size:13px">DIASA+EEAT 흐름으로 홈판 글을 작성 중…</div>';
