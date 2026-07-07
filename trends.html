@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>데일리 트렌드 뷰어</title>
+<style>
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --card: #1c2029;
+  --border: #262b36;
+  --text: #e8eaf0;
+  --muted: #8b93a5;
+  --accent: #ff4b4b;
+  --accent2: #ffb020;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+}
+header {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(15,17,21,.92); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+}
+.h-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.back { color: var(--muted); text-decoration: none; font-size: 13px; }
+.back:hover { color: var(--text); }
+.logo { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.logo em { color: var(--accent); font-style: normal; }
+.today { color: var(--muted); font-size: 12px; }
+.h-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+select, button, input[type=text] {
+  background: var(--card); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 7px 12px; font-size: 13px; font-family: inherit; cursor: pointer;
+}
+select:hover, button:hover { border-color: #3a4150; }
+button.primary { background: var(--accent); border-color: var(--accent); font-weight: 700; }
+.tabs { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
+.tab {
+  padding: 8px 14px; border-radius: 9px 9px 0 0; cursor: pointer;
+  font-size: 14px; font-weight: 700; color: var(--muted);
+  border: 1px solid transparent; border-bottom: none; user-select: none;
+}
+.tab.active { color: var(--text); background: var(--panel); border-color: var(--border); }
+.chips { display: flex; gap: 7px; padding: 12px 16px 4px; flex-wrap: wrap; }
+.chip {
+  padding: 6px 13px; border-radius: 999px; font-size: 13px; cursor: pointer;
+  background: var(--card); border: 1px solid var(--border); color: var(--muted);
+  user-select: none; white-space: nowrap;
+}
+.chip.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+main { padding: 12px 16px 60px; }
+.status { color: var(--muted); font-size: 13px; padding: 8px 2px; min-height: 20px; }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px;
+  font-weight: 700; margin-right: 6px; vertical-align: 1px;
+}
+.badge.live { background: #16391f; color: #5fd97e; border: 1px solid #235c31; }
+.badge.static { background: #1d2c45; color: #7cb2ff; border: 1px solid #2c4a77; }
+.grid {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.grid.shorts { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; cursor: pointer; transition: transform .12s, border-color .12s;
+  position: relative;
+}
+.card:hover { transform: translateY(-3px); border-color: #3d4557; }
+.thumb-wrap { position: relative; aspect-ratio: 16/9; background: #000; }
+.grid.shorts .thumb-wrap { aspect-ratio: 9/13; }
+.thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rank {
+  position: absolute; top: 8px; left: 8px;
+  background: rgba(0,0,0,.75); color: #fff; font-size: 12px; font-weight: 800;
+  padding: 3px 9px; border-radius: 7px; border: 1px solid rgba(255,255,255,.15);
+}
+.rank.r1 { background: #d4a017; }
+.rank.r2 { background: #8e9aab; }
+.rank.r3 { background: #a4642a; }
+.dur {
+  position: absolute; bottom: 8px; right: 8px;
+  background: rgba(0,0,0,.8); color: #fff; font-size: 11px;
+  padding: 2px 6px; border-radius: 5px;
+}
+.info { padding: 10px 12px 12px; }
+.title {
+  font-size: 13px; font-weight: 600; line-height: 1.4; height: 2.8em;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.meta { margin-top: 7px; font-size: 12px; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; }
+.meta b { color: var(--accent2); font-weight: 700; }
+.board-links { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 2px 14px; }
+.blink {
+  display: inline-block; padding: 8px 14px; border-radius: 9px; font-size: 13px;
+  background: var(--card); border: 1px solid var(--border); color: var(--text);
+  text-decoration: none;
+}
+.blink:hover { border-color: var(--accent); }
+.board-add { display: flex; gap: 8px; padding: 4px 2px 16px; }
+.board-add input { flex: 1; cursor: text; }
+.bcard { display: flex; gap: 12px; align-items: center; }
+.bcard .thumb-wrap { width: 110px; min-width: 110px; aspect-ratio: 16/10; border-radius: 8px; overflow: hidden; }
+.bcard .noimg { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+.bcard .binfo { flex: 1; min-width: 0; padding: 10px 0; }
+.bcard .btitle { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all; }
+.bcard .bmeta { font-size: 12px; color: var(--muted); margin-top: 5px; }
+.bcard .del {
+  margin-right: 12px; background: transparent; border: 1px solid var(--border);
+  color: var(--muted); border-radius: 7px; padding: 5px 10px; font-size: 12px;
+}
+.bcard .del:hover { color: var(--accent); border-color: var(--accent); }
+.board-grid { display: flex; flex-direction: column; gap: 10px; max-width: 760px; }
+.empty { color: var(--muted); padding: 30px 4px; font-size: 14px; }
+.modal {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,.85); align-items: center; justify-content: center;
+}
+.modal.open { display: flex; }
+.player { width: min(920px, 94vw); aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; }
+.player.vertical { width: min(400px, 90vw); aspect-ratio: 9/16; }
+.player iframe { width: 100%; height: 100%; border: 0; }
+.modal-close {
+  position: absolute; top: 18px; right: 24px; font-size: 30px; color: #fff;
+  background: transparent; border: none; cursor: pointer;
+}
+.spinner {
+  display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid var(--muted); border-top-color: transparent;
+  animation: spin .8s linear infinite; vertical-align: -2px; margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <div class="h-top">
+    <a class="back" href="index.html">← 메인</a>
+    <div class="logo">데일리 <em>트렌드</em> 뷰어</div>
+    <div class="today" id="today"></div>
+    <div class="h-right">
+      <select id="period">
+        <option value="today">오늘</option>
+        <option value="week" selected>이번 주</option>
+        <option value="month">이번 달</option>
+      </select>
+      <button class="primary" id="refresh">새로고침</button>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="youtube">▶ 유튜브</div>
+    <div class="tab" data-tab="shorts">⚡ 쇼츠</div>
+    <div class="tab" data-tab="tiktok">🎵 틱톡</div>
+    <div class="tab" data-tab="reels">🎞️ 릴스</div>
+  </div>
+</header>
+
+<div class="chips" id="chips"></div>
+
+<main>
+  <div class="status" id="status"></div>
+  <div id="content"></div>
+</main>
+
+<div class="modal" id="modal">
+  <button class="modal-close" onclick="closeModal()">✕</button>
+  <div class="player" id="player"></div>
+</div>
+
+<script>
+var LOCAL_API = "http://localhost:8778";
+var state = {
+  tab: "youtube", category: "전체", period: "week",
+  categories: ["전체", "음악", "게임", "먹방", "뷰티/패션", "브이로그", "스포츠",
+               "예능/코미디", "영화/드라마", "테크/IT", "지식/교육", "여행", "동물", "뉴스/이슈"],
+  mode: null,        // "live" | "static"
+  staticData: null   // trends_data.json 내용
+};
+
+var TIKTOK_LINKS = [
+  ["🔥 인기 해시태그", "https://ads.tiktok.com/business/creativecenter/inspiration/popular/hashtag/pc/ko"],
+  ["🎵 인기 음악", "https://ads.tiktok.com/business/creativecenter/inspiration/popular/music/pc/ko"],
+  ["📈 트렌드 탐색", "https://www.tiktok.com/discover"],
+  ["🍜 먹방", "https://www.tiktok.com/tag/먹방"],
+  ["😂 코미디", "https://www.tiktok.com/tag/코미디"],
+  ["💄 뷰티", "https://www.tiktok.com/tag/뷰티"],
+  ["🎮 게임", "https://www.tiktok.com/tag/게임"],
+  ["🐶 동물", "https://www.tiktok.com/tag/펫"]
+];
+var REELS_LINKS = [
+  ["🧭 인스타그램 탐색", "https://www.instagram.com/explore/"],
+  ["🍜 먹방 태그", "https://www.instagram.com/explore/tags/먹방/"],
+  ["💄 뷰티 태그", "https://www.instagram.com/explore/tags/뷰티/"],
+  ["✈️ 여행 태그", "https://www.instagram.com/explore/tags/여행/"],
+  ["🐶 반려동물 태그", "https://www.instagram.com/explore/tags/반려동물/"],
+  ["🏋️ 운동 태그", "https://www.instagram.com/explore/tags/운동/"]
+];
+
+function $(id) { return document.getElementById(id); }
+
+function fmtViews(n) {
+  if (n >= 1e8) return (n / 1e8).toFixed(1).replace(/\.0$/, "") + "억회";
+  if (n >= 1e4) return (n / 1e4).toFixed(1).replace(/\.0$/, "") + "만회";
+  return n.toLocaleString() + "회";
+}
+
+function escapeHtml(t) {
+  return (t || "").replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function setToday() {
+  var d = new Date();
+  var days = ["일", "월", "화", "수", "목", "금", "토"];
+  $("today").textContent = d.getFullYear() + "년 " + (d.getMonth() + 1) + "월 " +
+    d.getDate() + "일 " + days[d.getDay()] + "요일";
+}
+
+/* ---------------- 데이터 소스 감지: 로컬 서버(실시간) → 정적 JSON ---------------- */
+function fetchTimeout(url, ms, opts) {
+  var ctrl = new AbortController();
+  var t = setTimeout(function () { ctrl.abort(); }, ms);
+  opts = opts || {};
+  opts.signal = ctrl.signal;
+  return fetch(url, opts).finally(function () { clearTimeout(t); });
+}
+
+function detectMode() {
+  return fetchTimeout(LOCAL_API + "/api/categories", 1500)
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      state.mode = "live";
+      if (d.categories) state.categories = d.categories;
+    })
+    .catch(function () {
+      state.mode = "static";
+      return loadStatic(false);
+    });
+}
+
+function loadStatic(force) {
+  return fetch("trends_data.json" + (force ? "?t=" + Date.now() : ""))
+    .then(function (r) {
+      if (!r.ok) throw new Error("trends_data.json 없음");
+      return r.json();
+    })
+    .then(function (d) {
+      state.staticData = d;
+      if (d.categories) state.categories = d.categories;
+    })
+    .catch(function () { state.staticData = null; });
+}
+
+function modeBadge() {
+  return state.mode === "live"
+    ? '<span class="badge live">● 실시간</span>'
+    : '<span class="badge static">웹 데이터</span>';
+}
+
+/* ---------------- 트렌드 렌더링 ---------------- */
+function renderChips() {
+  var el = $("chips");
+  if (state.tab === "tiktok" || state.tab === "reels") { el.innerHTML = ""; return; }
+  el.innerHTML = state.categories.map(function (c) {
+    return '<div class="chip' + (c === state.category ? " active" : "") +
+      '" data-cat="' + c + '">' + c + "</div>";
+  }).join("");
+  el.querySelectorAll(".chip").forEach(function (ch) {
+    ch.onclick = function () {
+      state.category = ch.dataset.cat;
+      renderChips();
+      loadTrends(false);
+    };
+  });
+}
+
+function loadTrends(force) {
+  var s = $("status");
+  s.innerHTML = '<span class="spinner"></span>불러오는 중...';
+  if (state.mode === "live") {
+    var url = LOCAL_API + "/api/trends?tab=" + state.tab +
+      "&category=" + encodeURIComponent(state.category) +
+      "&period=" + state.period + (force ? "&force=1" : "");
+    var snap = state.tab + state.category + state.period;
+    fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+      if (state.tab + state.category + state.period !== snap) return;
+      if (d.error) { s.textContent = "오류: " + d.error; return; }
+      drawGrid(d.videos || [], modeBadge() + "총 " + (d.videos || []).length +
+        "개 · 조회수 내림차순 · 로컬 서버 데이터");
+    }).catch(function () {
+      // 로컬 서버가 중간에 꺼졌으면 정적 모드로 전환
+      state.mode = "static";
+      loadStatic(true).then(function () { loadTrends(false); });
+    });
+  } else {
+    var render = function () {
+      var d = state.staticData;
+      if (!d) {
+        s.textContent = "아직 수집된 데이터가 없습니다. 깃허브 액션 '트렌드 데이터 자동 수집'을 실행해 주세요.";
+        $("content").innerHTML = "";
+        return;
+      }
+      var vids = (d.data && d.data[state.tab + "|" + state.period + "|" + state.category]) || [];
+      var ageH = Math.round((Date.now() / 1000 - d.generatedAt) / 3600 * 10) / 10;
+      drawGrid(vids, modeBadge() + "총 " + vids.length + "개 · 조회수 내림차순 · " +
+        (ageH < 1 ? "1시간 이내" : ageH + "시간 전") + " 수집됨 (6시간마다 자동 갱신)");
+    };
+    if (force) loadStatic(true).then(render);
+    else render();
+  }
+}
+
+function drawGrid(vids, statusText) {
+  var s = $("status"), grid = $("content");
+  if (!vids.length) {
+    s.innerHTML = modeBadge() + "결과가 없습니다. 다른 기간/카테고리를 선택해 보세요.";
+    grid.innerHTML = "";
+    return;
+  }
+  s.innerHTML = statusText;
+  grid.innerHTML = '<div class="grid' + (state.tab === "shorts" ? " shorts" : "") + '">' +
+    vids.map(function (v, i) {
+      var r = i + 1;
+      var thumb = v.thumb || ("https://i.ytimg.com/vi/" + v.id + "/hqdefault.jpg");
+      return '<div class="card" data-id="' + v.id + '">' +
+        '<div class="thumb-wrap"><img loading="lazy" src="' + thumb + '" alt="">' +
+        '<div class="rank r' + r + '">' + r + "위</div>" +
+        (v.duration ? '<div class="dur">' + v.duration + "</div>" : "") +
+        "</div><div class=\"info\">" +
+        '<div class="title">' + escapeHtml(v.title) + "</div>" +
+        '<div class="meta"><span>조회수 <b>' + fmtViews(v.views) + "</b></span>" +
+        "<span>" + escapeHtml(v.channel) + "</span><span>" + (v.published || "") + "</span></div>" +
+        "</div></div>";
+    }).join("") + "</div>";
+  grid.querySelectorAll(".card").forEach(function (c) {
+    c.onclick = function () { openPlayer(c.dataset.id, state.tab === "shorts"); };
+  });
+}
+
+function openPlayer(id, vertical) {
+  var p = $("player");
+  p.className = "player" + (vertical ? " vertical" : "");
+  p.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id +
+    '?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
+  $("modal").classList.add("open");
+}
+function closeModal() {
+  $("modal").classList.remove("open");
+  $("player").innerHTML = "";
+}
+$("modal").onclick = function (e) { if (e.target === this) closeModal(); };
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
+
+/* ---------------- 틱톡/릴스 저장 보드 (localStorage) ---------------- */
+function boardKey() { return "trendboard_" + state.tab; }
+function loadBoardItems() {
+  try { return JSON.parse(localStorage.getItem(boardKey()) || "[]"); }
+  catch (e) { return []; }
+}
+function saveBoardItems(items) {
+  localStorage.setItem(boardKey(), JSON.stringify(items));
+}
+
+function renderBoard() {
+  var tab = state.tab;
+  var links = tab === "tiktok" ? TIKTOK_LINKS : REELS_LINKS;
+  var s = $("status"), c = $("content");
+  s.innerHTML = (tab === "tiktok"
+    ? "틱톡은 공개 순위 API가 없어 바로가기 + 저장 보드로 제공됩니다."
+    : "인스타그램 릴스는 공개 순위 API가 없어 바로가기 + 저장 보드로 제공됩니다.") +
+    " (이 브라우저에 저장)";
+  var html = '<div class="board-links">' + links.map(function (l) {
+    return '<a class="blink" href="' + l[1] + '" target="_blank" rel="noopener">' + l[0] + "</a>";
+  }).join("") + "</div>";
+  html += '<div class="board-add"><input type="text" id="boardUrl" placeholder="매일 확인할 영상 URL을 붙여넣고 저장하세요">' +
+    '<button class="primary" id="boardAdd">저장</button></div>';
+  html += '<div class="board-grid" id="boardGrid"></div>';
+  c.innerHTML = html;
+  $("boardAdd").onclick = addBoardItem;
+  $("boardUrl").addEventListener("keydown", function (e) { if (e.key === "Enter") addBoardItem(); });
+  drawBoardItems(loadBoardItems());
+}
+
+function drawBoardItems(items) {
+  var g = $("boardGrid");
+  if (!g) return;
+  if (!items.length) {
+    g.innerHTML = '<div class="empty">저장된 영상이 없습니다. 위에 URL을 붙여넣어 보드를 채워보세요.</div>';
+    return;
+  }
+  g.innerHTML = items.map(function (it) {
+    return '<div class="card bcard" data-url="' + it.url + '">' +
+      '<div class="thumb-wrap">' +
+      (it.thumb ? '<img loading="lazy" src="' + it.thumb + '" alt="" onerror="this.outerHTML=\'<div class=noimg>🎬</div>\'">'
+                : '<div class="noimg">🎬</div>') +
+      "</div>" +
+      '<div class="binfo"><div class="btitle">' + escapeHtml(it.title) + "</div>" +
+      '<div class="bmeta">' + escapeHtml(it.author || "") + (it.author ? " · " : "") + (it.addedAt || "") + "</div></div>" +
+      '<button class="del" data-id="' + it.id + '">삭제</button></div>';
+  }).join("");
+  g.querySelectorAll(".bcard").forEach(function (c) {
+    c.onclick = function (e) {
+      if (e.target.classList.contains("del")) return;
+      window.open(c.dataset.url, "_blank");
+    };
+  });
+  g.querySelectorAll(".del").forEach(function (b) {
+    b.onclick = function () {
+      var items = loadBoardItems().filter(function (i) { return i.id !== b.dataset.id; });
+      saveBoardItems(items);
+      drawBoardItems(items);
+    };
+  });
+}
+
+function shortTitleFromUrl(url) {
+  try {
+    var u = new URL(url);
+    return u.hostname.replace("www.", "") + u.pathname;
+  } catch (e) { return url; }
+}
+
+function addBoardItem() {
+  var input = $("boardUrl");
+  var url = input.value.trim();
+  if (!url) return;
+  if (!/^https?:\/\//.test(url)) { alert("올바른 URL이 아닙니다"); return; }
+  var items = loadBoardItems();
+  if (items.some(function (i) { return i.url === url; })) { alert("이미 저장된 URL입니다"); return; }
+  var btn = $("boardAdd");
+  btn.textContent = "저장 중...";
+  btn.disabled = true;
+  var item = {
+    id: String(Date.now()),
+    url: url, title: shortTitleFromUrl(url), thumb: "", author: "",
+    addedAt: new Date().toISOString().slice(0, 10)
+  };
+  var m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([\w-]{11})/);
+  if (m) item.thumb = "https://i.ytimg.com/vi/" + m[1] + "/hqdefault.jpg";
+
+  var done = function () {
+    items = loadBoardItems();
+    items.unshift(item);
+    saveBoardItems(items);
+    input.value = "";
+    btn.textContent = "저장";
+    btn.disabled = false;
+    drawBoardItems(items);
+  };
+  if (url.indexOf("tiktok.com") >= 0) {
+    // 틱톡 oEmbed는 브라우저에서 CORS가 막힐 수 있음 — 되면 제목·썸네일 채우고, 안 되면 링크만 저장
+    fetchTimeout("https://www.tiktok.com/oembed?url=" + encodeURIComponent(url), 5000)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.title) item.title = d.title;
+        if (d.thumbnail_url) item.thumb = d.thumbnail_url;
+        if (d.author_name) item.author = d.author_name;
+      })
+      .catch(function () {})
+      .finally(done);
+  } else {
+    done();
+  }
+}
+
+/* ---------------- 탭/이벤트 ---------------- */
+function switchTab(tab) {
+  state.tab = tab;
+  document.querySelectorAll(".tab").forEach(function (t) {
+    t.classList.toggle("active", t.dataset.tab === tab);
+  });
+  renderChips();
+  if (tab === "tiktok" || tab === "reels") renderBoard();
+  else loadTrends(false);
+}
+
+document.querySelectorAll(".tab").forEach(function (t) {
+  t.onclick = function () { switchTab(t.dataset.tab); };
+});
+$("period").onchange = function () {
+  state.period = this.value;
+  if (state.tab === "youtube" || state.tab === "shorts") loadTrends(false);
+};
+$("refresh").onclick = function () {
+  if (state.tab === "youtube" || state.tab === "shorts") loadTrends(true);
+  else renderBoard();
+};
+
+setToday();
+detectMode().then(function () {
+  renderChips();
+  loadTrends(false);
+});
+</script>
+</body>
+</html>
