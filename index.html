@@ -335,6 +335,9 @@ header{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 1.5rem
   <div class="maintab" id="mt-homepan" data-tab="homepan" style="position:relative">🏠 홈판 글쓰기
     <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
   </div>
+  <div class="maintab" id="mt-wpwrite" data-tab="wpwrite" style="position:relative">📝 워드프레스
+    <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
+  </div>
   <a href="video-transcription.html" class="maintab" id="mt-transcribe" style="position:relative;text-decoration:none">🎙️ 자막 받아쓰기
     <span style="position:absolute;top:6px;right:6px;background:#e8c97a;color:#0a0a0a;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px">NEW</span>
   </a>
@@ -2239,6 +2242,154 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+<!-- ===== 📝 워드프레스 글쓰기 탭 ===== -->
+<div class="mainpanel" id="mp-wpwrite">
+<div style="max-width:760px;margin:0 auto;padding:1.5rem 0 3rem">
+
+  <div style="margin-bottom:1rem">
+    <div style="font-size:16px;font-weight:800;color:var(--txt)">📝 워드프레스 글쓰기 <span style="font-size:10px;font-weight:700;background:var(--gl);color:var(--gd);padding:2px 7px;border-radius:6px;vertical-align:middle">구글 SEO · HTML</span></div>
+    <div style="font-size:12px;color:var(--t3);margin-top:3px;line-height:1.6">주제를 던지거나 참고할 글을 붙여넣으면 → <b>구글 SEO 구조의 워드프레스 글</b>을 만들어 <b>HTML로 바로 복사</b>해 붙여넣을 수 있어요.</div>
+  </div>
+
+  <div id="wp_keyhint" style="display:none;border:1px solid #c9a84c;background:#fff9ef;border-radius:var(--rs);padding:10px 13px;margin-bottom:12px;font-size:12px;color:#8a6d2f;line-height:1.6">🔑 Claude API 키가 필요해요. <b>「✏ 글쓰기」 탭 → ⚙ 설정</b>에서 키를 먼저 저장하세요. (같은 키를 씁니다)</div>
+
+  <div class="field" style="padding:0;margin-bottom:10px">
+    <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">주제 / 키워드 또는 참고할 글 붙여넣기 <span style="color:var(--red)">*</span></label>
+    <textarea id="wp_input" placeholder="· 주제/키워드만 (예: 아이폰 배터리 오래 쓰는 법) → 새 글 작성&#10;· 기사/남의 글 붙여넣기 → 각색 비율만큼 새로 재구성(표절 회피)" style="width:100%;min-height:150px;padding:12px 13px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;line-height:1.7;resize:vertical;outline:none;color:var(--txt);background:var(--sur)"></textarea>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+    <div class="field" style="padding:0;flex:2;min-width:180px">
+      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">메인 키워드 <span style="font-weight:400;color:var(--t3)">(구글 SEO · 선택)</span></label>
+      <input type="text" id="wp_kw" placeholder="비우면 자동 추출 (예: 아이폰 배터리 관리)" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;outline:none;color:var(--txt);background:var(--sur)"/>
+    </div>
+    <div class="field" style="padding:0;flex:1;min-width:130px">
+      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">분량 (공백포함)</label>
+      <select id="wp_len" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);cursor:pointer">
+        <option value="2500" selected>약 2,500자</option>
+        <option value="1800">약 1,800자</option>
+        <option value="4000">약 4,000자 (롱폼)</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+    <div class="field" style="padding:0;flex:1;min-width:170px">
+      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">각색 비율 <span style="font-weight:400;color:var(--t3)">(참고글 넣을 때)</span></label>
+      <select id="wp_adapt" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);cursor:pointer">
+        <option value="50">50% 각색 (구조 참고·표현 새로)</option>
+        <option value="70" selected>70% 각색 (대폭 변경·추천)</option>
+        <option value="100">완전히 새로운 글</option>
+      </select>
+    </div>
+    <div class="field" style="padding:0;flex:1;min-width:170px">
+      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">말투</label>
+      <select id="wp_tone" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);cursor:pointer">
+        <option value="신뢰감 있는 정보형 존댓말(~합니다/~입니다)">정보형 존댓말</option>
+        <option value="친근한 대화형 해요체(~해요/~예요)">친근한 해요체</option>
+        <option value="전문가의 분석적인 어조">전문가 분석형</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="field" style="padding:0;margin-bottom:10px">
+    <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">글 방향성 / 추가 명령 <span style="font-weight:400;color:var(--t3)">(선택)</span></label>
+    <textarea id="wp_dir" placeholder="예: 30대 직장인 타겟 / 제품 비교표 꼭 넣어줘 / 초보자도 이해하게 / 마지막에 추천 리스트" style="width:100%;min-height:52px;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;line-height:1.6;resize:vertical;outline:none;color:var(--txt);background:var(--sur)"></textarea>
+  </div>
+
+  <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t2);margin-bottom:12px;cursor:pointer">
+    <input type="checkbox" id="wp_faq" checked style="width:16px;height:16px;cursor:pointer"/> 자주 묻는 질문(FAQ) 섹션 포함 <span style="color:var(--t3);font-size:11px">— 구글 검색 노출에 유리</span>
+  </label>
+
+  <button onclick="wpGo()" id="wp_gobtn" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">📝 워드프레스 글 생성 (HTML)</button>
+
+  <div id="wp_result" style="margin-top:16px"></div>
+
+  <div style="font-size:11px;color:var(--t3);margin-top:16px;line-height:1.7;background:var(--bg);border-radius:var(--rs);padding:11px 13px">
+    💡 <b>붙여넣는 법</b>: 「HTML 복사」 → 워드프레스 글 편집기에서 <b>클래식/코드 편집기</b> 또는 <b>'사용자 지정 HTML' 블록</b>에 붙여넣기. 구텐베르크는 붙여넣으면 자동으로 블록 변환돼요. <b>제목(H1)</b>은 별도 제공되니 워드프레스 제목칸에 넣으세요.
+  </div>
+
+</div>
+</div>
+
+<script>
+/* ===== 📝 워드프레스 글쓰기 (독립 모듈, HTML 출력) ===== */
+(function(){
+  function $(id){return document.getElementById(id);}
+  function wpEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function wpKey(){try{return (sessionStorage.getItem('ak_claude')||localStorage.getItem('ak_claude')||'').replace(/[^\x20-\x7E]/g,'').trim();}catch(e){return '';}}
+  function wpHint(){var h=$('wp_keyhint'); if(h)h.style.display=wpKey()?'none':'block';}
+  function wpErr(e){
+    var m=((e&&e.message)||e||'').toString(), lo=m.toLowerCase();
+    if(m==='NO_KEY') return '🔑 Claude API 키가 없어요. 「✏ 글쓰기」 탭 ⚙ 설정에서 키를 먼저 저장하세요.';
+    if(/credit balance|too low|billing|purchase credits/i.test(lo)) return '⚠ Anthropic 크레딧(잔액)이 부족합니다. console.anthropic.com → Plans & Billing에서 충전 후 다시 시도하세요.';
+    if(/authentication|invalid x-api-key|unauthorized/i.test(lo)) return '⚠ API 키가 올바르지 않습니다. ⚙ 설정에서 sk-ant- 키를 다시 등록하세요.';
+    if(/overloaded|rate ?limit|429|529/i.test(lo)) return '⚠ 요청이 몰려 일시적으로 막혔어요. 잠시 후 다시 시도하세요.';
+    return '⚠ '+m;
+  }
+  function wpCopy(t,btn){
+    try{ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);} else { var ta=document.createElement('textarea'); ta.value=t; ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);} }catch(e){}
+    if(btn){var o=btn.textContent; btn.textContent='복사됨 ✔'; setTimeout(function(){btn.textContent=o;},1400);}
+    showToast('[v] 복사됐어요','ok');
+  }
+  window.wpCopyEl=function(btn,id){ var el=$(id); if(el) wpCopy(el.value!==undefined?el.value:el.textContent, btn); };
+  window.wpCopyTitle=function(btn){ wpCopy(btn.parentNode.querySelector('.wp-tt').textContent, btn); };
+  window.wpTogglePrev=function(btn){ var p=$('wp_prev'); if(!p)return; var on=p.style.display==='none'; p.style.display=on?'block':'none'; btn.textContent=on?'미리보기 숨기기':'미리보기 보기'; };
+  function wpSanitize(html){ return html.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/ on[a-z]+="[^"]*"/gi,'').replace(/ on[a-z]+='[^']*'/gi,'').replace(/javascript:/gi,''); }
+
+  window.wpGo=async function(){
+    var input=$('wp_input').value.trim();
+    var kw=$('wp_kw').value.trim(), len=$('wp_len').value||'2500';
+    var adapt=$('wp_adapt').value||'70', tone=$('wp_tone').value, dir=$('wp_dir').value.trim();
+    var faq=$('wp_faq').checked;
+    var box=$('wp_result'), btn=$('wp_gobtn');
+    wpHint();
+    if(!input){ box.innerHTML='<p style="color:var(--red);font-size:13px">주제/키워드나 참고할 글을 입력해주세요.</p>'; return; }
+    if(!wpKey()){ box.innerHTML='<div class="th-card" style="border-color:#c9a84c"><p style="color:#8a6d2f;font-size:13px;margin:0">🔑 「✏ 글쓰기」 탭 ⚙ 설정에서 Claude 키를 먼저 저장하세요.</p></div>'; return; }
+
+    var adaptMap={'50':'원문의 큰 구조·핵심 논지는 참고하되, 모든 문장을 동의어·유의어·다른 문형으로 100% 새로 쓴다.','70':'원문에서 사실·핵심 정보만 취하고, 구성·전개·예시·표현을 대폭 바꿔 상당히 다른 글로 재구성한다.','100':'원문은 소재·영감으로만 쓰고 완전히 새로운 구성으로 100% 새 글을 쓴다.'};
+    var sys='너는 워드프레스 블로그(구글 검색 최적화)를 위한 전문 콘텐츠 에디터야. 목표는 구글 상위 노출 + 체류시간 + 신뢰(EEAT).\n\n'
+      +'[입력 자동 판단] 주제·키워드면 새 글을 쓰고, 기사/남의 글이면 각색한다. [각색] '+(adaptMap[adapt]||adaptMap['70'])+' 원문 문장 그대로 복사 금지, 표절·저작권 문제 없게 표현을 충분히 바꾼다(키워드만 입력 시 이 항목 무시).\n\n'
+      +'[좋은 콘텐츠 원칙 — EEAT] 직접 경험·구체적 사례, 대안 비교(가능하면 표), 실제 결과·수치, 객관적 근거, 독자의 검색의도 충족, 과장·거짓·근거없는 단정 금지.\n\n'
+      +'[구글 SEO 구조] 제목(H1)은 본문에 넣지 말고 따로 제공. 본문은 도입 문단(검색의도 훅+요약, 메인 키워드 자연 포함) → <h2> 섹션 5~8개(필요시 <h3> 하위) → '+(faq?'<h2>자주 묻는 질문</h2> + Q&A 3~4개(각 질문 <h3>, 답변 <p>) → ':'')+'결론 <h2>. 비교 정보는 <table>로, 단계·목록은 <ul>/<ol>로.\n\n'
+      +'[HTML 출력 규칙 — 매우 중요] 본문은 순수 HTML 태그만 사용: h2,h3,p,ul,ol,li,strong,em,table,thead,tbody,tr,th,td,blockquote,a. style 속성·class·id·div·span·script·h1 금지. 마크다운(#,*,**) 금지. 워드프레스에 그대로 붙여넣어 렌더되게 깔끔히.\n\n'
+      +'[말투] '+tone+'. [분량] 공백 포함 약 '+len+'자.\n'
+      +'[SEO] 메인 키워드'+(kw?'("'+kw+'")':'')+'를 제목·첫 문단·H2 중 하나·본문에 자연스럽게 반복(스터핑 금지).\n\n'
+      +'[출력 형식 — 반드시 이 형식 그대로, 다른 말 없이]\n[제목]\n1) (제목1)\n2) (제목2)\n3) (제목3)\n\n[메타설명]\n(검색결과용 155자 이내 요약, 메인 키워드 포함)\n\n[HTML]\n<h2>...</h2>\n<p>...</p>\n...';
+    var user='[메인 키워드] '+(kw||'자동 추출')+'\n[목표 분량] 공백포함 약 '+len+'자\n[각색 강도] '+adapt+'%'
+      +(dir?'\n[글 방향성·추가 요청 — 반드시 반영] '+dir:'')
+      +'\n\n[입력 — 주제/키워드 또는 참고글]\n'+input.slice(0,7000);
+
+    btn.disabled=true; btn.innerHTML='<span class="th-spin"></span>워드프레스 글 작성 중… (25~50초)';
+    box.innerHTML='<div style="text-align:center;padding:22px;color:var(--t3);font-size:13px">구글 SEO 구조로 HTML 글을 작성 중…</div>';
+    try{
+      var k=wpKey(); var out=(await callClaude(k,sys,user)).replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
+      var titles=[]; var tm=out.match(/\[제목\]([\s\S]*?)\[메타설명\]/);
+      if(tm){ titles=tm[1].split('\n').map(function(s){return s.replace(/^\s*\d+[).\]]\s*/,'').replace(/^[-*]\s*/,'').trim();}).filter(Boolean).slice(0,3); }
+      var meta=''; var mm=out.match(/\[메타설명\]([\s\S]*?)\[HTML\]/); if(mm) meta=mm[1].trim();
+      var html=out; var hi=out.indexOf('[HTML]'); if(hi>=0) html=out.slice(hi+6).replace(/^\s*\n/,'').trim();
+      html=html.replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
+      var textLen=html.replace(/<[^>]+>/g,'').replace(/\s/g,'').length;
+
+      var titleHtml=titles.length?('<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--gd);margin-bottom:7px">✅ 추천 제목 3개 (H1 · 클릭해서 복사)</div>'
+        +titles.map(function(t){return '<div style="display:flex;gap:8px;align-items:center;padding:9px 12px;border:1px solid var(--bor);border-radius:var(--rs);margin-bottom:6px;background:var(--gl)"><div class="wp-tt" style="flex:1;font-size:13px;font-weight:600;color:var(--txt);line-height:1.5">'+wpEsc(t)+'</div><button onclick="wpCopyTitle(this)" style="padding:5px 11px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex:0 0 auto">복사</button></div>';}).join('')
+        +'</div>'):'';
+      var metaHtml=meta?('<div data-wpcard style="border:1px solid var(--bor);border-radius:var(--rs);overflow:hidden;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--gl)"><span style="font-size:12px;font-weight:700;color:var(--gd)">메타 설명 ('+meta.length+'자)</span><button onclick="wpCopyEl(this,\'wp_meta\')" style="padding:5px 11px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">복사</button></div><textarea id="wp_meta" readonly style="width:100%;min-height:52px;border:none;padding:9px 12px;font-family:inherit;font-size:12px;line-height:1.6;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+wpEsc(meta)+'</textarea></div>'):'';
+
+      box.innerHTML=titleHtml+metaHtml
+        +'<div style="border:1px solid var(--bor);border-radius:var(--r);overflow:hidden">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 13px;background:var(--gl)"><span style="font-size:12px;font-weight:700;color:var(--gd)">📝 워드프레스 HTML (공백제외 약 '+textLen.toLocaleString()+'자)</span><span style="display:flex;gap:6px"><button onclick="wpTogglePrev(this)" style="padding:6px 11px;background:var(--sur);color:var(--t2);border:1px solid var(--bor);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">미리보기 보기</button><button onclick="wpCopyEl(this,\'wp_html\')" style="padding:6px 13px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📋 HTML 복사</button></span></div>'
+        +'<textarea id="wp_html" readonly style="width:100%;min-height:360px;border:none;padding:13px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.7;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+wpEsc(html)+'</textarea>'
+        +'<div id="wp_prev" style="display:none;padding:16px 16px;border-top:1px solid var(--bor);background:#fff;color:#1a1a1a;line-height:1.75;font-size:14px">'+wpSanitize(html)+'</div>'
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.6">※ 순수 HTML(h2·p·ul·table 등)이라 워드프레스 코드 편집기/사용자 지정 HTML 블록에 그대로 붙여넣으면 돼요. 발행 전 내 경험·이미지를 더하면 구글 노출에 더 좋아요.</div>';
+    }catch(e){ box.innerHTML='<div class="th-card"><p style="color:var(--red);font-size:13px;margin:0;white-space:pre-line">'+wpEsc(wpErr(e))+'</p></div>'; }
+    finally{ btn.disabled=false; btn.textContent='📝 워드프레스 글 생성 (HTML)'; }
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wpHint);else wpHint();
+})();
+</script>
+
 <script>function showToast(msg,type){var el=document.getElementById('toast');el.className='toast'+(type?' '+type:'');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2800);}
 
 // ── 센터 찾기
@@ -2513,7 +2664,7 @@ function init(){
 }
 
 function setMainTab(n){
-  ['write','analyze','center','cafe','crawl','guide','video','homepage','imgauto','blogscore','homepan'].forEach(function(x){
+  ['write','analyze','center','cafe','crawl','guide','video','homepage','imgauto','blogscore','homepan','wpwrite'].forEach(function(x){
     var mt=document.getElementById('mt-'+x);
     var mp=document.getElementById('mp-'+x);
     if(mt)mt.className='maintab'+(x===n?' on':'');
