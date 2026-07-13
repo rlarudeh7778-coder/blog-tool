@@ -2253,9 +2253,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   <div id="wp_keyhint" style="display:none;border:1px solid #c9a84c;background:#fff9ef;border-radius:var(--rs);padding:10px 13px;margin-bottom:12px;font-size:12px;color:#8a6d2f;line-height:1.6">🔑 Claude API 키가 필요해요. <b>「✏ 글쓰기」 탭 → ⚙ 설정</b>에서 키를 먼저 저장하세요. (같은 키를 씁니다)</div>
 
+  <div style="border:1px solid var(--bor);border-radius:var(--r);padding:12px 13px;margin-bottom:12px;background:var(--sur)">
+    <div style="font-size:12.5px;font-weight:700;color:var(--t2);margin-bottom:7px">🔗 네이버 블로그에서 레퍼런스 가져오기 <span style="font-weight:400;color:var(--t3)">(선택 — 최근 글 목록에서 골라 각색)</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input type="text" id="wp_ref_url" placeholder="블로그 주소나 아이디 (예: blog.naver.com/아이디)" onkeydown="if(event.key==='Enter')wpRefLoad()" style="flex:1;min-width:200px;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;outline:none;color:var(--txt);background:var(--bg)"/>
+      <button onclick="wpRefLoad()" id="wp_ref_btn" style="padding:10px 16px;background:var(--txt);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">최근 글 불러오기</button>
+    </div>
+    <div id="wp_ref_list" style="margin-top:10px"></div>
+  </div>
+
   <div class="field" style="padding:0;margin-bottom:10px">
     <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">주제 / 키워드 또는 참고할 글 붙여넣기 <span style="color:var(--red)">*</span></label>
-    <textarea id="wp_input" placeholder="· 주제/키워드만 (예: 아이폰 배터리 오래 쓰는 법) → 새 글 작성&#10;· 기사/남의 글 붙여넣기 → 각색 비율만큼 새로 재구성(표절 회피)" style="width:100%;min-height:150px;padding:12px 13px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;line-height:1.7;resize:vertical;outline:none;color:var(--txt);background:var(--sur)"></textarea>
+    <textarea id="wp_input" placeholder="· 주제/키워드만 (예: 아이폰 배터리 오래 쓰는 법) → 새 글 작성&#10;· 기사/남의 글 붙여넣기 → 각색 비율만큼 새로 재구성(표절 회피)&#10;· 위에서 네이버 글을 불러오면 여기에 자동으로 채워져요" style="width:100%;min-height:150px;padding:12px 13px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;line-height:1.7;resize:vertical;outline:none;color:var(--txt);background:var(--sur)"></textarea>
   </div>
 
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
@@ -2334,8 +2343,57 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
   window.wpCopyEl=function(btn,id){ var el=$(id); if(el) wpCopy(el.value!==undefined?el.value:el.textContent, btn); };
   window.wpCopyTitle=function(btn){ wpCopy(btn.parentNode.querySelector('.wp-tt').textContent, btn); };
-  window.wpTogglePrev=function(btn){ var p=$('wp_prev'); if(!p)return; var on=p.style.display==='none'; p.style.display=on?'block':'none'; btn.textContent=on?'미리보기 숨기기':'미리보기 보기'; };
+  window.wpView=function(m){
+    var p=$('wp_prev'), c=$('wp_html'), bp=$('wp_tab_prev'), bc=$('wp_tab_code');
+    var prev=(m==='prev');
+    if(p)p.style.display=prev?'block':'none';
+    if(c)c.style.display=prev?'none':'block';
+    if(bp){bp.style.background=prev?'var(--green)':'var(--sur)';bp.style.color=prev?'#fff':'var(--t2)';}
+    if(bc){bc.style.background=prev?'var(--sur)':'var(--green)';bc.style.color=prev?'var(--t2)':'#fff';}
+  };
   function wpSanitize(html){ return html.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/ on[a-z]+="[^"]*"/gi,'').replace(/ on[a-z]+='[^']*'/gi,'').replace(/javascript:/gi,''); }
+  // 소제목(H2/H3)을 버튼형으로 — 복사본·미리보기 공통 (인라인 스타일이라 워드프레스에서도 유지)
+  function wpStyleHeadings(html){
+    return html
+      .replace(/<h2\b[^>]*>/gi,'<h2 style="display:block;background:#eaf5ee;border-left:5px solid #1f9d63;padding:13px 17px;border-radius:10px;font-size:19px;font-weight:800;color:#14663f;margin:32px 0 15px;line-height:1.4">')
+      .replace(/<h3\b[^>]*>/gi,'<h3 style="display:inline-block;background:#f1f3f5;padding:7px 15px;border-radius:22px;font-size:15.5px;font-weight:700;color:#2c2c2c;margin:24px 0 11px;line-height:1.4">');
+  }
+  // ── 네이버 레퍼런스 가져오기 (노출점수 탭의 Worker 재사용)
+  function wpWorker(){ return (localStorage.getItem('bscore_worker')||'').trim(); }
+  function wpParseBlogId(s){ s=(s||'').trim(); var m=s.match(/blog\.naver\.com\/([A-Za-z0-9_-]+)/i); if(m)return m[1]; m=s.match(/^@?([A-Za-z0-9_-]+)$/); return m?m[1]:''; }
+  window.wpRefLoad=async function(){
+    var raw=$('wp_ref_url').value, blogId=wpParseBlogId(raw);
+    var box=$('wp_ref_list'), btn=$('wp_ref_btn'), w=wpWorker();
+    if(!w){ box.innerHTML='<div style="font-size:11.5px;color:#8a6d2f;background:#fff9ef;border:1px solid #c9a84c;border-radius:var(--rs);padding:9px 11px;line-height:1.6">⚙ 먼저 <b>📊 노출점수</b> 탭에서 측정 서버(Worker) 주소를 등록하고, 최신 코드로 <b>재배포</b>해주세요. (같은 Worker를 씁니다)</div>'; return; }
+    if(!blogId){ box.innerHTML='<p style="color:var(--red);font-size:12px;margin:6px 0 0">블로그 주소나 아이디를 확인해주세요.</p>'; return; }
+    btn.disabled=true; var ot=btn.textContent; btn.textContent='불러오는 중…'; box.innerHTML='<div style="font-size:12px;color:var(--t3);padding:6px 0">최근 글을 불러오는 중…</div>';
+    try{
+      var r=await fetch(w+'?action=posts&blogId='+encodeURIComponent(blogId));
+      var d=await r.json();
+      if(d.error){ box.innerHTML='<p style="color:var(--red);font-size:12px;margin:6px 0 0">⚠ '+wpEsc(d.error)+'</p>'; return; }
+      var posts=d.posts||[];
+      box.innerHTML='<div style="font-size:11px;color:var(--t3);margin-bottom:6px">최근 글 '+posts.length+'개 — 각색할 글을 선택하세요</div>'
+        +posts.map(function(p){return '<button type="button" onclick="wpRefPick(this,\''+wpEsc(blogId)+'\',\''+wpEsc(p.logNo)+'\')" data-title="'+wpEsc(p.title)+'" style="display:block;width:100%;text-align:left;padding:9px 12px;margin-bottom:6px;border:1px solid var(--bor);border-radius:var(--rs);background:var(--bg);cursor:pointer;font-family:inherit;font-size:12.5px;color:var(--txt);line-height:1.5">📄 '+wpEsc(p.title)+(p.date?' <span style="color:var(--t3);font-size:10.5px">· '+wpEsc(p.date)+'</span>':'')+'</button>';}).join('')
+        +'<div style="font-size:10.5px;color:var(--t3);margin-top:2px">※ 네이버는 \'인기글\' 순위를 공개 API로 주지 않아 최근 글 기준으로 불러와요.</div>';
+    }catch(e){ box.innerHTML='<p style="color:var(--red);font-size:12px;margin:6px 0 0">⚠ 서버 연결 실패 — Worker가 최신 코드로 재배포됐는지 확인해주세요.</p>'; }
+    finally{ btn.disabled=false; btn.textContent=ot; }
+  };
+  window.wpRefPick=async function(btn,blogId,logNo){
+    var w=wpWorker(); if(!w) return;
+    var title=btn.getAttribute('data-title')||'';
+    var ob=btn.style.background; btn.style.background='var(--gl)'; btn.textContent='가져오는 중…';
+    try{
+      var r=await fetch(w+'?action=post&blogId='+encodeURIComponent(blogId)+'&logNo='+encodeURIComponent(logNo));
+      var d=await r.json();
+      if(d.error){ btn.textContent='⚠ '+d.error; btn.style.background=ob; return; }
+      var txt=(d.text||'').trim();
+      $('wp_input').value='[레퍼런스 글: '+title+']\n'+txt;
+      if(!$('wp_kw').value.trim()) $('wp_kw').value='';
+      showToast('[v] 레퍼런스 불러옴 ('+txt.length.toLocaleString()+'자) — 아래에서 각색 비율 정하고 생성','ok');
+      btn.textContent='✅ '+title+' (불러옴)'; btn.style.background='var(--gl)';
+      $('wp_input').scrollIntoView({behavior:'smooth',block:'center'});
+    }catch(e){ btn.textContent='⚠ 불러오기 실패'; btn.style.background=ob; }
+  };
 
   window.wpGo=async function(){
     var input=$('wp_input').value.trim();
@@ -2369,6 +2427,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       var meta=''; var mm=out.match(/\[메타설명\]([\s\S]*?)\[HTML\]/); if(mm) meta=mm[1].trim();
       var html=out; var hi=out.indexOf('[HTML]'); if(hi>=0) html=out.slice(hi+6).replace(/^\s*\n/,'').trim();
       html=html.replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
+      html=wpStyleHeadings(html); // 소제목 버튼형 (복사본에도 반영)
       var textLen=html.replace(/<[^>]+>/g,'').replace(/\s/g,'').length;
 
       var titleHtml=titles.length?('<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--gd);margin-bottom:7px">✅ 추천 제목 3개 (H1 · 클릭해서 복사)</div>'
@@ -2378,11 +2437,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
       box.innerHTML=titleHtml+metaHtml
         +'<div style="border:1px solid var(--bor);border-radius:var(--r);overflow:hidden">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 13px;background:var(--gl)"><span style="font-size:12px;font-weight:700;color:var(--gd)">📝 워드프레스 HTML (공백제외 약 '+textLen.toLocaleString()+'자)</span><span style="display:flex;gap:6px"><button onclick="wpTogglePrev(this)" style="padding:6px 11px;background:var(--sur);color:var(--t2);border:1px solid var(--bor);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">미리보기 보기</button><button onclick="wpCopyEl(this,\'wp_html\')" style="padding:6px 13px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📋 HTML 복사</button></span></div>'
-        +'<textarea id="wp_html" readonly style="width:100%;min-height:360px;border:none;padding:13px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.7;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+wpEsc(html)+'</textarea>'
-        +'<div id="wp_prev" style="display:none;padding:16px 16px;border-top:1px solid var(--bor);background:#fff;color:#1a1a1a;line-height:1.75;font-size:14px">'+wpSanitize(html)+'</div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 13px;background:var(--gl)"><span style="display:flex;gap:6px"><button id="wp_tab_prev" onclick="wpView(\'prev\')" style="padding:6px 13px;background:var(--green);color:#fff;border:1px solid var(--bor);border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit">👁 미리보기</button><button id="wp_tab_code" onclick="wpView(\'code\')" style="padding:6px 13px;background:var(--sur);color:var(--t2);border:1px solid var(--bor);border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit">&lt;/&gt; HTML</button></span><button onclick="wpCopyEl(this,\'wp_html\')" style="padding:6px 13px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📋 HTML 복사</button></div>'
+        +'<div id="wp_prev" style="display:block;padding:20px 18px;background:#fff;color:#1a1a1a;line-height:1.85;font-size:15px;max-height:560px;overflow:auto">'+wpSanitize(html)+'</div>'
+        +'<textarea id="wp_html" readonly style="display:none;width:100%;min-height:360px;border:none;border-top:1px solid var(--bor);padding:13px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.7;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+wpEsc(html)+'</textarea>'
+        +'<div style="font-size:11px;color:var(--t3);padding:9px 13px;border-top:1px solid var(--bor);background:var(--gl)">공백제외 약 '+textLen.toLocaleString()+'자 · 소제목은 버튼형으로 자동 스타일됨</div>'
         +'</div>'
-        +'<div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.6">※ 순수 HTML(h2·p·ul·table 등)이라 워드프레스 코드 편집기/사용자 지정 HTML 블록에 그대로 붙여넣으면 돼요. 발행 전 내 경험·이미지를 더하면 구글 노출에 더 좋아요.</div>';
+        +'<div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.6">※ <b>HTML 복사</b> → 워드프레스 \'사용자 지정 HTML\' 블록/코드 편집기에 붙여넣기. 소제목 버튼 스타일이 그대로 유지돼요. 발행 전 내 경험·이미지를 더하면 구글 노출에 더 좋아요.</div>';
     }catch(e){ box.innerHTML='<div class="th-card"><p style="color:var(--red);font-size:13px;margin:0;white-space:pre-line">'+wpEsc(wpErr(e))+'</p></div>'; }
     finally{ btn.disabled=false; btn.textContent='📝 워드프레스 글 생성 (HTML)'; }
   };
