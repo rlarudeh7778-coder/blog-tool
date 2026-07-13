@@ -2348,6 +2348,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       +'[제목] 정확히 3개. 숫자·수치 활용. 결론을 제목에서 다 말하지 말 것(궁금증 남기기). 저품질 유발 단어(충격/소름/경악/대반전/실화 등) 금지, 광고 느낌 금지. 인물형·사건형·생활형 공식 참고.\n\n'
       +'[구조 — DIASA + EEAT] 소제목 약 7개로 문단을 나눠 아래 흐름을 자연스럽게 녹인다:\n① 후킹 확장 + Authority: 이슈를 날짜·행동 중심으로 구체적으로 요약(감정 과장 금지)\n② 궁금증 증폭 + Experience: 왜 화제인지, 주변 반응·대중 심리·공감 포인트("나도 비슷한데?")\n③ 전문 분석 = Expertise: 분야에 맞는 전문 관점, 단정 금지("~일 수 있어요/~로 해석돼요"), 핵심 개념 쉽게 풀기\n④ 실천 팁 = Trust: 일반인이 오늘부터 가능한 팁 3~5개(무리한 방법 배제)\n⑤ 마무리: 이슈를 습관/태도/선택으로 부드럽게 연결\n\n'
       +'[분량] 공백 포함 약 '+len+'자. 소제목 약 7개.\n\n'
+      +NAVER2026_RULES+'\n\n'
       +'[SEO] 인물명/사건명 또는 핵심 키워드를 본문에 6~8회 자연스럽게 문장 속에 녹여 반복(키워드 나열 금지).\n\n'
       +'[CTA] 마지막에 공감형 + 저장/댓글/공유 유도(쿠팡 등 판매·외부구매 유도 금지).\n\n'
       +'[해시태그] 8~12개, 주제 직접 연관 키워드만, 각 태그 짧게(총 20~40자 내외).\n\n'
@@ -3403,6 +3404,15 @@ if(document.readyState === 'loading'){
   initRefPasteCleaners();
 }
 
+// ── 네이버 2026 '좋은 콘텐츠' 원칙 (AI 시대 사용자의 선택을 받는 콘텐츠 가이드 기반) — 글 생성 공용 규칙
+var NAVER2026_RULES='[네이버 2026 좋은 콘텐츠 원칙 — 반드시 반영]\n'
+  +'① 직접 경험: 직접 해본 사람만 아는 팁·주의사항을 시간·절차의 흐름에 따라 구체적으로 풀 것.\n'
+  +'② 대안·비교: 고려한 다른 선택지(대안)의 장단점을 함께 비교하고, 최종 선택의 결정적 이유를 밝힐 것. 독자 상황별 추천(예: 커플엔 A, 가족엔 B)까지.\n'
+  +'③ 실제 결과·시행착오: 실제 적용했을 때의 결과, 예상과 달랐던 점, 실패·수정 과정을 구체적 수치(예: 7분→6분30초)와 함께. 가능하면 통계·연구·공식문서 등 객관적 근거를 인용.\n'
+  +'④ 독자·목적(TPO): 누가·언제·어떤 상황에서 이 정보를 찾는지 명확히 겨냥해 실용 정보(동선·가격·소요시간 등)를 줄 것. 단순 나열 금지.\n'
+  +'⑤ 읽기 쉬운 구조: 표·리스트·소제목으로 핵심을 빠르게 파악하게. 이미지/영상으로 전달할 핵심은 텍스트로도 함께 설명(본문과 무관한 사진 금지).\n'
+  +'⑥ 진정성: 과장·거짓·근거 없는 단정("한 달 5kg")·위험한 조언 금지. 스펙시트 복붙·구매링크 강조 금지. 본인의 주관·취향·관점을 진솔하게.';
+
 function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,reviewData){
   var catLabel={phone:'선불폰/알뜰폰',english:'영어회화/학원',food:'음식/맛집',product:'제품리뷰',travel:'여행/카페',custom:'일반'}[cat]||'일반';
   var subList=subkw?subkw.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
@@ -3637,7 +3647,7 @@ function buildPrompt(kw,subkw,region,dir,cat,tone,dealer,usedTitles,suggestKws,r
   var versionGuide=postVersion==='mobile'
     ?'\n[모바일 버전 필수 규칙]\n한 문장 쓰고 무조건 줄바꿈. 문장 20자 이하. 3줄 연속 금지. 정보전달형 제외 이모지 적극 활용(👉 ✅ 💡 등). 선불폰은 각 절차 단계마다 줄바꿈 필수.\n'
     :'\n[PC 버전] 긴 문단, 연속적인 흐름.\n';
-  var user='아래 조건으로 네이버 블로그 글 작성. JSON만 출력.\n\n카테고리: '+catLabel+'\n메인키워드: '+kw+'\n서브키워드: '+(subList.join(', ')||'없음')+'\n지역: '+(region||'없음')+'\n글 톤: '+tone+'\n특이사항: '+(dir||'없음')+'\n'+usedNote+patternNote+versionGuide+'\n'+toneGuide+'\n글 스타일:\n'+introGuide+'\n맺음말: "'+randomEnding+'" 느낌으로\n목표 글자수: 공백포함 '+charTarget+'자 내외\n'+phoneInfo+engInfo+reviewInfo+'\n절대 준수 규칙:\n1. 제목: "'+kw+'" 반드시 포함 + 35자 이내 (SEO 필수)\n2. 메인키워드 "'+kw+'" 본문에서 정확히 3회만 사용 - 2회도 안되고 4회도 절대 금지\n3. 서브키워드 각각 1~5회 이내 (0회도 안됨 - 반드시 본문에 자연스럽게 포함)\n4. ## ** 마크다운 절대 금지\n5. '+forbiddenWords+'6. 단락 사이 빈줄 1개\n7. 숫자/수치 최소 3개 이상 (요금, 날짜, 시간, 거리 등 구체적 수치)\n8. 공백포함 반드시 '+charMin.toLocaleString()+'자 이상 '+charMax.toLocaleString()+'자 미만 - 작성 후 스스로 글자 세어서 부족하면 보충\n9. 소제목 구조화 필수 (숫자 or 이모지 or ■ 소제목으로 단락 구분)\n10. AI 티 나는 표현 절대 금지\n11. 참고 내용 그대로 복사 금지\n'+synonymGuide+'\n출력(JSON만, 첫글자{, content 내 큰따옴표 반드시 \\" 이스케이프): {"title":"제목","content":"본문('+charTarget+'자내외)","hashtags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8","태그9","태그10"]}';
+  var user='아래 조건으로 네이버 블로그 글 작성. JSON만 출력.\n\n카테고리: '+catLabel+'\n메인키워드: '+kw+'\n서브키워드: '+(subList.join(', ')||'없음')+'\n지역: '+(region||'없음')+'\n글 톤: '+tone+'\n특이사항: '+(dir||'없음')+'\n'+usedNote+patternNote+versionGuide+'\n'+toneGuide+'\n글 스타일:\n'+introGuide+'\n맺음말: "'+randomEnding+'" 느낌으로\n목표 글자수: 공백포함 '+charTarget+'자 내외\n'+phoneInfo+engInfo+reviewInfo+'\n절대 준수 규칙:\n1. 제목: "'+kw+'" 반드시 포함 + 35자 이내 (SEO 필수)\n2. 메인키워드 "'+kw+'" 본문에서 정확히 3회만 사용 - 2회도 안되고 4회도 절대 금지\n3. 서브키워드 각각 1~5회 이내 (0회도 안됨 - 반드시 본문에 자연스럽게 포함)\n4. ## ** 마크다운 절대 금지\n5. '+forbiddenWords+'6. 단락 사이 빈줄 1개\n7. 숫자/수치 최소 3개 이상 (요금, 날짜, 시간, 거리 등 구체적 수치)\n8. 공백포함 반드시 '+charMin.toLocaleString()+'자 이상 '+charMax.toLocaleString()+'자 미만 - 작성 후 스스로 글자 세어서 부족하면 보충\n9. 소제목 구조화 필수 (숫자 or 이모지 or ■ 소제목으로 단락 구분)\n10. AI 티 나는 표현 절대 금지\n11. 참고 내용 그대로 복사 금지\n'+synonymGuide+'\n\n'+NAVER2026_RULES+'\n\n출력(JSON만, 첫글자{, content 내 큰따옴표 반드시 \\" 이스케이프): {"title":"제목","content":"본문('+charTarget+'자내외)","hashtags":["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8","태그9","태그10"]}';
 
   return{sys:sys,user:user};
 }
@@ -6545,6 +6555,12 @@ function careAddUsed(){} // 로그 저장으로 자동 처리되므로 no-op
 
 // ── 로그인 / 가입 / 로그아웃
 function careAuthMsg(t,color){var el=document.getElementById('care-auth-msg');if(el){el.textContent=t;el.style.color=color||'var(--t3)';}}
+function careAuthErr(e){
+  var m=((e&&(e.message||e))||'').toString();
+  if(/failed to fetch|networkerror|load failed|fetch/i.test(m)) return '서버 연결 실패 — 무료 Supabase 프로젝트가 휴면 상태일 수 있어요. supabase.com 대시보드에서 프로젝트를 다시 활성화(Restore)한 뒤 시도해주세요.';
+  if(/already registered|user already/i.test(m)) return '이미 가입된 아이디예요. 로그인해주세요.';
+  return m;
+}
 async function careSignup(){
   var sb=careSB();if(!sb){careAuthMsg('연결 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.','#c0392b');return;}
   var email=document.getElementById('care-auth-email').value.trim();
@@ -6552,8 +6568,10 @@ async function careSignup(){
   if(!email||!pw){careAuthMsg('아이디와 비밀번호를 입력해주세요.','#c0392b');return;}
   if(email.indexOf('@')<0)email=email+'@care.local'; // 이메일 형식 보정
   careAuthMsg('가입 중...');
-  var r=await sb.auth.signUp({email:email,password:pw});
-  if(r.error){careAuthMsg('가입 실패: '+r.error.message,'#c0392b');return;}
+  var r;
+  try{ r=await sb.auth.signUp({email:email,password:pw}); }
+  catch(e){ careAuthMsg('가입 실패: '+careAuthErr(e),'#c0392b'); return; }
+  if(r.error){careAuthMsg('가입 실패: '+careAuthErr(r.error),'#c0392b');return;}
   // 인증 꺼져있으면 바로 세션 생김. 아니면 로그인 시도.
   if(!r.data.session){
     var l=await sb.auth.signInWithPassword({email:email,password:pw});
@@ -6569,8 +6587,14 @@ async function careLogin(){
   if(!email||!pw){careAuthMsg('아이디와 비밀번호를 입력해주세요.','#c0392b');return;}
   if(email.indexOf('@')<0)email=email+'@care.local';
   careAuthMsg('로그인 중...');
-  var l=await sb.auth.signInWithPassword({email:email,password:pw});
-  if(l.error){careAuthMsg('로그인 실패: 아이디/비밀번호를 확인하세요.','#c0392b');return;}
+  var l;
+  try{ l=await sb.auth.signInWithPassword({email:email,password:pw}); }
+  catch(e){ careAuthMsg('로그인 실패: '+careAuthErr(e),'#c0392b'); return; }
+  if(l.error){
+    if(/failed to fetch|networkerror|load failed|fetch/i.test(l.error.message||'')) careAuthMsg('로그인 실패: '+careAuthErr(l.error),'#c0392b');
+    else careAuthMsg('로그인 실패: 아이디/비밀번호를 확인하세요.','#c0392b');
+    return;
+  }
   careAuthMsg('');
   await careOnLogin();
 }
