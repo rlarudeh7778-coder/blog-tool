@@ -21,6 +21,30 @@ export default {
     const url = new URL(req.url);
     const blogId = (url.searchParams.get('blogId') || '').trim().replace(/^@/, '').replace(/\s/g, '');
     if (!blogId) return json({ error: 'blogId 파라미터가 필요합니다.' }, 400, cors);
+
+    // ── 레퍼런스용: 네이버 키 없이 동작 (RSS 최근글 목록 / 글 본문 가져오기)
+    const action = (url.searchParams.get('action') || '').trim();
+    if (action === 'posts' || action === 'post') {
+      try {
+        if (action === 'posts') {
+          const rssRes = await fetch('https://rss.blog.naver.com/' + encodeURIComponent(blogId) + '.xml', {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; blogscore/1.0)' },
+          });
+          if (!rssRes.ok) return json({ error: '블로그를 찾을 수 없거나 RSS가 비공개입니다.' }, 404, cors);
+          const posts = parseRssFull(await rssRes.text()).slice(0, 15);
+          if (!posts.length) return json({ error: '최근 글을 찾지 못했어요. (비공개이거나 글 없음)' }, 404, cors);
+          return json({ blogId, posts }, 200, cors);
+        }
+        const logNo = (url.searchParams.get('logNo') || '').trim();
+        if (!logNo) return json({ error: 'logNo가 필요합니다.' }, 400, cors);
+        const t = await fetchPostText(blogId, logNo);
+        if (t.error) return json({ error: t.error }, 502, cors);
+        return json({ blogId, logNo, title: t.title || '', text: t.text || '' }, 200, cors);
+      } catch (e) {
+        return json({ error: '불러오기 오류: ' + (e && e.message ? e.message : e) }, 500, cors);
+      }
+    }
+
     if (!env.NAVER_ID || !env.NAVER_SECRET) {
       return json({ error: '서버에 네이버 키(NAVER_ID/NAVER_SECRET)가 설정되지 않았습니다.' }, 500, cors);
     }
@@ -88,6 +112,44 @@ function parseRss(xml) {
 }
 function decodeEnt(s) {
   return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+}
+// 레퍼런스용: RSS에서 제목+링크+logNo+날짜까지
+function parseRssFull(xml) {
+  const out = [];
+  const re = /<item>([\s\S]*?)<\/item>/g;
+  let m;
+  while ((m = re.exec(xml)) && out.length < 20) {
+    const b = m[1];
+    const t = (b.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/) || [])[1] || '';
+    const l = (b.match(/<link>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/link>/) || [])[1] || '';
+    const d = (b.match(/<pubDate>([\s\S]*?)<\/pubDate>/) || [])[1] || '';
+    const link = l.trim();
+    const logNo = (link.match(/(\d{6,})/) || [])[1] || '';
+    if (t.trim()) out.push({ title: decodeEnt(t.trim()), link, logNo, date: d.trim().slice(0, 16) });
+  }
+  return out;
+}
+// 레퍼런스용: 한 글의 본문 텍스트 추출
+async function fetchPostText(blogId, logNo) {
+  const u = 'https://blog.naver.com/PostView.naver?blogId=' + encodeURIComponent(blogId) + '&logNo=' + encodeURIComponent(logNo);
+  const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; blogscore/1.0)' } });
+  if (!r.ok) return { error: '글을 불러올 수 없어요(비공개이거나 삭제됨).' };
+  const html = await r.text();
+  let title = '';
+  const tm = html.match(/<meta property="og:title" content="([^"]*)"/i);
+  if (tm) title = decodeEnt(tm[1]);
+  const idx = html.indexOf('se-main-container');
+  const seg = idx >= 0 ? html.slice(idx, idx + 200000) : html;
+  const text = seg
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"')
+    .replace(/&#[0-9]+;/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+  if (text.length < 30) return { error: '본문을 추출하지 못했어요(에디터 형식 문제).' };
+  return { title, text: text.slice(0, 4500) };
 }
 function cleanQuery(t) {
   // 제목 전체로 검색하면 '자기 글'이 항상 1위라 의미가 없음 → 흔한 군더더기 단어를 빼고
