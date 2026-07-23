@@ -2306,8 +2306,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     <textarea id="wp_dir" placeholder="예: 30대 직장인 타겟 / 제품 비교표 꼭 넣어줘 / 초보자도 이해하게 / 마지막에 추천 리스트" style="width:100%;min-height:52px;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;line-height:1.6;resize:vertical;outline:none;color:var(--txt);background:var(--sur)"></textarea>
   </div>
 
-  <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t2);margin-bottom:12px;cursor:pointer">
+  <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t2);margin-bottom:8px;cursor:pointer">
     <input type="checkbox" id="wp_faq" checked style="width:16px;height:16px;cursor:pointer"/> 자주 묻는 질문(FAQ) 섹션 포함 <span style="color:var(--t3);font-size:11px">— 구글 검색 노출에 유리</span>
+  </label>
+  <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t2);margin-bottom:12px;cursor:pointer">
+    <input type="checkbox" id="wp_cta" checked style="width:16px;height:16px;cursor:pointer"/> 글 하단에 '바쓰영' 홍보 배너 넣기 <span style="color:var(--t3);font-size:11px">— bassyeong.com CTA</span>
   </label>
 
   <button onclick="wpGo()" id="wp_gobtn" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">📝 워드프레스 글 생성 (HTML)</button>
@@ -2361,14 +2364,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       n++; var id='sec'+n;
       var text=inner.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
       toc.push({id:id,text:text});
-      return '<h2 id="'+id+'" style="border-left:6px solid #555;border-bottom:2px solid #ededed;padding:2px 0 13px 15px;margin:54px 0 22px;font-size:21px;font-weight:800;color:#222;line-height:1.5">'+inner+'</h2>';
+      return '<h2 id="'+id+'" style="border-left:6px solid #555;border-bottom:2px solid #ededed;padding:2px 0 13px 15px;margin:72px 0 24px;scroll-margin-top:90px;font-size:21px;font-weight:800;color:#222;line-height:1.5">'+inner+'</h2>';
     });
-    html=html.replace(/<h3\b[^>]*>/gi,'<h3 style="margin:36px 0 14px;padding-left:12px;border-left:4px solid #b9b9b9;font-size:17px;font-weight:700;color:#333;line-height:1.5">');
-    html=html.replace(/<p\b[^>]*>/gi,'<p style="margin:0 0 24px;line-height:1.95;font-size:16px;color:#333">');
-    html=html.replace(/<ul\b[^>]*>/gi,'<ul style="margin:0 0 26px;padding-left:22px;line-height:1.95;font-size:16px;color:#333">');
-    html=html.replace(/<ol\b[^>]*>/gi,'<ol style="margin:0 0 26px;padding-left:22px;line-height:1.95;font-size:16px;color:#333">');
+    html=html.replace(/<h3\b[^>]*>/gi,'<h3 style="margin:40px 0 15px;padding-left:12px;border-left:4px solid #b9b9b9;font-size:17px;font-weight:700;color:#333;line-height:1.5;scroll-margin-top:90px">');
+    html=html.replace(/<p\b[^>]*>/gi,'<p style="margin:0 0 26px;line-height:1.95;font-size:16px;color:#333">');
+    html=html.replace(/<ul\b[^>]*>/gi,'<ul style="margin:0 0 28px;padding-left:22px;line-height:1.95;font-size:16px;color:#333">');
+    html=html.replace(/<ol\b[^>]*>/gi,'<ol style="margin:0 0 28px;padding-left:22px;line-height:1.95;font-size:16px;color:#333">');
     html=html.replace(/<li\b[^>]*>/gi,'<li style="margin:0 0 10px">');
-    html=html.replace(/<strong\b[^>]*>/gi,'<strong style="font-weight:800;color:#111">');
+    html=html.replace(/<strong\b[^>]*>/gi,'<strong style="font-weight:700;color:#111">');
+    // 핵심 문장: 빨강 + 밑줄 (섹션당 1개, 모델이 <mark>로 감쌈)
+    html=html.replace(/<mark\b[^>]*>/gi,'<mark style="background:transparent;color:#d6336c;font-weight:700;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#f3a5c0;text-decoration-thickness:2px">');
     html=html.replace(/<table\b[^>]*>/gi,'<table style="width:100%;border-collapse:collapse;margin:0 0 28px;font-size:15px">');
     html=html.replace(/<th\b[^>]*>/gi,'<th style="border:1px solid #e0e0e0;padding:11px;background:#f3f4f6;text-align:left;font-weight:700">');
     html=html.replace(/<td\b[^>]*>/gi,'<td style="border:1px solid #e0e0e0;padding:11px;line-height:1.7">');
@@ -2382,6 +2387,14 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         +'</ol></div>';
     }
     return tocHtml+html;
+  }
+  // 하단 바쓰영 CTA 배너
+  function wpCtaHtml(){
+    return '<div style="margin:56px 0 0;padding:30px 26px;background:linear-gradient(135deg,#1f9d63,#12855a);border-radius:16px;text-align:center">'
+      +'<div style="font-size:20px;font-weight:800;color:#fff;line-height:1.5">혼자 공부하기 힘드신가요?</div>'
+      +'<div style="font-size:15px;color:#e8f6ee;margin:12px 0 20px;line-height:1.7">영어, 이제 혼자 애쓰지 마세요.<br>체계적인 커리큘럼과 함께라면 독학보다 훨씬 빠릅니다.</div>'
+      +'<a href="https://bassyeong.com/" target="_blank" rel="noopener" style="display:inline-block;background:#fff;color:#12855a;padding:14px 34px;border-radius:30px;font-size:16px;font-weight:800;text-decoration:none">바쓰영과 함께 시작하기 →</a>'
+      +'</div>';
   }
   // ── 네이버 레퍼런스 가져오기 (노출점수 탭의 Worker 재사용)
   function wpWorker(){ return (localStorage.getItem('bscore_worker')||'').trim(); }
@@ -2435,8 +2448,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       +'[입력 자동 판단] 주제·키워드면 새 글을 쓰고, 기사/남의 글이면 각색한다. [각색] '+(adaptMap[adapt]||adaptMap['70'])+' 원문 문장 그대로 복사 금지, 표절·저작권 문제 없게 표현을 충분히 바꾼다(키워드만 입력 시 이 항목 무시).\n\n'
       +'[좋은 콘텐츠 원칙 — EEAT] 직접 경험·구체적 사례, 대안 비교(가능하면 표), 실제 결과·수치, 객관적 근거, 독자의 검색의도 충족, 과장·거짓·근거없는 단정 금지.\n\n'
       +'[구글 SEO 구조] 제목(H1)은 본문에 넣지 말고 따로 제공. 본문은 도입 문단(검색의도 훅+요약, 메인 키워드 자연 포함) → <h2> 섹션 5~8개(필요시 <h3> 하위) → '+(faq?'<h2>자주 묻는 질문</h2> + Q&A 3~4개(각 질문 <h3>, 답변 <p>) → ':'')+'결론 <h2>. 비교 정보는 <table>로, 단계·목록은 <ul>/<ol>로.\n'
-      +'[가독성 — 중요] 모바일 기준. 한 문단(<p>)은 2~4문장으로 짧게 끊어서 여러 <p>로 나눠 쓸 것(긴 문단 금지). 핵심 문장·중요 수치·결론은 반드시 <strong>으로 굵게 강조. 목차는 넣지 마(시스템이 자동 생성함).\n\n'
-      +'[HTML 출력 규칙 — 매우 중요] 본문은 순수 HTML 태그만 사용: h2,h3,p,ul,ol,li,strong,em,table,thead,tbody,tr,th,td,blockquote,a. style 속성·class·id·div·span·script·h1 금지(디자인은 시스템이 입힘). 마크다운(#,*,**) 금지. 모든 문단은 반드시 <p>로 감쌀 것.\n\n'
+      +'[가독성 — 중요] 모바일 기준. 한 문단(<p>)은 2~4문장으로 짧게 끊어서 여러 <p>로 나눠 쓸 것(긴 문단 금지). 목차·하단 홍보문구는 넣지 마(시스템이 자동 생성함).\n'
+      +'[강조 규칙 — 남발 금지] <strong>(볼드)는 정말 중요한 키워드/수치에만 아껴서 문단당 최대 1개 이하로. 그리고 각 섹션에서 독자가 꼭 기억해야 할 가장 중요한 문장 딱 1개만 <mark>...</mark>로 감쌀 것(섹션당 최대 1개, 없으면 생략). <mark>는 핵심 문장 강조용이야.\n\n'
+      +'[HTML 출력 규칙 — 매우 중요] 본문은 순수 HTML 태그만 사용: h2,h3,p,ul,ol,li,strong,em,mark,table,thead,tbody,tr,th,td,blockquote,a. style 속성·class·id·div·span·script·h1 금지(디자인은 시스템이 입힘). 마크다운(#,*,**) 금지. 모든 문단은 반드시 <p>로 감쌀 것.\n'
+      +'[검색 최적화 — 최종 목표] 구글·네이버에서 잘 노출되고 AI가 인용하기 좋은 글이 목표. 소제목(H2)은 사람들이 실제로 검색·질문하는 형태로, 각 섹션 첫 문장에서 결론을 명확히, 표·리스트로 핵심을 구조화할 것.\n\n'
       +'[말투] '+tone+'. [분량] 공백 포함 약 '+len+'자.\n'
       +'[SEO] 메인 키워드'+(kw?'("'+kw+'")':'')+'를 제목·첫 문단·H2 중 하나·본문에 자연스럽게 반복(스터핑 금지).\n\n'
       +'[출력 형식 — 반드시 이 형식 그대로, 다른 말 없이]\n[제목]\n1) (제목1)\n2) (제목2)\n3) (제목3)\n\n[메타설명]\n(검색결과용 155자 이내 요약, 메인 키워드 포함)\n\n[HTML]\n<h2>...</h2>\n<p>...</p>\n...';
@@ -2455,6 +2470,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       html=html.replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
       var textLen=html.replace(/<[^>]+>/g,'').replace(/\s/g,'').length;
       html=wpFormat(html); // 줄간격·소제목 디자인·목차·강조 자동 적용 (복사본에도 유지)
+      if($('wp_cta')&&$('wp_cta').checked) html+=wpCtaHtml(); // 하단 바쓰영 배너
 
       var titleHtml=titles.length?('<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--gd);margin-bottom:7px">✅ 추천 제목 3개 (H1 · 클릭해서 복사)</div>'
         +titles.map(function(t){return '<div style="display:flex;gap:8px;align-items:center;padding:9px 12px;border:1px solid var(--bor);border-radius:var(--rs);margin-bottom:6px;background:var(--gl)"><div class="wp-tt" style="flex:1;font-size:13px;font-weight:600;color:var(--txt);line-height:1.5">'+wpEsc(t)+'</div><button onclick="wpCopyTitle(this)" style="padding:5px 11px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex:0 0 auto">복사</button></div>';}).join('')
