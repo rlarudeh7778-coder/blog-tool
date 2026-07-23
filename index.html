@@ -2312,6 +2312,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t2);margin-bottom:12px;cursor:pointer">
     <input type="checkbox" id="wp_cta" checked style="width:16px;height:16px;cursor:pointer"/> 글 하단에 '바쓰영' 홍보 배너 넣기 <span style="color:var(--t3);font-size:11px">— bassyeong.com CTA</span>
   </label>
+  <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t2);margin-bottom:12px;cursor:pointer">
+    <input type="checkbox" id="wp_img" checked style="width:16px;height:16px;cursor:pointer"/> 이미지 추천 위치 표시 <span style="color:var(--t3);font-size:11px">— 어디에 어떤 alt로 넣을지 안내(SEO)</span>
+  </label>
 
   <button onclick="wpGo()" id="wp_gobtn" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">📝 워드프레스 글 생성 (HTML)</button>
 
@@ -2346,6 +2349,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
   window.wpCopyEl=function(btn,id){ var el=$(id); if(el) wpCopy(el.value!==undefined?el.value:el.textContent, btn); };
   window.wpCopyTitle=function(btn){ wpCopy(btn.parentNode.querySelector('.wp-tt').textContent, btn); };
+  window.wpCopy2=function(btn,sel){ var el=btn.parentNode.querySelector(sel); if(el) wpCopy(el.textContent, btn); };
   window.wpView=function(m){
     var p=$('wp_prev'), c=$('wp_html'), bp=$('wp_tab_prev'), bc=$('wp_tab_code');
     var prev=(m==='prev');
@@ -2359,6 +2363,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   // 워드프레스용 포맷팅: 줄간격·문단간격·소제목 디자인·목차 자동생성 (인라인 스타일이라 어떤 테마에서도 유지)
   function wpFormat(html){
     var toc=[], n=0;
+    // 이미지 자리 표시 [IMG|설명|alt] → 안내 박스 (모델이 <p>로 감쌀 수도 있어 함께 처리)
+    html=html.replace(/(?:<p[^>]*>\s*)?\[IMG\|([^|\]]*)\|([^\]]*)\]\s*(?:<\/p>)?/gi,function(mm,desc,alt){
+      desc=(desc||'').trim(); alt=(alt||'').trim();
+      return '<div style="border:2px dashed #cbd5e1;border-radius:12px;padding:24px 18px;margin:12px 0 30px;text-align:center;background:#f8fafc;color:#64748b">'
+        +'<div style="font-size:14px;font-weight:700;color:#475569">📷 이미지 추천 위치</div>'
+        +(desc?'<div style="font-size:12.5px;margin-top:6px">'+desc+'</div>':'')
+        +'<div style="font-size:11.5px;margin-top:9px;color:#94a3b8">여기에 이미지를 넣고, 대체텍스트(alt)를 <b style="color:#e8590c">'+alt+'</b> 로 설정하세요</div>'
+        +'</div>';
+    });
     // H2: id 부여 + 깔끔한 소제목 디자인(왼쪽 바 + 하단 라인) + 목차 수집
     html=html.replace(/<h2\b[^>]*>([\s\S]*?)<\/h2>/gi,function(mm,inner){
       n++; var id='sec'+n;
@@ -2438,6 +2451,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     var kw=$('wp_kw').value.trim(), len=$('wp_len').value||'2500';
     var adapt=$('wp_adapt').value||'70', tone=$('wp_tone').value, dir=$('wp_dir').value.trim();
     var faq=$('wp_faq').checked;
+    var img=$('wp_img')?$('wp_img').checked:false;
+    var kwCount=Math.min(9,Math.max(5,Math.round((parseInt(len,10)||2000)/320)));
     var box=$('wp_result'), btn=$('wp_gobtn');
     wpHint();
     if(!input){ box.innerHTML='<p style="color:var(--red);font-size:13px">주제/키워드나 참고할 글을 입력해주세요.</p>'; return; }
@@ -2452,9 +2467,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       +'[강조 규칙 — 남발 금지] <strong>(볼드)는 정말 중요한 키워드/수치에만 아껴서 문단당 최대 1개 이하로. 그리고 각 섹션에서 독자가 꼭 기억해야 할 가장 중요한 문장 딱 1개만 <mark>...</mark>로 감쌀 것(섹션당 최대 1개, 없으면 생략). <mark>는 핵심 문장 강조용이야.\n\n'
       +'[HTML 출력 규칙 — 매우 중요] 본문은 순수 HTML 태그만 사용: h2,h3,p,ul,ol,li,strong,em,mark,table,thead,tbody,tr,th,td,blockquote,a. style 속성·class·id·div·span·script·h1 금지(디자인은 시스템이 입힘). 마크다운(#,*,**) 금지. 모든 문단은 반드시 <p>로 감쌀 것.\n'
       +'[검색 최적화 — 최종 목표] 구글·네이버에서 잘 노출되고 AI가 인용하기 좋은 글이 목표. 소제목(H2)은 사람들이 실제로 검색·질문하는 형태로, 각 섹션 첫 문장에서 결론을 명확히, 표·리스트로 핵심을 구조화할 것.\n\n'
-      +'[말투] '+tone+'. [분량] 공백 포함 약 '+len+'자.\n'
-      +'[SEO] 메인 키워드'+(kw?'("'+kw+'")':'')+'를 제목·첫 문단·H2 중 하나·본문에 자연스럽게 반복(스터핑 금지).\n\n'
-      +'[출력 형식 — 반드시 이 형식 그대로, 다른 말 없이]\n[제목]\n1) (제목1)\n2) (제목2)\n3) (제목3)\n\n[메타설명]\n(검색결과용 155자 이내 요약, 메인 키워드 포함)\n\n[HTML]\n<h2>...</h2>\n<p>...</p>\n...';
+      +'[말투] '+tone+'. [분량] 공백 포함 약 '+len+'자. 모바일 우선(짧은 문단·짧은 문장).\n\n'
+      +'[Rank Math SEO 필수 — 아래를 모두 충족] 포커스 키워드'+(kw?'는 "'+kw+'"':'를 입력 주제에서 딱 하나 정해')+'. 그 키워드를 다음에 모두 자연스럽게(스터핑 금지) 넣어라:\n'
+      +' 1) 제목 3개 모두 포커스 키워드를 "맨 앞부분"에 배치하고, 각 제목에 숫자를 포함.\n'
+      +' 2) 메타설명(155자 이내)에 포커스 키워드 포함.\n'
+      +' 3) 본문 "첫 문장"에 포커스 키워드 포함.\n'
+      +' 4) 소제목(H2/H3) 중 최소 2개에 포커스 키워드(또는 자연스러운 변형) 포함.\n'
+      +' 5) 본문 전체에서 포커스 키워드를 약 '+kwCount+'회 내외(밀도 ~1%)로 자연스럽게 반복.\n'
+      +' 6) 주제와 관련된 신뢰도 높은 "외부 공식 사이트"로 나가는 링크 <a href="https://...">를 본문에 1~2개 포함(실제로 존재하는 유명 사이트만, nofollow 붙이지 말 것=dofollow).\n'
+      +(img?' 7) 본문 흐름상 자연스러운 2~3곳에 이미지 자리를 정확히 이 형식의 "한 줄"로 표시: [IMG|이미지 설명|포커스 키워드가 들어간 alt 문구]\n':'')
+      +'\n[출력 형식 — 반드시 이 형식 그대로, 다른 말 없이]\n[포커스키워드]\n(정한 포커스 키워드 한 줄)\n\n[슬러그]\n(포커스 키워드를 하이픈으로 연결한 URL 슬러그. 한글 가능, 예: 영어공부-혼자-하는-방법)\n\n[제목]\n1) (포커스키워드 앞배치+숫자)\n2) ...\n3) ...\n\n[메타설명]\n(155자 이내, 포커스 키워드 포함)\n\n[HTML]\n<h2>...</h2>\n<p>...</p>\n...';
     var user='[메인 키워드] '+(kw||'자동 추출')+'\n[목표 분량] 공백포함 약 '+len+'자\n[각색 강도] '+adapt+'%'
       +(dir?'\n[글 방향성·추가 요청 — 반드시 반영] '+dir:'')
       +'\n\n[입력 — 주제/키워드 또는 참고글]\n'+input.slice(0,7000);
@@ -2463,6 +2485,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     box.innerHTML='<div style="text-align:center;padding:22px;color:var(--t3);font-size:13px">구글 SEO 구조로 HTML 글을 작성 중…</div>';
     try{
       var k=wpKey(); var out=(await callClaude(k,sys,user)).replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
+      var focusKw=''; var fm=out.match(/\[포커스키워드\]([\s\S]*?)\[슬러그\]/); if(fm){ focusKw=(fm[1].split('\n').map(function(s){return s.trim();}).filter(Boolean)[0]||''); }
+      var slug=''; var sm=out.match(/\[슬러그\]([\s\S]*?)\[제목\]/); if(sm){ slug=(sm[1].split('\n').map(function(s){return s.trim();}).filter(Boolean)[0]||''); }
       var titles=[]; var tm=out.match(/\[제목\]([\s\S]*?)\[메타설명\]/);
       if(tm){ titles=tm[1].split('\n').map(function(s){return s.replace(/^\s*\d+[).\]]\s*/,'').replace(/^[-*]\s*/,'').trim();}).filter(Boolean).slice(0,3); }
       var meta=''; var mm=out.match(/\[메타설명\]([\s\S]*?)\[HTML\]/); if(mm) meta=mm[1].trim();
@@ -2472,19 +2496,37 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       html=wpFormat(html); // 줄간격·소제목 디자인·목차·강조 자동 적용 (복사본에도 유지)
       if($('wp_cta')&&$('wp_cta').checked) html+=wpCtaHtml(); // 하단 바쓰영 배너
 
+      var seoHtml='';
+      if(focusKw||slug){
+        seoHtml='<div data-wpcard style="border:1px solid #1f9d63;border-radius:var(--rs);overflow:hidden;margin-bottom:12px">'
+          +'<div style="padding:8px 12px;background:var(--gl);font-size:12px;font-weight:700;color:var(--gd)">🎯 Rank Math 설정값 (워드프레스에 그대로 입력)</div>'
+          +'<div style="padding:10px 12px">'
+          +(focusKw?'<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><span style="font-size:11px;color:var(--t3);width:74px;flex:0 0 auto">포커스 키워드</span><b class="wp-fk" style="flex:1;font-size:13px;color:var(--txt)">'+wpEsc(focusKw)+'</b><button onclick="wpCopy2(this,\'.wp-fk\')" style="padding:4px 10px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">복사</button></div>':'')
+          +(slug?'<div style="display:flex;gap:8px;align-items:center"><span style="font-size:11px;color:var(--t3);width:74px;flex:0 0 auto">URL 슬러그</span><b class="wp-slug" style="flex:1;font-size:13px;color:var(--txt);word-break:break-all">'+wpEsc(slug)+'</b><button onclick="wpCopy2(this,\'.wp-slug\')" style="padding:4px 10px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">복사</button></div>':'')
+          +'</div></div>';
+      }
       var titleHtml=titles.length?('<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--gd);margin-bottom:7px">✅ 추천 제목 3개 (H1 · 클릭해서 복사)</div>'
         +titles.map(function(t){return '<div style="display:flex;gap:8px;align-items:center;padding:9px 12px;border:1px solid var(--bor);border-radius:var(--rs);margin-bottom:6px;background:var(--gl)"><div class="wp-tt" style="flex:1;font-size:13px;font-weight:600;color:var(--txt);line-height:1.5">'+wpEsc(t)+'</div><button onclick="wpCopyTitle(this)" style="padding:5px 11px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex:0 0 auto">복사</button></div>';}).join('')
         +'</div>'):'';
       var metaHtml=meta?('<div data-wpcard style="border:1px solid var(--bor);border-radius:var(--rs);overflow:hidden;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--gl)"><span style="font-size:12px;font-weight:700;color:var(--gd)">메타 설명 ('+meta.length+'자)</span><button onclick="wpCopyEl(this,\'wp_meta\')" style="padding:5px 11px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">복사</button></div><textarea id="wp_meta" readonly style="width:100%;min-height:52px;border:none;padding:9px 12px;font-family:inherit;font-size:12px;line-height:1.6;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+wpEsc(meta)+'</textarea></div>'):'';
 
-      box.innerHTML=titleHtml+metaHtml
+      box.innerHTML=seoHtml+titleHtml+metaHtml
         +'<div style="border:1px solid var(--bor);border-radius:var(--r);overflow:hidden">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 13px;background:var(--gl)"><span style="display:flex;gap:6px"><button id="wp_tab_prev" onclick="wpView(\'prev\')" style="padding:6px 13px;background:var(--green);color:#fff;border:1px solid var(--bor);border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit">👁 미리보기</button><button id="wp_tab_code" onclick="wpView(\'code\')" style="padding:6px 13px;background:var(--sur);color:var(--t2);border:1px solid var(--bor);border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit">&lt;/&gt; HTML</button></span><button onclick="wpCopyEl(this,\'wp_html\')" style="padding:6px 13px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📋 HTML 복사</button></div>'
         +'<div id="wp_prev" style="display:block;padding:20px 18px;background:#fff;color:#1a1a1a;line-height:1.85;font-size:15px;max-height:560px;overflow:auto">'+wpSanitize(html)+'</div>'
         +'<textarea id="wp_html" readonly style="display:none;width:100%;min-height:360px;border:none;border-top:1px solid var(--bor);padding:13px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.7;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+wpEsc(html)+'</textarea>'
         +'<div style="font-size:11px;color:var(--t3);padding:9px 13px;border-top:1px solid var(--bor);background:var(--gl)">공백제외 약 '+textLen.toLocaleString()+'자 · 소제목은 버튼형으로 자동 스타일됨</div>'
         +'</div>'
-        +'<div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.6">※ <b>HTML 복사</b> → 워드프레스 \'사용자 지정 HTML\' 블록/코드 편집기에 붙여넣기. 소제목 버튼 스타일이 그대로 유지돼요. 발행 전 내 경험·이미지를 더하면 구글 노출에 더 좋아요.</div>';
+        +'<div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.6">※ <b>HTML 복사</b> → 워드프레스 \'사용자 지정 HTML\' 블록/코드 편집기에 붙여넣기.</div>'
+        +'<div style="margin-top:10px;border:1px solid var(--bor);border-radius:var(--rs);background:var(--sur);padding:11px 13px;font-size:11.5px;color:var(--t2);line-height:1.85">'
+          +'<b style="color:var(--txt)">✅ Rank Math 100점 체크리스트 (워드프레스에서 5가지만)</b><br>'
+          +'① Rank Math <b>포커스 키워드</b> 칸에 위 🎯키워드 입력<br>'
+          +'② <b>메타 설명</b> 칸에 위 메타설명 붙여넣기<br>'
+          +'③ <b>URL(고유주소)</b>를 위 슬러그로 변경<br>'
+          +'④ 📷 <b>이미지 추천 위치</b>에 실제 이미지 업로드 + <b>대체텍스트(alt)</b>를 안내대로 입력<br>'
+          +'⑤ 본문 아무 데나 <b>내 블로그의 다른 글 링크(내부링크)</b> 1개 걸기<br>'
+          +'<span style="color:var(--t3)">→ 제목·키워드 배치·외부링크·본문 키워드는 이미 글에 반영돼 있어요.</span>'
+        +'</div>';
     }catch(e){ box.innerHTML='<div class="th-card"><p style="color:var(--red);font-size:13px;margin:0;white-space:pre-line">'+wpEsc(wpErr(e))+'</p></div>'; }
     finally{ btn.disabled=false; btn.textContent='📝 워드프레스 글 생성 (HTML)'; }
   };
