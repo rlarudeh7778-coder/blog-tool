@@ -2353,10 +2353,35 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   };
   function wpSanitize(html){ return html.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/ on[a-z]+="[^"]*"/gi,'').replace(/ on[a-z]+='[^']*'/gi,'').replace(/javascript:/gi,''); }
   // 소제목(H2/H3)을 버튼형으로 — 복사본·미리보기 공통 (인라인 스타일이라 워드프레스에서도 유지)
-  function wpStyleHeadings(html){
-    return html
-      .replace(/<h2\b[^>]*>/gi,'<h2 style="display:block;background:#eaf5ee;border-left:5px solid #1f9d63;padding:13px 17px;border-radius:10px;font-size:19px;font-weight:800;color:#14663f;margin:32px 0 15px;line-height:1.4">')
-      .replace(/<h3\b[^>]*>/gi,'<h3 style="display:inline-block;background:#f1f3f5;padding:7px 15px;border-radius:22px;font-size:15.5px;font-weight:700;color:#2c2c2c;margin:24px 0 11px;line-height:1.4">');
+  // 워드프레스용 포맷팅: 줄간격·문단간격·소제목 디자인·목차 자동생성 (인라인 스타일이라 어떤 테마에서도 유지)
+  function wpFormat(html){
+    var toc=[], n=0;
+    // H2: id 부여 + 깔끔한 소제목 디자인(왼쪽 바 + 하단 라인) + 목차 수집
+    html=html.replace(/<h2\b[^>]*>([\s\S]*?)<\/h2>/gi,function(mm,inner){
+      n++; var id='sec'+n;
+      var text=inner.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+      toc.push({id:id,text:text});
+      return '<h2 id="'+id+'" style="border-left:6px solid #555;border-bottom:2px solid #ededed;padding:2px 0 13px 15px;margin:54px 0 22px;font-size:21px;font-weight:800;color:#222;line-height:1.5">'+inner+'</h2>';
+    });
+    html=html.replace(/<h3\b[^>]*>/gi,'<h3 style="margin:36px 0 14px;padding-left:12px;border-left:4px solid #b9b9b9;font-size:17px;font-weight:700;color:#333;line-height:1.5">');
+    html=html.replace(/<p\b[^>]*>/gi,'<p style="margin:0 0 24px;line-height:1.95;font-size:16px;color:#333">');
+    html=html.replace(/<ul\b[^>]*>/gi,'<ul style="margin:0 0 26px;padding-left:22px;line-height:1.95;font-size:16px;color:#333">');
+    html=html.replace(/<ol\b[^>]*>/gi,'<ol style="margin:0 0 26px;padding-left:22px;line-height:1.95;font-size:16px;color:#333">');
+    html=html.replace(/<li\b[^>]*>/gi,'<li style="margin:0 0 10px">');
+    html=html.replace(/<strong\b[^>]*>/gi,'<strong style="font-weight:800;color:#111">');
+    html=html.replace(/<table\b[^>]*>/gi,'<table style="width:100%;border-collapse:collapse;margin:0 0 28px;font-size:15px">');
+    html=html.replace(/<th\b[^>]*>/gi,'<th style="border:1px solid #e0e0e0;padding:11px;background:#f3f4f6;text-align:left;font-weight:700">');
+    html=html.replace(/<td\b[^>]*>/gi,'<td style="border:1px solid #e0e0e0;padding:11px;line-height:1.7">');
+    html=html.replace(/<blockquote\b[^>]*>/gi,'<blockquote style="margin:0 0 26px;padding:15px 19px;background:#f7f8fa;border-left:4px solid #999;color:#444;line-height:1.85;border-radius:0 8px 8px 0">');
+    var tocHtml='';
+    if(toc.length>=2){
+      tocHtml='<div style="background:#f7f8fa;border:1px solid #e8eaed;border-radius:12px;padding:20px 22px;margin:0 0 40px">'
+        +'<div style="font-size:15px;font-weight:800;color:#222;margin-bottom:14px">📑 목차</div>'
+        +'<ol style="margin:0;padding-left:20px;line-height:1.5">'
+        +toc.map(function(t){return '<li style="margin:0 0 12px"><a href="#'+t.id+'" style="color:#2563eb;text-decoration:none;font-size:15px">'+t.text+'</a></li>';}).join('')
+        +'</ol></div>';
+    }
+    return tocHtml+html;
   }
   // ── 네이버 레퍼런스 가져오기 (노출점수 탭의 Worker 재사용)
   function wpWorker(){ return (localStorage.getItem('bscore_worker')||'').trim(); }
@@ -2409,8 +2434,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     var sys='너는 워드프레스 블로그(구글 검색 최적화)를 위한 전문 콘텐츠 에디터야. 목표는 구글 상위 노출 + 체류시간 + 신뢰(EEAT).\n\n'
       +'[입력 자동 판단] 주제·키워드면 새 글을 쓰고, 기사/남의 글이면 각색한다. [각색] '+(adaptMap[adapt]||adaptMap['70'])+' 원문 문장 그대로 복사 금지, 표절·저작권 문제 없게 표현을 충분히 바꾼다(키워드만 입력 시 이 항목 무시).\n\n'
       +'[좋은 콘텐츠 원칙 — EEAT] 직접 경험·구체적 사례, 대안 비교(가능하면 표), 실제 결과·수치, 객관적 근거, 독자의 검색의도 충족, 과장·거짓·근거없는 단정 금지.\n\n'
-      +'[구글 SEO 구조] 제목(H1)은 본문에 넣지 말고 따로 제공. 본문은 도입 문단(검색의도 훅+요약, 메인 키워드 자연 포함) → <h2> 섹션 5~8개(필요시 <h3> 하위) → '+(faq?'<h2>자주 묻는 질문</h2> + Q&A 3~4개(각 질문 <h3>, 답변 <p>) → ':'')+'결론 <h2>. 비교 정보는 <table>로, 단계·목록은 <ul>/<ol>로.\n\n'
-      +'[HTML 출력 규칙 — 매우 중요] 본문은 순수 HTML 태그만 사용: h2,h3,p,ul,ol,li,strong,em,table,thead,tbody,tr,th,td,blockquote,a. style 속성·class·id·div·span·script·h1 금지. 마크다운(#,*,**) 금지. 워드프레스에 그대로 붙여넣어 렌더되게 깔끔히.\n\n'
+      +'[구글 SEO 구조] 제목(H1)은 본문에 넣지 말고 따로 제공. 본문은 도입 문단(검색의도 훅+요약, 메인 키워드 자연 포함) → <h2> 섹션 5~8개(필요시 <h3> 하위) → '+(faq?'<h2>자주 묻는 질문</h2> + Q&A 3~4개(각 질문 <h3>, 답변 <p>) → ':'')+'결론 <h2>. 비교 정보는 <table>로, 단계·목록은 <ul>/<ol>로.\n'
+      +'[가독성 — 중요] 모바일 기준. 한 문단(<p>)은 2~4문장으로 짧게 끊어서 여러 <p>로 나눠 쓸 것(긴 문단 금지). 핵심 문장·중요 수치·결론은 반드시 <strong>으로 굵게 강조. 목차는 넣지 마(시스템이 자동 생성함).\n\n'
+      +'[HTML 출력 규칙 — 매우 중요] 본문은 순수 HTML 태그만 사용: h2,h3,p,ul,ol,li,strong,em,table,thead,tbody,tr,th,td,blockquote,a. style 속성·class·id·div·span·script·h1 금지(디자인은 시스템이 입힘). 마크다운(#,*,**) 금지. 모든 문단은 반드시 <p>로 감쌀 것.\n\n'
       +'[말투] '+tone+'. [분량] 공백 포함 약 '+len+'자.\n'
       +'[SEO] 메인 키워드'+(kw?'("'+kw+'")':'')+'를 제목·첫 문단·H2 중 하나·본문에 자연스럽게 반복(스터핑 금지).\n\n'
       +'[출력 형식 — 반드시 이 형식 그대로, 다른 말 없이]\n[제목]\n1) (제목1)\n2) (제목2)\n3) (제목3)\n\n[메타설명]\n(검색결과용 155자 이내 요약, 메인 키워드 포함)\n\n[HTML]\n<h2>...</h2>\n<p>...</p>\n...';
@@ -2427,8 +2453,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       var meta=''; var mm=out.match(/\[메타설명\]([\s\S]*?)\[HTML\]/); if(mm) meta=mm[1].trim();
       var html=out; var hi=out.indexOf('[HTML]'); if(hi>=0) html=out.slice(hi+6).replace(/^\s*\n/,'').trim();
       html=html.replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
-      html=wpStyleHeadings(html); // 소제목 버튼형 (복사본에도 반영)
       var textLen=html.replace(/<[^>]+>/g,'').replace(/\s/g,'').length;
+      html=wpFormat(html); // 줄간격·소제목 디자인·목차·강조 자동 적용 (복사본에도 유지)
 
       var titleHtml=titles.length?('<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--gd);margin-bottom:7px">✅ 추천 제목 3개 (H1 · 클릭해서 복사)</div>'
         +titles.map(function(t){return '<div style="display:flex;gap:8px;align-items:center;padding:9px 12px;border:1px solid var(--bor);border-radius:var(--rs);margin-bottom:6px;background:var(--gl)"><div class="wp-tt" style="flex:1;font-size:13px;font-weight:600;color:var(--txt);line-height:1.5">'+wpEsc(t)+'</div><button onclick="wpCopyTitle(this)" style="padding:5px 11px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex:0 0 auto">복사</button></div>';}).join('')
