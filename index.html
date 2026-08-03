@@ -2267,16 +2267,25 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     <textarea id="wp_input" placeholder="· 주제/키워드만 (예: 아이폰 배터리 오래 쓰는 법) → 새 글 작성&#10;· 기사/남의 글 붙여넣기 → 각색 비율만큼 새로 재구성(표절 회피)&#10;· 위에서 네이버 글을 불러오면 여기에 자동으로 채워져요" style="width:100%;min-height:150px;padding:12px 13px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;line-height:1.7;resize:vertical;outline:none;color:var(--txt);background:var(--sur)"></textarea>
   </div>
 
+  <div style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+      <label style="font-size:12px;font-weight:700;color:var(--t2)">💡 추천 키워드(영어) <span style="font-weight:400;color:var(--t3)">— 클릭하면 채워져요 · ✓는 이미 쓴 것</span></label>
+      <button onclick="wpKwShuffle()" style="padding:3px 9px;background:var(--sur);color:var(--t2);border:1px solid var(--bor);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🔄 다른 추천</button>
+    </div>
+    <div id="wp_kwrec" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+  </div>
+
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
     <div class="field" style="padding:0;flex:2;min-width:180px">
-      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">메인 키워드 <span style="font-weight:400;color:var(--t3)">(구글 SEO · 선택)</span></label>
-      <input type="text" id="wp_kw" placeholder="비우면 자동 추출 (예: 아이폰 배터리 관리)" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;outline:none;color:var(--txt);background:var(--sur)"/>
+      <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">메인 키워드 <span style="font-weight:400;color:var(--t3)">(포커스 키워드 · 위에서 선택 가능)</span></label>
+      <input type="text" id="wp_kw" placeholder="예: 왕초보 영어회화" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;outline:none;color:var(--txt);background:var(--sur)"/>
     </div>
     <div class="field" style="padding:0;flex:1;min-width:130px">
       <label style="margin:0 0 6px;display:block;font-size:12px;font-weight:700;color:var(--t2)">분량 (공백포함)</label>
       <select id="wp_len" style="width:100%;padding:10px 12px;border:1px solid var(--bor);border-radius:var(--rs);font-family:inherit;font-size:13px;color:var(--txt);background:var(--sur);cursor:pointer">
-        <option value="2500" selected>약 2,500자</option>
-        <option value="1800">약 1,800자</option>
+        <option value="3000" selected>약 3,000자 (권장)</option>
+        <option value="2500">약 2,500자</option>
+        <option value="2000">약 2,000자</option>
         <option value="4000">약 4,000자 (롱폼)</option>
       </select>
     </div>
@@ -2310,7 +2319,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     <input type="checkbox" id="wp_faq" checked style="width:16px;height:16px;cursor:pointer"/> 자주 묻는 질문(FAQ) 섹션 포함 <span style="color:var(--t3);font-size:11px">— 구글 검색 노출에 유리</span>
   </label>
   <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t2);margin-bottom:12px;cursor:pointer">
-    <input type="checkbox" id="wp_cta" checked style="width:16px;height:16px;cursor:pointer"/> 글 하단에 '바쓰영' 홍보 배너 넣기 <span style="color:var(--t3);font-size:11px">— bassyeong.com CTA</span>
+    <input type="checkbox" id="wp_cta" checked style="width:16px;height:16px;cursor:pointer"/> 바쓰영 내부링크 4개 + 하단 홍보 배너 넣기 <span style="color:var(--t3);font-size:11px">— 커리큘럼·후기·진단·상담 링크</span>
   </label>
   <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t2);margin-bottom:12px;cursor:pointer">
     <input type="checkbox" id="wp_img" checked style="width:16px;height:16px;cursor:pointer"/> 이미지 추천 위치 표시 <span style="color:var(--t3);font-size:11px">— 어디에 어떤 alt로 넣을지 안내(SEO)</span>
@@ -2350,6 +2359,25 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   window.wpCopyEl=function(btn,id){ var el=$(id); if(el) wpCopy(el.value!==undefined?el.value:el.textContent, btn); };
   window.wpCopyTitle=function(btn){ wpCopy(btn.parentNode.querySelector('.wp-tt').textContent, btn); };
   window.wpCopy2=function(btn,sel){ var el=btn.parentNode.querySelector(sel); if(el) wpCopy(el.textContent, btn); };
+  // 추천 키워드(영어) + 생성 이력(중복 방지)
+  var WP_ENG_KWS=['왕초보 영어회화','성인 영어회화','영어회화 공부법','기초영어 공부','영어 독학 방법','직장인 영어공부','화상영어 추천','전화영어 효과','영어 스피킹 연습','영어 발음 교정','비즈니스 영어회화','여행영어 회화','생활영어 표현','영어 쉐도잉 방법','오픽 IH 공부법','토익스피킹 독학','영어 리스닝 공부법','영어단어 외우는 법','영어 문법 기초','원어민 영어회화','영어 초보 탈출','영어 말하기 연습','왕초보 영어단어','영어회화 학원 추천'];
+  var _wpKwOff=0;
+  function wpHistory(){ try{ return JSON.parse(localStorage.getItem('wp_history')||'[]'); }catch(e){ return []; } }
+  function wpAddHistory(kw,title){ try{ var h=wpHistory(); h.unshift({kw:kw||'',title:title||''}); localStorage.setItem('wp_history',JSON.stringify(h.slice(0,60))); }catch(e){} }
+  function wpUsedKw(k){ return wpHistory().some(function(x){ return (x.kw||'')===k; }); }
+  window.wpPickKw=function(k){ if($('wp_kw'))$('wp_kw').value=k; var inp=$('wp_input'); if(inp&&!inp.value.trim()) inp.value=k+' 공부법'; wpRenderKws(); showToast('[v] 키워드 선택: '+k,'ok'); };
+  window.wpKwShuffle=function(){ _wpKwOff=(_wpKwOff+12)%WP_ENG_KWS.length; wpRenderKws(); };
+  function wpRenderKws(){
+    var box=$('wp_kwrec'); if(!box) return;
+    var cur=($('wp_kw')&&$('wp_kw').value.trim())||'';
+    var out=[];
+    for(var i=0;i<12;i++){
+      var k=WP_ENG_KWS[(_wpKwOff+i)%WP_ENG_KWS.length], used=wpUsedKw(k), on=(cur===k);
+      var bg=on?'var(--green)':(used?'var(--bg)':'var(--sur)'), col=on?'#fff':(used?'var(--t3)':'var(--t2)');
+      out.push('<button type="button" onclick="wpPickKw(\''+k+'\')" style="padding:6px 11px;border:1px solid var(--bor);border-radius:16px;background:'+bg+';color:'+col+';font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">'+(used?'✓ ':'')+k+'</button>');
+    }
+    box.innerHTML=out.join('');
+  }
   window.wpView=function(m){
     var p=$('wp_prev'), c=$('wp_html'), bp=$('wp_tab_prev'), bc=$('wp_tab_code');
     var prev=(m==='prev');
@@ -2364,12 +2392,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   function wpFormat(html){
     var toc=[], n=0;
     // 이미지 자리 표시 [IMG|설명|alt] → 안내 박스 (모델이 <p>로 감쌀 수도 있어 함께 처리)
-    html=html.replace(/(?:<p[^>]*>\s*)?\[IMG\|([^|\]]*)\|([^\]]*)\]\s*(?:<\/p>)?/gi,function(mm,desc,alt){
-      desc=(desc||'').trim(); alt=(alt||'').trim();
+    html=html.replace(/(?:<p[^>]*>\s*)?\[IMG\|([^|\]]*)\|([^|\]]*)(?:\|([^\]]*))?\]\s*(?:<\/p>)?/gi,function(mm,desc,alt,file){
+      desc=(desc||'').trim(); alt=(alt||'').trim(); file=(file||'').trim();
       return '<div style="border:2px dashed #cbd5e1;border-radius:12px;padding:24px 18px;margin:12px 0 30px;text-align:center;background:#f8fafc;color:#64748b">'
         +'<div style="font-size:14px;font-weight:700;color:#475569">📷 이미지 추천 위치</div>'
         +(desc?'<div style="font-size:12.5px;margin-top:6px">'+desc+'</div>':'')
         +'<div style="font-size:11.5px;margin-top:9px;color:#94a3b8">여기에 이미지를 넣고, 대체텍스트(alt)를 <b style="color:#e8590c">'+alt+'</b> 로 설정하세요</div>'
+        +(file?'<div style="font-size:11px;margin-top:5px;color:#94a3b8">추천 파일명: <b>'+file+'</b></div>':'')
         +'</div>';
     });
     // H2: id 부여 + 깔끔한 소제목 디자인(왼쪽 바 + 하단 라인) + 목차 수집
@@ -2452,7 +2481,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     var adapt=$('wp_adapt').value||'70', tone=$('wp_tone').value, dir=$('wp_dir').value.trim();
     var faq=$('wp_faq').checked;
     var img=$('wp_img')?$('wp_img').checked:false;
-    var kwCount=Math.min(9,Math.max(5,Math.round((parseInt(len,10)||2000)/320)));
+    var cta=$('wp_cta')?$('wp_cta').checked:false;
+    var histTitles=wpHistory().slice(0,15).map(function(x){return x.title;}).filter(Boolean);
+    var kwCount=Math.min(12,Math.max(5,Math.round((parseInt(len,10)||3000)/320)));
     var box=$('wp_result'), btn=$('wp_gobtn');
     wpHint();
     if(!input){ box.innerHTML='<p style="color:var(--red);font-size:13px">주제/키워드나 참고할 글을 입력해주세요.</p>'; return; }
@@ -2470,13 +2501,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       +'[말투] '+tone+'. [분량] 공백 포함 약 '+len+'자. 모바일 우선(짧은 문단·짧은 문장).\n\n'
       +'[Rank Math SEO 필수 — 아래를 모두 충족] 포커스 키워드'+(kw?'는 "'+kw+'"':'를 입력 주제에서 딱 하나 정해')+'. 그 키워드를 다음에 모두 자연스럽게(스터핑 금지) 넣어라:\n'
       +' 1) 제목 3개 모두 포커스 키워드를 "맨 앞부분"에 배치하고, 각 제목에 숫자를 포함.\n'
-      +' 2) 메타설명(155자 이내)에 포커스 키워드 포함.\n'
+      +' 2) 메타설명(120~160자)에 포커스 키워드 포함.\n'
       +' 3) 본문 "첫 문장"에 포커스 키워드 포함.\n'
       +' 4) 소제목(H2/H3) 중 최소 2개에 포커스 키워드(또는 자연스러운 변형) 포함.\n'
       +' 5) 본문 전체에서 포커스 키워드를 약 '+kwCount+'회 내외(밀도 ~1%)로 자연스럽게 반복.\n'
-      +' 6) 주제와 관련된 신뢰도 높은 "외부 공식 사이트"로 나가는 링크 <a href="https://...">를 본문에 1~2개 포함(실제로 존재하는 유명 사이트만, nofollow 붙이지 말 것=dofollow).\n'
-      +(img?' 7) 본문 흐름상 자연스러운 2~3곳에 이미지 자리를 정확히 이 형식의 "한 줄"로 표시: [IMG|이미지 설명|포커스 키워드가 들어간 alt 문구]\n':'')
-      +'\n[출력 형식 — 반드시 이 형식 그대로, 다른 말 없이]\n[포커스키워드]\n(정한 포커스 키워드 한 줄)\n\n[슬러그]\n(포커스 키워드를 하이픈으로 연결한 URL 슬러그. 한글 가능, 예: 영어공부-혼자-하는-방법)\n\n[제목]\n1) (포커스키워드 앞배치+숫자)\n2) ...\n3) ...\n\n[메타설명]\n(155자 이내, 포커스 키워드 포함)\n\n[HTML]\n<h2>...</h2>\n<p>...</p>\n...';
+      +' 6) 영어 학습 관련 신뢰도 높은 "외부 공식 사이트"(BBC Learning English, British Council, Cambridge Dictionary, EF SET 중 1곳)로 나가는 dofollow 외부링크 1개를 본문에 자연스럽게 포함(nofollow 금지, 실제 URL만).\n'
+      +(cta?' 7) 아래 바쓰영 내부 링크 4개를 문맥에 맞는 자연스러운 앵커 텍스트로 본문 곳곳에 삽입: 커리큘럼 https://bassyeong.com/bcurriculum/ , 수강후기 https://bassyeong.com/review/ , 내 실력 진단하기 https://bassyeong.com/test/ , 상담문의 https://bassyeong.com/contact/ .\n':'')
+      +(img?' 8) 본문 흐름상 자연스러운 2~3곳에 이미지 자리를 정확히 이 형식의 "한 줄"로 표시(파일명은 키워드가 들어간 영문·소문자·하이픈): [IMG|이미지 설명|포커스 키워드가 들어간 alt 문구|keyword-english-filename.jpg]\n':'')
+      +(histTitles.length?' 9) [중복 금지] 아래 제목들은 이미 작성했으니 소재·제목·전개를 확실히 다르게(같은 각도 반복 금지): '+histTitles.join(' / ')+'\n':'')
+      +'\n[출력 형식 — 반드시 이 형식 그대로, 다른 말 없이]\n[포커스키워드]\n(정한 포커스 키워드 한 줄)\n\n[슬러그]\n(포커스 키워드를 하이픈으로 연결한 URL 슬러그. 한글 가능, 예: 왕초보-영어회화-공부법)\n\n[제목]\n1) (포커스키워드 앞배치+숫자)\n2) ...\n3) ...\n\n[메타설명]\n(120~160자, 포커스 키워드 포함)\n\n[HTML]\n<h2>...</h2>\n<p>...</p>\n...\n\n[태그]\n태그1, 태그2, 태그3 (영어·주제 관련 3~7개)';
     var user='[메인 키워드] '+(kw||'자동 추출')+'\n[목표 분량] 공백포함 약 '+len+'자\n[각색 강도] '+adapt+'%'
       +(dir?'\n[글 방향성·추가 요청 — 반드시 반영] '+dir:'')
       +'\n\n[입력 — 주제/키워드 또는 참고글]\n'+input.slice(0,7000);
@@ -2490,8 +2523,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       var titles=[]; var tm=out.match(/\[제목\]([\s\S]*?)\[메타설명\]/);
       if(tm){ titles=tm[1].split('\n').map(function(s){return s.replace(/^\s*\d+[).\]]\s*/,'').replace(/^[-*]\s*/,'').trim();}).filter(Boolean).slice(0,3); }
       var meta=''; var mm=out.match(/\[메타설명\]([\s\S]*?)\[HTML\]/); if(mm) meta=mm[1].trim();
-      var html=out; var hi=out.indexOf('[HTML]'); if(hi>=0) html=out.slice(hi+6).replace(/^\s*\n/,'').trim();
+      var html=''; var hm=out.match(/\[HTML\]([\s\S]*?)(?:\[태그\]|$)/); if(hm) html=hm[1].trim(); else { var hi=out.indexOf('[HTML]'); if(hi>=0) html=out.slice(hi+6).trim(); }
       html=html.replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
+      var tags=[]; var gm=out.match(/\[태그\]([\s\S]*)/); if(gm){ tags=gm[1].split(/[,\n]/).map(function(s){return s.trim().replace(/^#/,'').trim();}).filter(Boolean).slice(0,7); }
       var textLen=html.replace(/<[^>]+>/g,'').replace(/\s/g,'').length;
       html=wpFormat(html); // 줄간격·소제목 디자인·목차·강조 자동 적용 (복사본에도 유지)
       if($('wp_cta')&&$('wp_cta').checked) html+=wpCtaHtml(); // 하단 바쓰영 배너
@@ -2510,7 +2544,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         +'</div>'):'';
       var metaHtml=meta?('<div data-wpcard style="border:1px solid var(--bor);border-radius:var(--rs);overflow:hidden;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--gl)"><span style="font-size:12px;font-weight:700;color:var(--gd)">메타 설명 ('+meta.length+'자)</span><button onclick="wpCopyEl(this,\'wp_meta\')" style="padding:5px 11px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">복사</button></div><textarea id="wp_meta" readonly style="width:100%;min-height:52px;border:none;padding:9px 12px;font-family:inherit;font-size:12px;line-height:1.6;color:var(--txt);background:var(--sur);resize:vertical;outline:none">'+wpEsc(meta)+'</textarea></div>'):'';
 
-      box.innerHTML=seoHtml+titleHtml+metaHtml
+      var tagHtml=tags.length?('<div data-wpcard style="border:1px solid var(--bor);border-radius:var(--rs);padding:10px 12px;margin-bottom:12px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:12px;font-weight:700;color:var(--gd)">🏷️ 추천 태그 '+tags.length+'개</span>'
+        +'<button onclick="wpCopyEl(this,\'wp_tags\')" style="padding:4px 10px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">복사</button></div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+tags.map(function(t){return '<span style="padding:5px 10px;background:var(--gl);color:var(--gd);border-radius:14px;font-size:12px;font-weight:600">#'+wpEsc(t)+'</span>';}).join('')+'</div>'
+        +'<span id="wp_tags" style="display:none">'+wpEsc(tags.join(', '))+'</span></div>'):'';
+      box.innerHTML=seoHtml+titleHtml+metaHtml+tagHtml
         +'<div style="border:1px solid var(--bor);border-radius:var(--r);overflow:hidden">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 13px;background:var(--gl)"><span style="display:flex;gap:6px"><button id="wp_tab_prev" onclick="wpView(\'prev\')" style="padding:6px 13px;background:var(--green);color:#fff;border:1px solid var(--bor);border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit">👁 미리보기</button><button id="wp_tab_code" onclick="wpView(\'code\')" style="padding:6px 13px;background:var(--sur);color:var(--t2);border:1px solid var(--bor);border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit">&lt;/&gt; HTML</button></span><button onclick="wpCopyEl(this,\'wp_html\')" style="padding:6px 13px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📋 HTML 복사</button></div>'
         +'<div id="wp_prev" style="display:block;padding:20px 18px;background:#fff;color:#1a1a1a;line-height:1.85;font-size:15px;max-height:560px;overflow:auto">'+wpSanitize(html)+'</div>'
@@ -2524,13 +2563,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           +'② <b>메타 설명</b> 칸에 위 메타설명 붙여넣기<br>'
           +'③ <b>URL(고유주소)</b>를 위 슬러그로 변경<br>'
           +'④ 📷 <b>이미지 추천 위치</b>에 실제 이미지 업로드 + <b>대체텍스트(alt)</b>를 안내대로 입력<br>'
-          +'⑤ 본문 아무 데나 <b>내 블로그의 다른 글 링크(내부링크)</b> 1개 걸기<br>'
-          +'<span style="color:var(--t3)">→ 제목·키워드 배치·외부링크·본문 키워드는 이미 글에 반영돼 있어요.</span>'
+          +'⑤ '+(cta?'<span style="color:var(--gd)">내부링크(바쓰영 4개)는 이미 본문에 포함됨 ✓</span>':'본문에 <b>내 블로그의 다른 글 링크(내부링크)</b> 1개 걸기')+'<br>'
+          +'<span style="color:var(--t3)">→ 제목·키워드 배치·외부링크·본문 키워드'+(cta?'·내부링크':'')+'는 이미 글에 반영돼 있어요.</span>'
         +'</div>';
+      wpAddHistory(focusKw||kw, (titles&&titles[0])||''); wpRenderKws(); // 중복 방지 이력 기록
     }catch(e){ box.innerHTML='<div class="th-card"><p style="color:var(--red);font-size:13px;margin:0;white-space:pre-line">'+wpEsc(wpErr(e))+'</p></div>'; }
     finally{ btn.disabled=false; btn.textContent='📝 워드프레스 글 생성 (HTML)'; }
   };
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wpHint);else wpHint();
+  function wpInit(){ wpHint(); wpRenderKws(); }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wpInit);else wpInit();
 })();
 </script>
 
