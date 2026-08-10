@@ -252,9 +252,15 @@
   .reveal.in{opacity:1;transform:none}
   @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}.orb,.aurora,header.hero h1 span{animation:none}}
 
-  /* 환불 안내 바 */
-  .refund-note{background:rgba(236,206,134,.07);border:1px solid var(--line);border-radius:11px;color:var(--mist);font-size:12.5px;text-align:center;padding:11px 14px;font-weight:300;margin:4px 0 14px;word-break:keep-all}
-  .refund-note b{color:var(--gold);font-weight:600}
+  /* 환불 규정 (푸터 하단, 클릭 시 펼침) */
+  .refund-toggle{margin:16px 0 4px;font-size:11.5px;color:var(--mut)}
+  .refund-toggle summary{cursor:pointer;display:inline-block;color:var(--mut);text-decoration:underline;font-weight:300;list-style:none}
+  .refund-toggle summary::-webkit-details-marker{display:none}
+  .refund-toggle summary:hover{color:var(--mist)}
+  .rf-body{margin-top:10px;padding:15px 17px;background:rgba(8,5,18,.45);border:1px solid var(--line);border-radius:10px;text-align:left;line-height:1.85;color:var(--mut);font-weight:300;word-break:keep-all}
+  .rf-body b{color:var(--mist);font-weight:600}
+  .rf-body p{margin:0 0 9px}
+  .rf-body p:last-child{margin-bottom:0}
 
   /* ── 통계/긴급성 밴드 ── */
   .statsband{position:relative;padding:46px 0 16px}
@@ -664,8 +670,6 @@
         <span><b class="gold">[필수]</b> 개인정보 수집·이용에 동의합니다. 수집 항목(성함·생년월일시·이메일·연락처)은 <b>사주 분석 및 결과 발송 목적</b>으로만 이용되며, 발송 완료 후 파기됩니다.</span>
       </label>
 
-      <div class="refund-note">🔒 본 서비스는 <b>디지털 콘텐츠</b>를 제공하므로, <b>입금(결제) 완료 후에는 환불이 불가</b>합니다. 신청 전 입력 정보를 정확히 확인해 주세요.</div>
-
       <button type="submit" class="btn" style="width:100%;margin-top:6px">신청 접수하기</button>
     </form>
   </div>
@@ -690,7 +694,7 @@
       <p style="margin:20px 0 14px;color:var(--mist);font-weight:300">입금 후 <b class="gold">카카오톡 채널</b>로 확인 메시지 하나 남겨주시면 좀 더 빠르게 받아보실 수 있어요.</p>
       <a href="http://pf.kakao.com/_gdCGX" target="_blank" rel="noopener" class="kakao-btn">💬 카카오톡 채널로 문의·확인</a>
       <div style="margin-top:22px;padding:13px 15px;background:rgba(8,5,18,.45);border:1px solid var(--line);border-radius:10px;font-size:12px;color:var(--mut);font-weight:300;line-height:1.65;text-align:left">
-        🔒 <b style="color:var(--mist)">입금 전 확인</b> · 본 서비스는 <b style="color:var(--lav)">디지털 콘텐츠</b>로 입금 완료 후 <b style="color:var(--lav)">환불이 불가</b>합니다. 제공되는 분석은 <b style="color:var(--lav)">참고용 엔터테인먼트</b> 콘텐츠로, 결과는 확정된 미래가 아니며 의료·법률·투자·결혼 등 중요한 결정의 근거가 될 수 없습니다.
+        🔒 <b style="color:var(--mist)">입금 전 확인</b> · 제공되는 분석은 <b style="color:var(--lav)">참고용 엔터테인먼트</b> 콘텐츠로, 결과는 확정된 미래가 아니며 의료·법률·투자·결혼 등 중요한 결정의 근거가 될 수 없습니다. 청약철회·환불에 관한 사항은 페이지 하단의 <b style="color:var(--mist)">「청약철회 및 환불 규정」</b>을 확인해 주세요.
       </div>
     </div>
   </div>
@@ -723,7 +727,7 @@
 </div></section>
 
 <footer><div class="wrap">
-  <p class="dis">본 서비스는 <b>디지털 콘텐츠</b> 제공 서비스로 결제(입금) 후 환불이 불가합니다. 제공되는 모든 콘텐츠는 명리학 이론에 기반한 <b>참고용 엔터테인먼트</b>로, 결과는 확정된 미래가 아니며
+  <p class="dis">본 서비스는 <b>디지털 콘텐츠</b> 제공 서비스입니다. 제공되는 모든 콘텐츠는 명리학 이론에 기반한 <b>참고용 엔터테인먼트</b>로, 결과는 확정된 미래가 아니며
     의료·법률·투자·결혼 등 중요한 결정의 근거가 될 수 없습니다. 최종 선택과 책임은 이용자 본인에게 있습니다.</p>
   <div class="biz">
     <span class="bt">사업자 정보</span>
@@ -734,6 +738,18 @@
     <b>종목</b> 점술 및 유사 서비스업 / 전자상거래 소매업<br>
     <b>사업장 소재지</b> 서울특별시 구로구 디지털로31길 85, 103동 1604호(구로동, 구로두산위브)
   </div>
+  <details class="refund-toggle">
+    <summary>청약철회 및 환불 규정 보기</summary>
+    <div class="rf-body">
+      <p><b>청약철회 및 환불 규정</b></p>
+      <p>결제일로부터 <b>7일 이내</b>, AI 분석이 시작되기 전까지 <b>전액 환불</b> 가능합니다.</p>
+      <p>본 서비스는 결제 완료 즉시 AI 분석이 시작되는 디지털 콘텐츠로, 「전자상거래법」 제17조 제2항 제5호에 따라 분석 결과(보고서) 제공 이후에는 청약철회가 제한됩니다.
+      결제 오류·중복 결제 등 분석이 시작되지 않은 경우는 요청 시 전액 환불됩니다.</p>
+      <p>제공된 내용이 사전 안내와 현저히 다른 경우, 공급일로부터 <b>3개월 이내</b> 철회 요청이 가능합니다.
+      환불은 접수일로부터 <b>3영업일 이내</b> 결제수단과 동일하게 환급되며, 지연 시 지연배상금이 지급됩니다.</p>
+      <p>문의 및 분쟁조정 : 이메일 <b>rlarudeh7778@gmail.com</b> · 전화 <b>010-7418-0705</b> · 한국소비자원 <b>1372</b></p>
+    </div>
+  </details>
   <p>© <span id="yr"></span> 운명을 읽다 · AI 사주명리 분석</p>
 </div></footer>
 
