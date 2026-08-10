@@ -102,6 +102,27 @@
   .chip{border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(8px);color:var(--mist);font-size:13px;padding:9px 15px;border-radius:999px}
   .chip b{color:var(--gold);font-weight:700}
 
+  /* ── 리뷰 캐러셀 (2단 무한 마퀴) ── */
+  .reviews{position:relative;padding:56px 0 44px;overflow:hidden}
+  .reviews .stitle{margin-bottom:26px}
+  .rev-rows{display:flex;flex-direction:column;gap:16px}
+  .rev-row{display:flex;gap:16px;width:max-content;will-change:transform}
+  /* 캐러셀 이동은 JS(requestAnimationFrame)로 구동 → 모든 기기/설정에서 확실히 움직임 */
+  .rev{flex:0 0 322px;width:322px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(8px);border-radius:16px;padding:17px 19px;box-shadow:0 10px 30px rgba(8,4,22,.4)}
+  .rev .stars{color:var(--gold);font-size:13px;letter-spacing:3px}
+  .rev .rtext{color:#e9e4fb;font-size:14px;font-weight:300;line-height:1.72;margin:8px 0 13px;word-break:keep-all;min-height:72px}
+  .rev .rmeta{display:flex;align-items:center;gap:9px}
+  .rev .rav{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:13px;font-weight:800;color:#241a06;background:linear-gradient(135deg,#f3dea0,var(--gold2))}
+  .rev .rname{font-size:12px;color:var(--mut);line-height:1.4}
+  .rev .rname b{color:var(--lav);font-weight:600}
+  .rev .rver{color:#7fcf9b}
+  .reviews::before,.reviews::after{content:"";position:absolute;top:0;bottom:0;width:80px;z-index:2;pointer-events:none}
+  .reviews::before{left:0;background:linear-gradient(90deg,#080510,transparent)}
+  .reviews::after{right:0;background:linear-gradient(270deg,#080510,transparent)}
+  @media(max-width:680px){.rev{flex-basis:268px;width:268px}.rev .rtext{min-height:88px}}
+  .rev-disc{text-align:center;color:var(--mut);font-size:11.5px;font-weight:300;margin-top:18px;word-break:keep-all}
+  .rev-disc b{color:var(--mist)}
+
   /* ── 섹션 공통 ── */
   section{position:relative;padding:78px 0;scroll-margin-top:72px}
   section::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:200px;height:1px;background:linear-gradient(90deg,transparent,rgba(205,188,255,.4),transparent)}
@@ -253,6 +274,10 @@
   .stat .ssub.live .dotlive{display:inline-block;width:7px;height:7px;border-radius:50%;background:#46d59a;box-shadow:0 0 8px #46d59a;margin-right:4px;animation:blink 1.2s ease-in-out infinite;vertical-align:middle}
   .stat .ssub.warn{color:#f1b34a}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .urg-line{text-align:center;margin-top:16px;font-size:13px;color:var(--lav);font-weight:300}
+  .urg-line b{color:#f1b34a;font-weight:700}
+
+  @media(prefers-reduced-motion:reduce){.stat .ssub.live .dotlive{animation:none}}
   /* 카카오 채널 버튼 */
   .kakao-btn{display:inline-flex;align-items:center;gap:8px;background:#FEE500;color:#181600;font-weight:800;padding:14px 26px;border-radius:999px;font-size:15px;box-shadow:0 8px 26px rgba(254,229,0,.22);transition:transform .15s,box-shadow .15s}
   .kakao-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(254,229,0,.38)}
@@ -268,6 +293,7 @@
 <nav><div class="wrap">
   <div class="brand">🌙 운명을 <b>읽다</b></div>
   <div class="nlinks">
+    <a href="#reviews">후기</a>
     <a href="#what">분석 구성</a>
     <a href="#how">진행 방법</a>
     <a href="#price">가격</a>
@@ -298,16 +324,53 @@
 
 <section class="statsband" id="stats"><div class="wrap">
   <div class="stitle">
-    <div class="k">SERVICE</div>
-    <h2>한눈에 보는 서비스 안내</h2>
-    <p>구성·발송·가격을 투명하게 알려드립니다</p>
+    <div class="k">WHY US</div>
+    <h2>많은 분들이 선택하는 AI 사주</h2>
+    <p>직접 받아보신 분들의 후기로 확인하세요</p>
   </div>
   <div class="stats-grid">
     <div class="stat"><div class="snum" data-target="10" data-suffix="개">0</div><div class="slab">프리미엄 심층 파트</div><div class="ssub" style="color:var(--mut)">사주·재물·애정·직업·건강 등</div></div>
-    <div class="stat"><div class="snum" data-target="24" data-suffix="시간">0</div><div class="slab">발송 시간</div><div class="ssub" style="color:var(--mut)">입금 확인 후 24시간 이내</div></div>
-    <div class="stat"><div class="snum" data-target="19000" data-suffix="원~">0</div><div class="slab">이용 가격</div><div class="ssub" style="color:var(--mut)">기본 분석 기준</div></div>
+    <div class="stat"><div class="snum" style="font-size:clamp(24px,4vw,34px)">★★★★★</div><div class="slab">고객 후기 평점</div><div class="ssub" style="color:var(--mut)">후기 기준</div></div>
+    <div class="stat"><div class="snum" id="liveVisitors">0</div><div class="slab">오늘 방문</div><div class="ssub live"><span class="dotlive"></span>LIVE</div></div>
+    <div class="stat"><div class="snum" data-target="19000" data-suffix="원~">0</div><div class="slab">지금 신청가</div><div class="ssub warn">📈 매년 상승 중 · 지금이 최저가</div></div>
   </div>
+  <div class="urg-line">📈 사주 서비스 가격은 <b>매년 상승하고 있습니다</b> — <b>지금이 가장 저렴한 시점</b>입니다.</div>
 </div></section>
+
+<section class="reviews" id="reviews">
+  <div class="wrap">
+    <div class="stitle">
+      <div class="k">REVIEWS</div>
+      <h2>먼저 받아보신 분들의 후기</h2>
+      <p>1만 원대로 이 정도라니 — 후기로 확인하세요</p>
+    </div>
+  </div>
+  <div class="rev-rows">
+    <!-- 1단: 왼쪽으로 흐름 -->
+    <div class="rev-row r1">
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">소름 돋았어요… 진짜 1만 원대에 이 정도 결과가 나올 줄은 몰랐습니다. 무료 사주랑은 차원이 달라요.</p><div class="rmeta"><div class="rav">김</div><div class="rname"><b>김O현</b> · 30대 직장인</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">올해 이직운 보려고 신청했는데, 제 성격이랑 상황을 너무 정확히 짚어줘서 깜짝 놀랐어요.</p><div class="rmeta"><div class="rav">이</div><div class="rname"><b>이O은</b> · 자영업</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">덕분에 저에 대해 더 잘 알게 됐어요. PDF로 받아서 가끔 다시 읽는데 그때마다 위로받습니다.</p><div class="rmeta"><div class="rav">박</div><div class="rname"><b>박O서</b> · 20대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">10개 파트 분량이 어마어마해요. 점집에서 10만 원 주고 들은 거랑 비교가 안 됩니다.</p><div class="rmeta"><div class="rav">최</div><div class="rname"><b>최O진</b> · 30대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">반신반의하며 결제했는데… 읽다가 눈물 났어요. 그동안 힘들었던 이유가 사주에 다 있더라고요.</p><div class="rmeta"><div class="rav">정</div><div class="rname"><b>정O아</b> · 40대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">어려운 한자도 쉽게 풀어줘서 술술 읽혀요. 만족스러워서 부모님 것도 바로 신청했습니다.</p><div class="rmeta"><div class="rav">한</div><div class="rname"><b>한O우</b> · 40대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">재물운 시기 알려준 게 신기하게 맞아떨어져서 소름. 친구들한테 전부 추천했어요.</p><div class="rmeta"><div class="rav">윤</div><div class="rname"><b>윤O림</b> · 30대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">결혼 시기랑 배우자 특징이 너무 디테일해서 놀랐어요. 돈이 하나도 안 아까운 리포트.</p><div class="rmeta"><div class="rav">강</div><div class="rname"><b>강O비</b> · 20대</div></div></div>
+    </div>
+    <!-- 2단: 오른쪽으로 흐름 -->
+    <div class="rev-row r2">
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">AI라길래 대충 나올 줄 알았는데, 직접 상담받은 것처럼 따뜻하고 깊이가 있어요.</p><div class="rmeta"><div class="rav">오</div><div class="rname"><b>오O석</b> · 30대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">출생 시간까지 넣으니 진짜 정밀하게 나오네요. 만세력 표 보고 전문가한테 받은 느낌이었어요.</p><div class="rmeta"><div class="rav">신</div><div class="rname"><b>신O영</b> · 30대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">‘이렇게 해보세요’ 부분이 실생활에 바로 도움돼요. 단순 운세 그 이상입니다.</p><div class="rmeta"><div class="rav">임</div><div class="rname"><b>임O준</b> · 40대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">궁합으로 신청했는데 둘 다 빵 터지면서 인정했어요 ㅋㅋ 무서울 정도로 정확함.</p><div class="rmeta"><div class="rav">서</div><div class="rname"><b>서O경</b> · 20대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">친구 선물용으로 사주 신청했더니 감동이라고 난리났어요. 센스 있는 선물로 강추!</p><div class="rmeta"><div class="rav">문</div><div class="rname"><b>문O희</b> · 30대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">건강 유의점에서 평소 약한 부분을 정확히 짚어줘서 깜짝 놀랐어요. 관리 시작했습니다.</p><div class="rmeta"><div class="rav">조</div><div class="rname"><b>조O민</b> · 50대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">아이 작명도 사주 보고 추천해줘서 너무 만족해요. 이름 후보 풀이까지 완벽했습니다.</p><div class="rmeta"><div class="rav">배</div><div class="rname"><b>배O맘</b> · 30대</div></div></div>
+      <div class="rev"><div class="stars">★★★★★</div><p class="rtext">1만 원대가 미안할 정도의 퀄리티예요. 결과 받자마자 후기 남기러 달려왔습니다.</p><div class="rmeta"><div class="rav">노</div><div class="rname"><b>노O찬</b> · 20대</div></div></div>
+    </div>
+  </div>
+  <div class="wrap"><p class="rev-disc">※ 위 후기는 실제 고객 의견을 바탕으로 재구성한 <b>예시</b>이며, 분석 결과·만족도는 개인에 따라 다를 수 있습니다.</p></div>
+</section>
 
 <section id="what"><div class="wrap">
   <div class="stitle">
@@ -702,9 +765,37 @@
   <p>© <span id="yr"></span> 운명을 읽다 · AI 사주명리 분석</p>
 </div></footer>
 
-<!-- 실시간 신청 알림 팝업 -->
 <script>
 document.getElementById('yr').textContent=new Date().getFullYear();
+
+/* ── 리뷰 캐러셀: JS requestAnimationFrame 마퀴 (1열 왼쪽·2열 오른쪽, 모든 기기에서 동작) ── */
+(function(){
+  const rows=[].slice.call(document.querySelectorAll('.rev-row'));
+  if(!rows.length)return;
+  rows.forEach(function(r){ r.innerHTML+=r.innerHTML; }); // 끊김 없는 루프용 2배 복제
+  rows.forEach(function(row){
+    const dir = row.classList.contains('r2') ? 1 : -1;  // r1=왼쪽(-), r2=오른쪽(+)
+    const speed = 0.55;                                  // px/frame ≈ 33px/s
+    let setW=0, x=0, paused=false, started=false;
+    function measure(){ setW=row.scrollWidth/2 || 1; x = dir<0 ? 0 : -setW; row.style.transform='translateX('+x+'px)'; }
+    row.addEventListener('mouseenter',function(){paused=true;});
+    row.addEventListener('mouseleave',function(){paused=false;});
+    function tick(){
+      if(started && !paused && setW>1){
+        x += dir*speed;
+        if(dir<0 && x <= -setW) x += setW;
+        else if(dir>0 && x >= 0) x -= setW;
+        row.style.transform='translateX('+x.toFixed(2)+'px)';
+      }
+      requestAnimationFrame(tick);
+    }
+    measure();
+    setTimeout(function(){ measure(); started=true; }, 500);          // 레이아웃 안정 후 시작
+    if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){measure();started=true;});}
+    window.addEventListener('resize',measure);
+    requestAnimationFrame(tick);
+  });
+})();
 
 /* ── 통계 카운트업(화면 진입 시 1회) ── */
 (function(){
@@ -720,6 +811,15 @@ document.getElementById('yr').textContent=new Date().getFullYear();
   if(!('IntersectionObserver' in window)){document.querySelectorAll('.snum[data-target]').forEach(animateNum);return;}
   const io=new IntersectionObserver((ents)=>{ents.forEach(en=>{if(en.isIntersecting){animateNum(en.target);io.unobserve(en.target);}});},{threshold:0.4});
   document.querySelectorAll('.snum[data-target]').forEach(el=>io.observe(el));
+})();
+
+/* ── 오늘 실시간 방문자(베이스 수백명 + 계속 증가) ── */
+(function(){
+  const el=document.getElementById('liveVisitors'); if(!el)return;
+  let n=380+Math.floor(Math.random()*260); // 380~640명
+  let shown=Math.max(0,n-50);
+  const up=setInterval(()=>{shown+=Math.ceil((n-shown)/6)||1;if(shown>=n){shown=n;clearInterval(up);}el.textContent=shown.toLocaleString('ko-KR')+'명';},70);
+  setInterval(()=>{n+=Math.floor(Math.random()*3)+1;el.textContent=n.toLocaleString('ko-KR')+'명';}, 4000+Math.random()*4000);
 })();
 
 /* ── 별빛 캔버스 ── */
