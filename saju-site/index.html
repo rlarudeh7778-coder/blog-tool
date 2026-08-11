@@ -262,22 +262,13 @@
   .rf-body p{margin:0 0 9px}
   .rf-body p:last-child{margin-bottom:0}
 
-  /* ── 통계/긴급성 밴드 ── */
+  /* ── 통계 밴드 ── */
   .statsband{position:relative;padding:46px 0 16px}
-  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-  @media(max-width:760px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+  .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:520px;margin:0 auto}
   .stat{background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(8px);border-radius:16px;padding:20px 16px;text-align:center;box-shadow:0 10px 30px rgba(8,4,22,.4)}
   .stat .snum{font-family:var(--serif);font-size:clamp(26px,4.4vw,38px);font-weight:800;line-height:1.1;background:linear-gradient(110deg,#f6e7b6,#fff,#e8c97a,#cdbcff);-webkit-background-clip:text;background-clip:text;color:transparent}
   .stat .slab{font-size:13px;color:var(--mist);margin-top:7px;font-weight:300;word-break:keep-all}
-  .stat .ssub{font-size:11px;margin-top:6px;font-weight:600}
-  .stat .ssub.live{color:#7fcf9b}
-  .stat .ssub.live .dotlive{display:inline-block;width:7px;height:7px;border-radius:50%;background:#46d59a;box-shadow:0 0 8px #46d59a;margin-right:4px;animation:blink 1.2s ease-in-out infinite;vertical-align:middle}
-  .stat .ssub.warn{color:#f1b34a}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-  .urg-line{text-align:center;margin-top:16px;font-size:13px;color:var(--lav);font-weight:300}
-  .urg-line b{color:#f1b34a;font-weight:700}
-
-  @media(prefers-reduced-motion:reduce){.stat .ssub.live .dotlive{animation:none}}
+  .stat .ssub{font-size:11px;margin-top:6px;font-weight:600;color:var(--mut)}
   /* 카카오 채널 버튼 */
   .kakao-btn{display:inline-flex;align-items:center;gap:8px;background:#FEE500;color:#181600;font-weight:800;padding:14px 26px;border-radius:999px;font-size:15px;box-shadow:0 8px 26px rgba(254,229,0,.22);transition:transform .15s,box-shadow .15s}
   .kakao-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(254,229,0,.38)}
@@ -324,17 +315,14 @@
 
 <section class="statsband" id="stats"><div class="wrap">
   <div class="stitle">
-    <div class="k">WHY US</div>
-    <h2>많은 분들이 선택하는 AI 사주</h2>
-    <p>직접 받아보신 분들의 후기로 확인하세요</p>
+    <div class="k">SERVICE</div>
+    <h2>한눈에 보는 서비스 안내</h2>
+    <p>구성과 가격을 투명하게 알려드립니다</p>
   </div>
   <div class="stats-grid">
-    <div class="stat"><div class="snum" data-target="10" data-suffix="개">0</div><div class="slab">프리미엄 심층 파트</div><div class="ssub" style="color:var(--mut)">사주·재물·애정·직업·건강 등</div></div>
-    <div class="stat"><div class="snum" style="font-size:clamp(24px,4vw,34px)">★★★★★</div><div class="slab">고객 후기 평점</div><div class="ssub" style="color:var(--mut)">후기 기준</div></div>
-    <div class="stat"><div class="snum" id="liveVisitors">0</div><div class="slab">오늘 방문</div><div class="ssub live"><span class="dotlive"></span>LIVE</div></div>
-    <div class="stat"><div class="snum" data-target="19000" data-suffix="원~">0</div><div class="slab">지금 신청가</div><div class="ssub warn">📈 매년 상승 중 · 지금이 최저가</div></div>
+    <div class="stat"><div class="snum" data-target="10" data-suffix="개">0</div><div class="slab">프리미엄 심층 파트</div><div class="ssub">사주·재물·애정·직업·건강 등</div></div>
+    <div class="stat"><div class="snum" data-target="19000" data-suffix="원~">0</div><div class="slab">이용 가격</div><div class="ssub">기본 분석 기준</div></div>
   </div>
-  <div class="urg-line">📈 사주 서비스 가격은 <b>매년 상승하고 있습니다</b> — <b>지금이 가장 저렴한 시점</b>입니다.</div>
 </div></section>
 
 <section class="reviews" id="reviews">
@@ -809,15 +797,6 @@ document.getElementById('yr').textContent=new Date().getFullYear();
   if(!('IntersectionObserver' in window)){document.querySelectorAll('.snum[data-target]').forEach(animateNum);return;}
   const io=new IntersectionObserver((ents)=>{ents.forEach(en=>{if(en.isIntersecting){animateNum(en.target);io.unobserve(en.target);}});},{threshold:0.4});
   document.querySelectorAll('.snum[data-target]').forEach(el=>io.observe(el));
-})();
-
-/* ── 오늘 실시간 방문자(베이스 수백명 + 계속 증가) ── */
-(function(){
-  const el=document.getElementById('liveVisitors'); if(!el)return;
-  let n=380+Math.floor(Math.random()*260); // 380~640명
-  let shown=Math.max(0,n-50);
-  const up=setInterval(()=>{shown+=Math.ceil((n-shown)/6)||1;if(shown>=n){shown=n;clearInterval(up);}el.textContent=shown.toLocaleString('ko-KR')+'명';},70);
-  setInterval(()=>{n+=Math.floor(Math.random()*3)+1;el.textContent=n.toLocaleString('ko-KR')+'명';}, 4000+Math.random()*4000);
 })();
 
 /* ── 별빛 캔버스 ── */
