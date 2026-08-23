@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>영상 다운로더</title>
+<style>
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --card: #1c2029;
+  --border: #262b36;
+  --text: #e8eaf0;
+  --muted: #8b93a5;
+  --accent: #ff4b4b;
+  --green: #5fd97e;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text); min-height: 100vh;
+  font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  display: flex; flex-direction: column; align-items: center; padding: 24px 16px 60px;
+}
+.top { width: 100%; max-width: 640px; margin-bottom: 14px; }
+.back { color: var(--muted); text-decoration: none; font-size: 13px; }
+.back:hover { color: var(--text); }
+.card {
+  width: 100%; max-width: 640px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 18px; padding: 30px;
+}
+h1 { font-size: 24px; text-align: center; margin-bottom: 6px; letter-spacing: -0.5px; }
+h1 em { color: var(--accent); font-style: normal; }
+.sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+.conn {
+  margin-bottom: 18px; padding: 10px 14px; border-radius: 10px; font-size: 13px;
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+}
+.conn.ok { background: #16391f; color: var(--green); border: 1px solid #235c31; }
+.conn.no { background: #3a1d1d; color: #ff9b9b; border: 1px solid #5c2323; }
+.guide {
+  display: none; margin-bottom: 18px; padding: 16px; border-radius: 12px; font-size: 13px;
+  background: var(--panel); border: 1px solid var(--border); line-height: 1.9; color: var(--muted);
+}
+.guide b { color: var(--text); }
+.guide code { background: #0c0e12; padding: 1px 7px; border-radius: 5px; font-size: 12px; color: #ffb020; }
+input[type=text] {
+  width: 100%; padding: 14px 16px; border-radius: 12px;
+  border: 1px solid var(--border); background: #12151b; color: #fff;
+  font-size: 15px; outline: none; font-family: inherit;
+}
+input[type=text]:focus { border-color: var(--accent); }
+.fmt { display: flex; gap: 10px; margin: 14px 0; }
+.fmt button {
+  flex: 1; padding: 11px; border-radius: 12px; border: 1px solid var(--border);
+  background: #12151b; color: var(--muted); font-size: 14px; cursor: pointer; font-family: inherit;
+}
+.fmt button.on { background: var(--accent); color: #fff; border-color: transparent; font-weight: 700; }
+.go {
+  width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 16px;
+  font-weight: 800; cursor: pointer; background: var(--accent); color: #fff; font-family: inherit;
+}
+.go:hover { filter: brightness(1.1); }
+.go:disabled { opacity: .45; cursor: not-allowed; }
+.preview {
+  display: none; margin-top: 16px; gap: 14px; align-items: center;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px;
+}
+.preview img { width: 120px; border-radius: 10px; }
+.preview .t { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.preview .u { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.bar-wrap { display: none; margin-top: 16px; }
+.bar-bg { height: 10px; background: #12151b; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+.bar { height: 100%; width: 0%; background: linear-gradient(90deg, #ff4b4b, #ffb020); transition: width .3s; }
+.bar-txt { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; }
+.msg { display: none; margin-top: 16px; padding: 14px; border-radius: 12px; font-size: 14px; text-align: center; line-height: 1.6; }
+.msg.ok { background: #16391f; border: 1px solid #235c31; color: var(--green); }
+.msg.err { background: #3a1d1d; border: 1px solid #5c2323; color: #ff9b9b; word-break: break-all; }
+.open-btn {
+  display: none; width: 100%; margin-top: 10px; padding: 12px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 14px; font-family: inherit;
+}
+.open-btn:hover { border-color: #3a4150; }
+.foot { text-align: center; font-size: 11px; color: #565e6f; margin-top: 22px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="top"><a class="back" href="index.html">← 메인으로</a></div>
+<div class="card">
+  <h1>영상 <em>다운로더</em></h1>
+  <div class="sub">유튜브 · 인스타그램 링크를 붙여넣으세요 (MP4 영상 / MP3 음원)</div>
+
+  <div class="conn" id="conn">로컬 프로그램 연결 확인 중...</div>
+
+  <div class="guide" id="guide">
+    이 기능은 <b>내 PC에 설치된 다운로더 프로그램</b>이 실제 다운로드를 수행합니다.<br>
+    <b>1.</b> PC에서 <code>바탕화면\동영상다운로더\start.bat</code> 더블클릭<br>
+    <b>2.</b> 검은 창이 뜨면 <button onclick="checkConn()" style="background:var(--accent);border:none;color:#fff;padding:3px 12px;border-radius:6px;cursor:pointer;font-family:inherit">다시 연결</button> 클릭<br>
+    <span style="font-size:12px">※ 다운로드가 자주 실패하면 <code>update.bat</code>으로 yt-dlp를 최신화하세요. 이 페이지는 프로그램이 설치된 PC에서만 동작합니다 (폰에서는 사용 불가).</span>
+  </div>
+
+  <input type="text" id="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off">
+  <div class="fmt">
+    <button id="fmtMp4" class="on">🎬 영상 (MP4)</button>
+    <button id="fmtMp3">🎵 음원 (MP3)</button>
+  </div>
+  <button class="go" id="go">다운로드</button>
+
+  <div class="preview" id="preview">
+    <img id="pvImg" src="" alt="">
+    <div><div class="t" id="pvTitle"></div><div class="u" id="pvUp"></div></div>
+  </div>
+  <div class="bar-wrap" id="barWrap">
+    <div class="bar-bg"><div class="bar" id="bar"></div></div>
+    <div class="bar-txt" id="barTxt">준비 중...</div>
+  </div>
+  <div class="msg" id="msg"></div>
+  <button class="open-btn" id="openBtn">📂 저장 폴더 열기 (바탕화면)</button>
+
+  <div class="foot" id="foot">저장 위치: 바탕화면 · 저작권이 있는 콘텐츠는 개인 소장 용도로만 사용하세요</div>
+</div>
+
+<script>
+var API = "http://localhost:8756";
+var fmt = "mp4";
+var connected = false;
+function $(id) { return document.getElementById(id); }
+
+$("fmtMp4").onclick = function () { fmt = "mp4"; this.classList.add("on"); $("fmtMp3").classList.remove("on"); };
+$("fmtMp3").onclick = function () { fmt = "mp3"; this.classList.add("on"); $("fmtMp4").classList.remove("on"); };
+$("url").addEventListener("keydown", function (e) { if (e.key === "Enter") $("go").click(); });
+
+function fetchTimeout(url, ms, opts) {
+  var ctrl = new AbortController();
+  var t = setTimeout(function () { ctrl.abort(); }, ms);
+  opts = opts || {};
+  opts.signal = ctrl.signal;
+  return fetch(url, opts).finally(function () { clearTimeout(t); });
+}
+
+function checkConn() {
+  var c = $("conn");
+  c.className = "conn"; c.textContent = "로컬 프로그램 연결 확인 중...";
+  fetchTimeout(API + "/api/status", 2500)
+    .then(function (r) { return r.json(); })
+    .then(function (s) {
+      connected = true;
+      c.className = "conn ok";
+      c.textContent = "● 로컬 다운로더 연결됨 (yt-dlp " + s.ytdlp + (s.ffmpeg ? " · ffmpeg OK" : " · ffmpeg 없음") + ")";
+      $("guide").style.display = "none";
+      $("go").disabled = false;
+      if (!s.js) {
+        c.className = "conn no";
+        c.textContent = "⚠ JS 런타임 없음 — 유튜브 다운로드가 실패할 수 있습니다. update.bat을 실행하세요.";
+      }
+    })
+    .catch(function () {
+      connected = false;
+      c.className = "conn no";
+      c.textContent = "✕ 로컬 다운로더가 꺼져 있습니다";
+      $("guide").style.display = "block";
+      $("go").disabled = true;
+    });
+}
+
+function clean(t) { return String(t || "").replace(/\[[0-9;]*m/g, ""); }
+function showMsg(text, ok) {
+  var m = $("msg");
+  m.textContent = clean(text);
+  m.className = "msg " + (ok ? "ok" : "err");
+  m.style.display = "block";
+}
+
+$("go").onclick = function () {
+  var url = $("url").value.trim();
+  if (!url) { showMsg("링크를 입력해 주세요.", false); return; }
+  if (!connected) { showMsg("로컬 다운로더가 꺼져 있습니다. start.bat을 먼저 실행해 주세요.", false); return; }
+  $("go").disabled = true;
+  $("msg").style.display = "none";
+  $("openBtn").style.display = "none";
+  $("preview").style.display = "none";
+  $("barWrap").style.display = "block";
+  $("bar").style.width = "0%";
+  $("barTxt").textContent = "영상 정보 확인 중...";
+
+  fetch(API + "/api/info", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: url })
+  }).then(function (r) { return r.json(); }).then(function (info) {
+    if (!info.error) {
+      $("pvImg").src = info.thumbnail || "";
+      $("pvTitle").textContent = info.title;
+      $("pvUp").textContent = (info.uploader || "") + (info.duration ? " | " + info.duration : "");
+      $("preview").style.display = "flex";
+    }
+  }).catch(function () {});
+
+  fetch(API + "/api/download", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: url, format: fmt })
+  }).then(function (r) { return r.json(); }).then(function (d) {
+    if (d.error) throw new Error(d.error);
+    poll(d.job_id);
+  }).catch(function (e) {
+    showMsg(e.message || "요청 실패 — 프로그램이 켜져 있는지 확인하세요.", false);
+    $("go").disabled = false;
+    $("barWrap").style.display = "none";
+  });
+};
+
+function poll(jobId) {
+  var timer = setInterval(function () {
+    fetch(API + "/api/progress/" + jobId)
+      .then(function (r) { return r.json(); })
+      .then(function (s) {
+        if (s.status === "downloading" || s.status === "starting") {
+          $("bar").style.width = (s.percent || 0) + "%";
+          $("barTxt").textContent = (s.note ? s.note + " - " : "") + "다운로드 중... " + (s.percent || 0) + "%";
+        } else if (s.status === "processing") {
+          $("bar").style.width = "100%";
+          $("barTxt").textContent = "변환 중...";
+        } else if (s.status === "done") {
+          clearInterval(timer);
+          $("barWrap").style.display = "none";
+          showMsg('완료! 바탕화면에 "' + (s.title || "파일") + '" 저장됨', true);
+          $("openBtn").style.display = "block";
+          $("go").disabled = false;
+        } else if (s.status === "error") {
+          clearInterval(timer);
+          $("barWrap").style.display = "none";
+          showMsg("오류: " + s.error, false);
+          $("go").disabled = false;
+        }
+      })
+      .catch(function () {});
+  }, 700);
+}
+
+$("openBtn").onclick = function () {
+  fetch(API + "/api/open-folder", { method: "POST" });
+};
+
+checkConn();
+</script>
+</body>
+</html>
