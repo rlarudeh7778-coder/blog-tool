@@ -38,11 +38,37 @@ h1 em { color: var(--accent); font-style: normal; }
 .conn.ok { background: #16391f; color: var(--green); border: 1px solid #235c31; }
 .conn.no { background: #3a1d1d; color: #ff9b9b; border: 1px solid #5c2323; }
 .guide {
-  display: none; margin-bottom: 18px; padding: 16px; border-radius: 12px; font-size: 13px;
-  background: var(--panel); border: 1px solid var(--border); line-height: 1.9; color: var(--muted);
+  display: none; margin-bottom: 18px; padding: 20px; border-radius: 14px; font-size: 13px;
+  background: var(--panel); border: 1px solid var(--border); line-height: 1.7; color: var(--muted);
 }
 .guide b { color: var(--text); }
 .guide code { background: #0c0e12; padding: 1px 7px; border-radius: 5px; font-size: 12px; color: #ffb020; }
+.guide h3 { font-size: 15px; color: var(--text); margin-bottom: 4px; }
+.guide .lead { margin-bottom: 16px; font-size: 12.5px; }
+.step { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+.step .n {
+  flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff;
+  font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+}
+.step .body { flex: 1; min-width: 0; }
+.step .body b { display: block; margin-bottom: 3px; }
+.step .hint { font-size: 12px; color: #6f7686; margin-top: 3px; }
+.dl-btn {
+  display: inline-block; margin-top: 7px; padding: 9px 16px; border-radius: 9px; cursor: pointer;
+  background: var(--accent); color: #fff; text-decoration: none; font-size: 13px; font-weight: 700;
+}
+.dl-btn:hover { filter: brightness(1.1); }
+.dl-btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); font-weight: 600; }
+.dl-btn.ghost:hover { border-color: var(--accent); }
+.guide .warn {
+  margin-top: 14px; padding: 10px 12px; border-radius: 9px; font-size: 12px;
+  background: #2a2113; border: 1px solid #4a3a1c; color: #d7b978; line-height: 1.6;
+}
+.helplink {
+  display: block; text-align: center; margin-top: 14px; font-size: 12.5px;
+  color: var(--muted); cursor: pointer; text-decoration: underline;
+}
+.helplink:hover { color: var(--text); }
 input[type=text] {
   width: 100%; padding: 14px 16px; border-radius: 12px;
   border: 1px solid var(--border); background: #12151b; color: #fff;
@@ -92,10 +118,54 @@ input[type=text]:focus { border-color: var(--accent); }
   <div class="conn" id="conn">로컬 프로그램 연결 확인 중...</div>
 
   <div class="guide" id="guide">
-    이 기능은 <b>내 PC에 설치된 다운로더 프로그램</b>이 실제 다운로드를 수행합니다.<br>
-    <b>1.</b> PC에서 <code>바탕화면\동영상다운로더\start.bat</code> 더블클릭<br>
-    <b>2.</b> 검은 창이 뜨면 <button onclick="checkConn()" style="background:var(--accent);border:none;color:#fff;padding:3px 12px;border-radius:6px;cursor:pointer;font-family:inherit">다시 연결</button> 클릭<br>
-    <span style="font-size:12px">※ 다운로드가 자주 실패하면 <code>update.bat</code>으로 yt-dlp를 최신화하세요. 이 페이지는 프로그램이 설치된 PC에서만 동작합니다 (폰에서는 사용 불가).</span>
+    <h3>🖥️ 처음이신가요? 내 PC에 설치하면 바로 쓸 수 있습니다</h3>
+    <div class="lead">
+      영상 다운로드는 웹사이트가 아니라 <b>내 PC의 프로그램</b>이 처리합니다.
+      아래 순서대로 한 번만 설치하면, 다음부터는 <b>2번</b>만 하면 됩니다. (무료 · 약 3분)
+    </div>
+
+    <div class="step">
+      <div class="n">1</div>
+      <div class="body">
+        <b>파이썬(Python) 설치 — 최초 1회만</b>
+        설치 화면 맨 아래 <b style="color:#ff8a8a;display:inline">"Add Python to PATH"</b>를 <b style="display:inline">반드시 체크</b>하세요. 안 하면 실행이 안 됩니다.
+        <a class="dl-btn ghost" href="https://www.python.org/downloads/" target="_blank" rel="noopener">파이썬 받으러 가기 ↗</a>
+        <div class="hint">이미 설치돼 있다면 건너뛰세요.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">2</div>
+      <div class="body">
+        <b>다운로더 프로그램 받기</b>
+        압축(ZIP)을 풀어서 <b style="display:inline">바탕화면</b>처럼 찾기 쉬운 곳에 두세요.
+        <a class="dl-btn" href="downloads/video-downloader.zip" download>⬇ 프로그램 다운로드 (ZIP)</a>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">3</div>
+      <div class="body">
+        <b>폴더 안의 <code>start.bat</code> 더블클릭</b>
+        검은 명령창이 뜨고 필요한 프로그램이 자동 설치됩니다. <b style="display:inline">처음 한 번은 1~3분</b> 걸립니다.
+        <div class="hint">창은 닫지 말고 켜 두세요. 닫으면 다운로더가 꺼집니다.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">4</div>
+      <div class="body">
+        <b>이 페이지로 돌아와 아래 버튼 클릭</b>
+        위쪽 배지가 초록색 <b style="display:inline">"연결됨"</b>으로 바뀌면 준비 끝입니다.
+        <a class="dl-btn" onclick="checkConn()">🔄 다시 연결</a>
+      </div>
+    </div>
+
+    <div class="warn">
+      <b>알아두세요</b> · 프로그램을 설치한 그 PC에서만 동작합니다 (휴대폰에서는 사용 불가).
+      다운로드가 자주 실패하면 폴더의 <code>update.bat</code>을 실행해 최신화하세요.
+      저작권이 있는 콘텐츠는 개인 소장 용도로만 사용하세요.
+    </div>
   </div>
 
   <input type="text" id="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off">
@@ -116,6 +186,7 @@ input[type=text]:focus { border-color: var(--accent); }
   <div class="msg" id="msg"></div>
   <button class="open-btn" id="openBtn">📂 저장 폴더 열기 (바탕화면)</button>
 
+  <span class="helplink" id="helplink" onclick="toggleGuide()">설치 안내 보기 / 다른 PC에 설치하기</span>
   <div class="foot" id="foot">저장 위치: 바탕화면 · 저작권이 있는 콘텐츠는 개인 소장 용도로만 사용하세요</div>
 </div>
 
@@ -137,6 +208,16 @@ function fetchTimeout(url, ms, opts) {
   return fetch(url, opts).finally(function () { clearTimeout(t); });
 }
 
+function toggleGuide() {
+  var g = $("guide");
+  var open = g.style.display === "block";
+  g.style.display = open ? "none" : "block";
+  $("helplink").textContent = open
+    ? "설치 안내 보기 / 다른 PC에 설치하기"
+    : "설치 안내 닫기";
+  if (!open) g.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
 function checkConn() {
   var c = $("conn");
   c.className = "conn"; c.textContent = "로컬 프로그램 연결 확인 중...";
@@ -147,6 +228,7 @@ function checkConn() {
       c.className = "conn ok";
       c.textContent = "● 로컬 다운로더 연결됨 (yt-dlp " + s.ytdlp + (s.ffmpeg ? " · ffmpeg OK" : " · ffmpeg 없음") + ")";
       $("guide").style.display = "none";
+      $("helplink").textContent = "설치 안내 보기 / 다른 PC에 설치하기";
       $("go").disabled = false;
       if (!s.js) {
         c.className = "conn no";
@@ -158,6 +240,7 @@ function checkConn() {
       c.className = "conn no";
       c.textContent = "✕ 로컬 다운로더가 꺼져 있습니다";
       $("guide").style.display = "block";
+      $("helplink").textContent = "설치 안내 닫기";
       $("go").disabled = true;
     });
 }
