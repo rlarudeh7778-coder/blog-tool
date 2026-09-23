@@ -84,7 +84,7 @@
   @media(max-width:680px){.nlinks{display:none}}
 
   /* ── 히어로 ── */
-  header.hero{position:relative;text-align:center;padding:110px 0 78px;overflow:hidden}
+  header.hero{position:relative;text-align:center;padding:236px 0 78px;overflow:hidden}
   .orb{position:absolute;top:46px;left:50%;transform:translateX(-50%);width:172px;height:172px;border-radius:50%;
     background:radial-gradient(circle at 36% 30%,#fffaf0,#f0d99a 38%,#c79f50 66%,#7a5a26 100%);
     box-shadow:0 0 90px 26px rgba(236,206,134,.4),inset -22px -22px 46px rgba(20,10,40,.5);
@@ -93,10 +93,10 @@
   @keyframes floaty{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-16px)}}
   header.hero .wrap{position:relative;z-index:1}
   .eyebrow{color:var(--lav);letter-spacing:5px;font-size:12px;font-weight:700;margin-bottom:22px;text-shadow:0 0 18px rgba(138,107,216,.5)}
-  header.hero h1{font-family:var(--serif);font-size:clamp(31px,6vw,55px);line-height:1.32;font-weight:800;letter-spacing:-.5px;text-shadow:0 2px 30px rgba(0,0,0,.5)}
+  header.hero h1{word-break:keep-all;font-family:var(--serif);font-size:clamp(31px,6vw,55px);line-height:1.32;font-weight:800;letter-spacing:-.5px;text-shadow:0 2px 30px rgba(0,0,0,.5)}
   header.hero h1 span{background:linear-gradient(110deg,#f6e7b6,#fff,#e8c97a,#cdbcff,#f6e7b6);background-size:240% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 7s linear infinite}
   @keyframes shine{to{background-position:240% 0}}
-  header.hero p.sub{color:var(--mist);font-weight:300;font-size:clamp(15px,2.4vw,19px);margin:24px auto 0;max-width:640px}
+  header.hero p.sub{word-break:keep-all;color:var(--mist);font-weight:300;font-size:clamp(15px,2.4vw,19px);margin:24px auto 0;max-width:640px}
   .cta-row{margin-top:40px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
   .trust{margin-top:50px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
   .chip{border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(8px);color:var(--mist);font-size:13px;padding:9px 15px;border-radius:999px}
@@ -225,9 +225,38 @@
   .paysum .ps-total b.amt{color:var(--gold);font-family:var(--serif);font-size:clamp(20px,5vw,26px);font-weight:800}
 
   /* ── 등장 애니메이션 ── */
+  /* ── 히어로 후킹 (취소선 → 형광펜) ── */
+  .hook{margin:0 auto 30px;max-width:640px;word-break:keep-all;text-shadow:0 2px 14px rgba(8,5,16,.95),0 0 3px rgba(8,5,16,.9)}
+  .hook .h-old{display:inline-block;position:relative;font-family:var(--serif);font-size:clamp(17px,2.8vw,22px);color:#c9c1e6;font-weight:700}
+  .hook .h-old::after{content:"";position:absolute;left:-4px;right:-4px;top:54%;height:2px;background:#e8826b;transform:scaleX(0);transform-origin:left;animation:strike .7s .6s cubic-bezier(.6,0,.3,1) forwards}
+  .hook .h-new{margin-top:10px;font-family:var(--serif);font-size:clamp(19px,3.2vw,26px);font-weight:800;color:var(--tx);opacity:0;animation:fadeUp .8s 1.35s ease forwards}
+  @keyframes strike{to{transform:scaleX(1)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  /* 형광펜: 부모에 .in 또는 .go 가 붙으면 왼→오 칠해짐 */
+  .mk{background:linear-gradient(transparent 58%,rgba(236,206,134,.42) 58%) no-repeat;background-size:0% 100%;transition:background-size 1s cubic-bezier(.3,.7,.2,1) .35s;padding:0 2px}
+  .go .mk,.in .mk{background-size:100% 100%}
+  .hook .h-new .mk{transition-delay:2s}
+  .ul{text-decoration:underline;text-decoration-color:rgba(236,206,134,.6);text-underline-offset:6px;text-decoration-thickness:1.5px}
+
+  /* ── 위로 섹션 ── */
+  .comfort{position:relative;padding:70px 0 40px}
+  .comfort .lead{text-align:center;font-family:var(--serif);font-size:clamp(23px,4vw,34px);font-weight:800;line-height:1.5}
+  .comfort .lead small{display:block;font-family:var(--sans);font-size:13px;letter-spacing:4px;color:var(--gold);font-weight:700;margin-bottom:14px;opacity:.85}
+  .cf-list{max-width:620px;margin:38px auto 0;display:flex;flex-direction:column;gap:12px}
+  .cf-card{display:flex;gap:16px;align-items:flex-start;background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px 20px;backdrop-filter:blur(8px)}
+  .cf-card .ic{font-size:22px;line-height:1.4;flex-shrink:0}
+  .cf-card p{color:var(--mist);font-weight:300;font-size:15px;line-height:1.75;word-break:keep-all}
+  .cf-card p b{color:var(--tx);font-weight:600}
+  .cf-close{max-width:620px;margin:44px auto 0;text-align:center}
+  .cf-close .big{font-family:var(--serif);font-size:clamp(24px,4.4vw,36px);font-weight:800;line-height:1.5;color:var(--tx)}
+  .cf-close p{color:var(--mist);font-weight:300;margin-top:16px;line-height:1.85;word-break:keep-all}
+  .cf-close .btn{margin-top:28px}
+  .cf-close .fine{font-size:11.5px;color:var(--mut);margin-top:14px}
+
   .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
   .reveal.in{opacity:1;transform:none}
-  @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}.orb,.aurora,header.hero h1 span{animation:none}}
+  @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}.orb,.aurora,header.hero h1 span{animation:none}
+    .hook .h-old::after{animation:none;transform:scaleX(1)}.hook .h-new{animation:none;opacity:1}.mk{transition:none;background-size:100% 100%}}
 
   /* 환불 규정 (푸터 하단, 클릭 시 펼침) */
   .refund-toggle{margin:16px 0 4px;font-size:11.5px;color:var(--mut)}
@@ -275,9 +304,13 @@
   <div class="orb" aria-hidden="true"></div>
   <div class="wrap">
     <div class="eyebrow">A I · 사 주 명 리 · 프 리 미 엄</div>
+    <div class="hook go">
+      <div class="h-old">"그냥 내가 운이 없었던 거겠지"</div>
+      <div class="h-new">어쩌면,<br><span class="mk">내 흐름을 몰랐던 것</span>일지도 모릅니다.</div>
+    </div>
     <h1>별이 새긴 당신의 사주,<br><span>천문 계산</span>으로 정확하게 풀어드립니다</h1>
     <p class="sub">생년월일시 하나로 사주팔자·오행·십성·대운을 정밀하게 산출하고,
-      올해의 운세부터 재물·애정·직업·건강까지 <b class="gold">10개 파트</b>의 프리미엄 리포트를 받아보세요.</p>
+      올해의 운세부터 재물·애정·직업·건강까지 <b class="gold ul">10개 파트</b>의 프리미엄 리포트를 받아보세요.</p>
     <div class="cta-row">
       <a href="#apply" class="btn">지금 분석 신청하기</a>
       <a href="#what" class="btn ghost">무엇을 받나요?</a>
@@ -289,6 +322,23 @@
     </div>
   </div>
 </header>
+
+<section class="comfort" id="comfort"><div class="wrap">
+  <div class="lead cf-head"><small>FOR YOU</small>요즘, <span class="mk">마음이 조금 무거우셨나요?</span></div>
+  <div class="cf-list">
+    <div class="cf-card"><div class="ic">🌧</div><p>분명 열심히 했는데, <b>이상하게 일이 자꾸 어긋날 때</b>가 있습니다.</p></div>
+    <div class="cf-card"><div class="ic">🍂</div><p>믿었던 사람에게 상처받고, <b>관계가 버겁게 느껴질 때</b>도 있지요.</p></div>
+    <div class="cf-card"><div class="ic">🌫</div><p>이직, 이별, 새로운 시작 앞에서 <b>어느 쪽으로 가야 할지 모르겠을 때</b>도요.</p></div>
+  </div>
+  <div class="cf-close">
+    <div class="big">괜찮아요.<br><span class="mk">지금부터 천천히 가도 늦지 않아요.</span></div>
+    <p>사주는 정해진 결말을 알려주는 것이 아니라,<br>
+      내가 어떤 기운을 타고났고 <b class="gold">지금 어떤 흐름 위에 서 있는지</b> 비춰주는 지도입니다.<br>
+      흐름을 알면, 다음 한 걸음을 조금 더 편안한 마음으로 고를 수 있습니다.</p>
+    <a href="#apply" class="btn">내 흐름 읽어보기</a>
+    <div class="fine">※ 사주 분석은 삶을 돌아보는 참고용 콘텐츠이며, 특정 결과를 보장하지 않습니다.</div>
+  </div>
+</div></section>
 
 <section class="statsband" id="stats"><div class="wrap">
   <div class="stitle">
@@ -828,7 +878,8 @@ document.getElementById('yr').textContent=new Date().getFullYear();
 
 /* ── 스크롤 등장 애니메이션 ── */
 (function(){
-  const els=document.querySelectorAll('.card,.step,.plan,.stitle,.band,details,.trust,.formwrap');
+  const els=document.querySelectorAll('.card,.step,.plan,.stitle,.band,details,.trust,.formwrap,.cf-head,.cf-card,.cf-close');
+  document.querySelectorAll('.cf-list').forEach(g=>{[...g.children].forEach((ch,i)=>ch.style.transitionDelay=(i*140)+'ms');});
   els.forEach(e=>e.classList.add('reveal'));
   document.querySelectorAll('.grid,.plans,.steps').forEach(g=>{[...g.children].forEach((ch,i)=>ch.style.transitionDelay=(i*55)+'ms');});
   if(!('IntersectionObserver'in window)){els.forEach(e=>e.classList.add('in'));return;}
